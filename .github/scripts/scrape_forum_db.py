@@ -186,13 +186,14 @@ def main():
                 f.write(h + "\n")
             f.write("\n")
 
-    with open(args.output, "w") as f:
-        json.dump(merged, f, indent=2)
-
     if args.diff:
         changed = diff_stats(merged, args.diff)
         if not changed:
             print("NO_CHANGES", file=sys.stderr)
+            return
+
+    with open(args.output, "w") as f:
+        json.dump(merged, f, indent=2)
 
 
 if __name__ == "__main__":
