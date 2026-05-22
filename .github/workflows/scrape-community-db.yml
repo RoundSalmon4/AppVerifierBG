@@ -28,11 +28,14 @@ jobs:
         run: |
           PREV_RUN=$(gh run list --workflow scrape-community-db.yml --branch main --status success --json databaseId --jq '.[0].databaseId' --limit 1 2>/dev/null)
           if [ -n "$PREV_RUN" ] && [ "$PREV_RUN" != "null" ]; then
-            echo "Downloading artifact from run #$PREV_RUN"
+            echo "Looking for artifact from run #$PREV_RUN"
             mkdir -p previous
-            gh run download "$PREV_RUN" --name community-database --dir previous
+            gh run download "$PREV_RUN" --name community-database --dir previous 2>/dev/null || true
             if [ -f previous/community_database.json ]; then
               echo "prev_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "No community-database artifact in previous run"
+              echo "prev_exists=false" >> $GITHUB_OUTPUT
             fi
           else
             echo "No previous successful run found"
