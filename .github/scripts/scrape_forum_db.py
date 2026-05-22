@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Scrape GrapheneOS forum thread for community-submitted app hashes."""
 
+import os
 import re
 import json
 import sys
@@ -175,6 +176,15 @@ def main():
 
     merged = merge_entries(all_entries)
     print(f"Found {len(merged)} unique packages across {page - 1} page(s)", file=sys.stderr)
+
+    root, ext = os.path.splitext(args.output)
+    txt_path = root + ".txt"
+    with open(txt_path, "w") as f:
+        for entry in merged:
+            f.write(entry["packageName"] + "\n")
+            for h in entry["hashes"]:
+                f.write(h + "\n")
+            f.write("\n")
 
     with open(args.output, "w") as f:
         json.dump(merged, f, indent=2)
