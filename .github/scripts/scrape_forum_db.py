@@ -114,7 +114,48 @@ def merge_entries(entries):
     return sorted(merged.values(), key=lambda x: x["packageName"])
 
 
+def load_previous(path):
+    with open(path) as f:
+        data = json.load(f)
+    return {e["packageName"]: set(e["hashes"]) for e in data}
+
+
+def diff_stats(new_entries, previous_path):
+    prev = load_previous(previous_path)
+    new_map = {e["packageName"]: set(e["hashes"]) for e in new_entries}
+
+    added_pkgs = [p for p in new_map if p not in prev]
+    removed_pkgs = [p for p in prev if p not in new_map]
+    changed_pkgs = [
+        p for p in new_map if p in prev and new_map[p] != prev[p]
+    ]
+
+    new_hash_count = sum(len(new_map[p]) - len(prev.get(p, set())) for p in new_map)
+    removed_hash_count = sum(len(prev[p]) - len(new_map.get(p, set())) for p in prev)
+
+    print(f"  Added packages: {len(added_pkgs)}", file=sys.stderr)
+    for p in added_pkgs:
+        print(f"    + {p}", file=sys.stderr)
+    print(f"  Removed packages: {len(removed_pkgs)}", file=sys.stderr)
+    for p in removed_pkgs:
+        print(f"    - {p}", file=sys.stderr)
+    print(f"  Changed packages: {len(changed_pkgs)}", file=sys.stderr)
+    for p in changed_pkgs:
+        print(f"    ~ {p}", file=sys.stderr)
+    print(f"  New hashes added to existing packages: {new_hash_count}", file=sys.stderr)
+    print(f"  Hashes removed from existing packages: {removed_hash_count}", file=sys.stderr)
+
+    return len(added_pkgs) + len(removed_pkgs) + len(changed_pkgs) > 0
+
+
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--diff", help="Path to previous JSON to diff against")
+    parser.add_argument("output", help="Path to write output JSON")
+    args = parser.parse_args()
+
     all_entries = []
     page = 1
     while True:
@@ -135,8 +176,13 @@ def main():
     merged = merge_entries(all_entries)
     print(f"Found {len(merged)} unique packages across {page - 1} page(s)", file=sys.stderr)
 
-    output = json.dumps(merged, indent=2)
-    print(output)
+    with open(args.output, "w") as f:
+        json.dump(merged, f, indent=2)
+
+    if args.diff:
+        changed = diff_stats(merged, args.diff)
+        if not changed:
+            print("NO_CHANGES", file=sys.stderr)
 
 
 if __name__ == "__main__":
