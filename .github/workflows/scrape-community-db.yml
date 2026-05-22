@@ -1,0 +1,27 @@
+name: Scrape Community Hash Database
+
+on:
+  schedule:
+    - cron: "0 12 * * 0"
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Scrape forum and generate database
+        run: python .github/scripts/scrape_forum_db.py > community_database.json
+
+      - name: Upload community database
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-database
+          path: community_database.json
