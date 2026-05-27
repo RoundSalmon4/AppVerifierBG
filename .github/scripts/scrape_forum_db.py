@@ -186,12 +186,6 @@ def main():
                 f.write(h + "\n")
             f.write("\n")
 
-    if args.diff:
-        changed = diff_stats(merged, args.diff)
-        if not changed:
-            print("NO_CHANGES", file=sys.stderr)
-            return
-
     yaml_path = root + ".yaml"
     with open(yaml_path, "w") as f:
         for entry in merged:
@@ -203,6 +197,11 @@ def main():
 
     with open(args.output, "w") as f:
         json.dump(merged, f, indent=2)
+
+    if args.diff:
+        changed = diff_stats(merged, args.diff)
+        if not changed:
+            print("NO_CHANGES", file=sys.stderr)
 
 
 if __name__ == "__main__":
