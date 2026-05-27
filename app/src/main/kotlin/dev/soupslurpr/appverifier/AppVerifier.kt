@@ -46,10 +46,12 @@ import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
+import dev.soupslurpr.appverifier.preferences.CURRENT_PRIVACY_POLICY_VERSION
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import dev.soupslurpr.appverifier.ui.AppListScreen
 import dev.soupslurpr.appverifier.ui.CreditsScreen
 import dev.soupslurpr.appverifier.ui.LicenseScreen
+import dev.soupslurpr.appverifier.ui.ReviewPrivacyPolicyAndLicense
 import dev.soupslurpr.appverifier.ui.PrivacyPolicyScreen
 import dev.soupslurpr.appverifier.ui.SettingsScreen
 import dev.soupslurpr.appverifier.ui.StartupScreen
@@ -119,6 +121,11 @@ fun AppVerifierApp(
         }
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
+
+    if (preferencesUiState.value.acceptedPrivacyPolicyVersion.second.value < CURRENT_PRIVACY_POLICY_VERSION) {
+        ReviewPrivacyPolicyAndLicense(preferencesViewModel = preferencesViewModel)
+        return
+    }
 
     Scaffold(
         topBar = {

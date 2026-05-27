@@ -4,13 +4,16 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 
+const val CURRENT_PRIVACY_POLICY_VERSION = 2
+
 data class PreferencesUiState(
-    val acceptedPrivacyPolicyAndLicense: Pair<Preferences.Key<Boolean>, MutableState<Boolean>> = Pair(
-        (booleanPreferencesKey("ACCEPTED_PRIVACY_POLICY_AND_LICENSE_DATE_1/4/2024")),
-        mutableStateOf(false)
+    val acceptedPrivacyPolicyVersion: Pair<Preferences.Key<Int>, MutableState<Int>> = Pair(
+        (intPreferencesKey("PRIVACY_POLICY_ACCEPTED_VERSION")),
+        mutableStateOf(0)
     ),
 
     val showHasMultipleSigners: Pair<Preferences.Key<Boolean>, MutableState<Boolean>> = Pair(
