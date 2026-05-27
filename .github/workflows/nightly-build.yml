@@ -34,7 +34,7 @@ jobs:
         if: steps.check.outputs.skip == 'true'
         run: exit 0
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: feature/all-enhancements
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -78,13 +78,13 @@ jobs:
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: temurin
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v4
@@ -180,7 +180,7 @@ jobs:
           echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: nightly-${{ steps.date.outputs.date }}
           name: Nightly ${{ steps.date.outputs.date }}
