@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -105,10 +106,9 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     }
 
     private suspend fun populateUserDatabase() {
-        dataStore.data.map { settings ->
-            val json = settings[USER_DATABASE_JSON] ?: return@map
-            _userDatabaseEntries.value = json.toUserDatabaseEntries().entries
-        }.collect()
+        val settings = dataStore.data.first()
+        val json = settings[USER_DATABASE_JSON] ?: return
+        _userDatabaseEntries.value = json.toUserDatabaseEntries().entries
     }
 
     suspend fun addUserDatabaseEntry(entry: UserDatabaseEntry) {
