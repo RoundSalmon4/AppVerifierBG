@@ -34,7 +34,7 @@ jobs:
         if: steps.check.outputs.skip == 'true'
         run: exit 0
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: feature/all-enhancements
           token: ${{ secrets.GITHUB_TOKEN }}
