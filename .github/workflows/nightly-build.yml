@@ -174,7 +174,7 @@ jobs:
 
           New apps can be submitted at [privacyguides/verified-apps/issues](https://github.com/privacyguides/verified-apps/issues/new?template=app-submission.yml).
 
-          **Community hashes:** \`grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt\` is included in the release assets — hashes shared by users on the GrapheneOS forum, in text format for import into the user database. These are community-submitted with no guarantee of accuracy. Cross-verify against multiple sources before trusting.
+          **Community hashes:** \`grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt\` is included in the release assets — hashes shared by users on the [GrapheneOS forum](https://discuss.grapheneos.org/d/15368-lets-compare-hashes-for-apps-not-in-appverifiers-database), in text format for import into the user database. These are community-submitted with no guarantee of accuracy. Cross-verify against multiple sources before trusting.
           BODYEOF
 
           echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
