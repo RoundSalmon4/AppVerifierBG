@@ -49,7 +49,6 @@ import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import dev.soupslurpr.appverifier.ui.AppListScreen
 import dev.soupslurpr.appverifier.ui.CreditsScreen
-import dev.soupslurpr.appverifier.ui.DonationScreen
 import dev.soupslurpr.appverifier.ui.LicenseScreen
 import dev.soupslurpr.appverifier.ui.PrivacyPolicyScreen
 import dev.soupslurpr.appverifier.ui.SettingsScreen
@@ -65,8 +64,7 @@ enum class AppVerifierScreens(@StringRes val title: Int) {
     Settings(title = R.string.settings),
     License(title = R.string.license),
     PrivacyPolicy(title = R.string.privacy_policy),
-    Credits(title = R.string.credits),
-    Donation(title = R.string.donation)
+    Credits(title = R.string.credits)
 }
 
 @Composable
@@ -300,10 +298,7 @@ fun AppVerifierApp(
                     onCreditsIconButtonClicked = {
                         navController.navigate(AppVerifierScreens.Credits.name)
                     },
-                    preferencesViewModel = preferencesViewModel,
-                    onDonationSettingsItemClicked = {
-                        navController.navigate(AppVerifierScreens.Donation.name)
-                    }
+                    preferencesViewModel = preferencesViewModel
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.License) {
@@ -314,9 +309,6 @@ fun AppVerifierApp(
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.Credits) {
                 CreditsScreen()
-            }
-            composableWithDefaultSlideTransitions(route = AppVerifierScreens.Donation) {
-                DonationScreen()
             }
         }
     }
