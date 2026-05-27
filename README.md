@@ -1,15 +1,12 @@
-# AppVerifier - Feature Enhancements
+# AppVerifier
 
-This fork adds to the original AppVerifier — still does everything the original does, plus the features below.
+Verify installed apps against shared signature hashes, the internal database, or a user-created database.
 
----
+This fork extends the original AppVerifier — still does everything the original does, plus the features below.
 
 ## Added Features
 
-### User Database
-Save an apps verification info so you can check it again later without needing the shared text. The database stores package names and their hashes, and you can export it as JSON or import lists in JSON, text, or YAML format.
-
-The import accepts these formats (format is auto-detected):
+**User Database.** Save an app's verification info so you can check it later without needing the shared text. Supports import and export in JSON, text, and YAML formats (auto-detected):
 
 **Plain text** — entries separated by a blank line:
 ```
@@ -38,33 +35,18 @@ hashes:
   - 11:22:33:44:55:66:77:88:...
 ```
 
-### Combined Database Status
-See internal and user database results side by side on both the app list and the verification screen. A three-way toggle in settings lets you choose between showing both, internal only, or user database only. Purple checkmarks appear in the app list for user database matches.
+**Combined Database Status.** See internal and user database results side by side on the app list and verification screen. A toggle lets you choose between both, internal only, or user database only.
 
-### Multi-App Text Sharing
-Share verification info for several apps at once instead of one at a time. Send multiple entries separated by blank lines — the format is just package name then hashes, repeated.
+**Multi-App Text Sharing.** Share verification info for several apps at once. Multiple entries separated by blank lines are accepted on receive.
 
-### Filtered App Lists
-When you receive shared text with multiple apps, this branch filters your installed app list to show only the ones that match. Each app gets a green or orange icon so you can see at a glance which ones check out. A Done button exits the filtered view.
+**Filtered App Lists.** Shared text with multiple apps filters your installed list to show matching apps only, with icons indicating hash match status.
 
-### Paste From Clipboard
-The startup screen has a button to paste multi-entry text from your clipboard, same behavior as receiving shared text.
+**Clipboard Verification.** Verify from clipboard with a single button on the startup screen. Successful clipboard verifications add a blue checkmark in the app list.
 
-### Shared Hash Comparison
-When viewing an app that was included in shared text, the verification status (shown in orange) tells you whether the installed hashes match what was shared. Tapping it shows more info.
+**Share All Apps.** Share every installed app's verification info as text.
 
-### Clipboard Verification
-When you verify an app from clipboard and it passes, a blue checkmark appears next to it in the app list. An option in settings lets the blue checkmark override a failed internal database match.
-
-### Share All Apps
-A settings option that shares every installed apps verification info as text, so you can send your full list to someone.
-
-### Clickable Database Status
-Tap the database status row on the verification screen to see match details and sources.
-
-### Privacy Guides Database
-The internal database is extended with entries from [privacyguides/verified-apps](https://github.com/privacyguides/verified-apps), updated with each new build. Hashes from both the original upstream and this database are preserved when they overlap.
+**Privacy Guides Database.** The internal database is extended with entries from [privacyguides/verified-apps](https://github.com/privacyguides/verified-apps), updated with each build.
 
 ---
 
-For the original README with download, community, and contributing info see the main upstream repository at https://github.com/soupslurpr/AppVerifier.
+For the original README with download, community, and contributing info see https://github.com/soupslurpr/AppVerifier.
