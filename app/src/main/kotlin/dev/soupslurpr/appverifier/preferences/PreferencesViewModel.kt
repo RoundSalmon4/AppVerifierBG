@@ -195,6 +195,7 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     suspend fun addClipboardVerifiedPackage(packageName: String) {
         val current = _clipboardVerifiedPackages.value
         if (packageName !in current) {
+            _clipboardVerifiedPackages.value = current + packageName
             dataStore.edit { preferences ->
                 preferences[CLIPBOARD_VERIFIED_PACKAGES] = current + packageName
             }
