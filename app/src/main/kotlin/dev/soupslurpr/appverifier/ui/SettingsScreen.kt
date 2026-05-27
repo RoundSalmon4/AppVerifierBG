@@ -104,6 +104,7 @@ fun SettingsScreen(
                     ExportFormat.JSON -> preferencesViewModel.exportUserDatabase()
                     ExportFormat.YAML -> userDatabaseEntries.toYaml()
                     ExportFormat.TEXT -> userDatabaseEntries.toText()
+                    null -> return@launch
                 }
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     out.write(data.toByteArray())
@@ -336,7 +337,7 @@ fun SettingsScreen(
                             }
                         }
                     },
-                    dismissButton = {
+                    confirmButton = {
                         TextButton(onClick = { showExportFormatDialog = false }) {
                             Text(stringResource(R.string.cancel))
                         }
