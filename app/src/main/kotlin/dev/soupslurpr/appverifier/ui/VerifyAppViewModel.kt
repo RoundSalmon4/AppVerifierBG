@@ -40,6 +40,10 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.value.packageName.value = packageName
         _uiState.value.hashes.value = hashes
         _uiState.value.internalDatabaseInfo.value = internalDatabaseInfo
+        _uiState.value.verificationStatus.value = VerificationStatus.UNKNOWN
+        _uiState.value.searchQuery.value = ""
+        _uiState.value.appNotFoundOrInvalidFormat.value = false
+        _uiState.value.apkFailedToParse.value = false
     }
 
     fun setAppIcon(icon: Drawable) {
@@ -214,10 +218,16 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun setAppNotFoundOrInvalidFormat(b: Boolean) {
         _uiState.value.appNotFoundOrInvalidFormat.value = b
+        if (b) {
+            _uiState.value.apkFailedToParse.value = false
+        }
     }
 
     fun setApkFailedToParse(b: Boolean) {
         _uiState.value.apkFailedToParse.value = b
+        if (b) {
+            _uiState.value.appNotFoundOrInvalidFormat.value = false
+        }
     }
 
     fun getInternalDatabaseInfoFromVerificationInfo(verificationInfo: VerificationInfo): InternalDatabaseInfo {

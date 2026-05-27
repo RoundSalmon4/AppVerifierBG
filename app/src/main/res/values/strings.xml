@@ -33,7 +33,11 @@
     <string name="show_hasmultiplesigners_setting_description">"Shows hasMultipleSigners in the app verification screen. This is useful for contributing to the internal verification info database."</string>
     <string name="user_database">User Database</string>
     <string name="export_user_database">Export user database</string>
-    <string name="export_user_database_description">Share your database as JSON</string>
+    <string name="export_user_database_description">Export your database</string>
+    <string name="export_format_title">Export format</string>
+    <string name="export_format_json">JSON (.json)</string>
+    <string name="export_format_yaml">YAML (.yaml)</string>
+    <string name="export_format_text">Text (.txt)</string>
     <string name="import_user_database">Import user database</string>
     <string name="import_user_database_description">Import database from a file</string>
     <string name="import_title">Import user database</string>
@@ -63,5 +67,6 @@
     <string name="format_not_recognized">The file format was not recognized.</string>
     <string name="could_not_be_read">%d could not be read.</string>
     <string name="download_report">Download report</string>
+    <string name="cancel">Cancel</string>
     <string name="user_database_cleared">All user database entries removed.</string>
 </resources>

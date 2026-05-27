@@ -49,8 +49,12 @@ import androidx.core.content.ContextCompat.startActivity
 import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.ImportSummary
+import dev.soupslurpr.appverifier.data.toText
+import dev.soupslurpr.appverifier.data.toYaml
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import kotlinx.coroutines.launch
+
+private enum class ExportFormat { JSON, YAML, TEXT }
 
 @Composable
 fun SettingsScreen(
@@ -88,14 +92,22 @@ fun SettingsScreen(
         importSummary = null
     }
 
+    var showExportFormatDialog by remember { mutableStateOf(false) }
+    var pendingExportFormat by remember { mutableStateOf<ExportFormat?>(null) }
+
     val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json")
+        contract = ActivityResultContracts.CreateDocument("*/*")
     ) { uri ->
-        if (uri != null) {
+        if (uri != null && pendingExportFormat != null) {
             coroutineScope.launch {
-                val json = preferencesViewModel.exportUserDatabase()
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(json.toByteArray())
+                val data = when (pendingExportFormat) {
+                    ExportFormat.JSON -> preferencesViewModel.exportUserDatabase()
+                    ExportFormat.YAML -> userDatabaseEntries.toYaml()
+                    ExportFormat.TEXT -> userDatabaseEntries.toText()
+                    null -> return@launch
+                }
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(data.toByteArray())
                 }
             }
         }
@@ -284,12 +296,54 @@ fun SettingsScreen(
                 description = stringResource(id = R.string.export_user_database_description),
                 hasIcon = true,
                 onClickIconSetting = {
-                    exportLauncher.launch("user_database.json")
+                    showExportFormatDialog = true
                 },
                 icon = {
                     Icon(Icons.Filled.FileUpload, null)
                 }
             )
+            if (showExportFormatDialog) {
+                AlertDialog(
+                    onDismissRequest = { showExportFormatDialog = false },
+                    title = { Text(stringResource(R.string.export_format_title)) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(
+                                onClick = {
+                                    pendingExportFormat = ExportFormat.JSON
+                                    exportLauncher.launch("user_database.json")
+                                    showExportFormatDialog = false
+                                }
+                            ) {
+                                Text(stringResource(R.string.export_format_json))
+                            }
+                            TextButton(
+                                onClick = {
+                                    pendingExportFormat = ExportFormat.YAML
+                                    exportLauncher.launch("user_database.yaml")
+                                    showExportFormatDialog = false
+                                }
+                            ) {
+                                Text(stringResource(R.string.export_format_yaml))
+                            }
+                            TextButton(
+                                onClick = {
+                                    pendingExportFormat = ExportFormat.TEXT
+                                    exportLauncher.launch("user_database.txt")
+                                    showExportFormatDialog = false
+                                }
+                            ) {
+                                Text(stringResource(R.string.export_format_text))
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showExportFormatDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    },
+                )
+            }
             SettingsItem(
                 name = stringResource(id = R.string.import_user_database),
                 description = stringResource(id = R.string.import_user_database_description),
