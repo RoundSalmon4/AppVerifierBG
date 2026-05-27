@@ -38,12 +38,6 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
-      - name: Set up debug keystore
-        run: |
-          mkdir -p "$HOME/.android"
-          printf '%s' "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
-
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
