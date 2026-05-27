@@ -26,6 +26,26 @@ data class ImportSummary(
     val skippedLines: List<String>,
 )
 
+fun List<UserDatabaseEntry>.toText(): String {
+    return joinToString("\n\n") { entry ->
+        buildString {
+            appendLine(entry.packageName)
+            entry.hashes.forEach { appendLine(it) }
+        }.trimEnd()
+    }
+}
+
+fun List<UserDatabaseEntry>.toYaml(): String {
+    return joinToString("\n") { entry ->
+        buildString {
+            appendLine("---")
+            appendLine("packageName: ${entry.packageName}")
+            appendLine("hashes:")
+            entry.hashes.forEach { appendLine("  - $it") }
+        }
+    }
+}
+
 fun List<UserDatabaseEntry>.toJson(): String {
     val arr = JSONArray()
     forEach { entry ->
