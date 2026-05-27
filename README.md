@@ -1,42 +1,70 @@
-# AppVerifier
+# AppVerifier - Feature Enhancements
 
-AppVerifier is an app signing certificate hash viewer and verifier.\
-It enables you to easily verify that your apps are genuine with others!
+This fork adds to the original AppVerifier — still does everything the original does, plus the features below.
 
-AppVerifier takes the app's package name and signing certificates hash(es) and compares them to the ones you provided or the ones in the internal database to verify that your apps are genuine.\
-You can simply share the verification info to others and receive verification info from them and
-share the received verification info to AppVerifier and you will see the verification status.\
-AppVerifier does the heavy lifting for you 💪
+---
 
-## Download
+## Added Features
 
-AppVerifier is available on the [Accrescent](https://accrescent.app) app store and GitHub releases. [Accrescent](https://accrescent.app) is the recommended way to get AppVerifier as it is more secure than GitHub releases.\
-Click on the badge below to get it on [Accrescent](https://accrescent.app).
+### User Database
+Save an apps verification info so you can check it again later without needing the shared text. The database stores package names and their hashes, and you can export it as JSON or import lists in JSON, text, or YAML format.
 
-<a href="https://accrescent.app/app/dev.soupslurpr.appverifier">
-                            <img alt="Get it on Accrescent" src="https://accrescent.app/badges/get-it-on.png">
-                        </a>
-                        
-The package name and SHA-256 hash of the signing certificate is below, so you can verify AppVerifier with [`apksigner`](https://developer.android.com/studio/command-line/apksigner#usage-verify) using `apksigner verify --print-certs AppVerifier-X.Y.Z.apk` if you are downloading the APK. If you are downloading from [Accrescent](https://accrescent.app) then you should verify [Accrescent](https://accrescent.app) itself [here](https://accrescent.app/faq#verifying).
+The import accepts these formats (format is auto-detected):
 
-DO NOT use AppVerifier to verify itself!\
-Also DO NOT use AppVerifier to verify Accrescent if you downloaded AppVerifier from it.
+**Plain text** — entries separated by a blank line:
+```
+com.example.app
+AA:BB:CC:DD:EE:FF:00:11:...
 
-dev.soupslurpr.appverifier\
-3A:04:A8:0B:2A:88:33:4C:74:74:85:F0:B2:15:16:40:A3:8B:B3:D2:D7:3A:8E:AB:81:DF:50:3E:0F:02:02:B2
+com.other.app
+11:22:33:44:55:66:77:88:...
+```
 
+**JSON** — array of objects with packageName, hashes, and hasMultipleSigners:
+```json
+[
+  {"packageName": "com.example.app", "hashes": ["AA:BB:CC:DD:EE:FF:00:11:..."], "hasMultipleSigners": false}
+]
+```
 
-It can also be found on a [Bluesky post](https://bsky.app/profile/soupslurpr.dev/post/3khnczlribj2i) to distrust the website. It is encouraged to verify it's the same with other people as well for assurance.
+**YAML** — documents separated by `---`:
+```yaml
+packageName: com.example.app
+hashes:
+  - AA:BB:CC:DD:EE:FF:00:11:...
+---
+packageName: com.other.app
+hashes:
+  - 11:22:33:44:55:66:77:88:...
+```
 
-## Community
+### Combined Database Status
+See internal and user database results side by side on both the app list and the verification screen. A three-way toggle in settings lets you choose between showing both, internal only, or user database only. Purple checkmarks appear in the app list for user database matches.
 
-Join the Matrix space at https://matrix.to/#/#appverifier-space:matrix.org for the Discussion, Announcements, and Beta Testing rooms.
+### Multi-App Text Sharing
+Share verification info for several apps at once instead of one at a time. Send multiple entries separated by blank lines — the format is just package name then hashes, repeated.
 
-## Contributing
+### Filtered App Lists
+When you receive shared text with multiple apps, this branch filters your installed app list to show only the ones that match. Each app gets a green or orange icon so you can see at a glance which ones check out. A Done button exits the filtered view.
 
-Check [CONTRIBUTING.md](https://github.com/soupslurpr/AppVerifier/blob/master/CONTRIBUTING.md) for things to know
-if you want to contribute.
+### Paste From Clipboard
+The startup screen has a button to paste multi-entry text from your clipboard, same behavior as receiving shared text.
 
-## Donation
+### Shared Hash Comparison
+When viewing an app that was included in shared text, the verification status (shown in orange) tells you whether the installed hashes match what was shared. Tapping it shows more info.
 
-Thank you to everyone who donated.
+### Clipboard Verification
+When you verify an app from clipboard and it passes, a blue checkmark appears next to it in the app list. An option in settings lets the blue checkmark override a failed internal database match.
+
+### Share All Apps
+A settings option that shares every installed apps verification info as text, so you can send your full list to someone.
+
+### Clickable Database Status
+Tap the database status row on the verification screen to see match details and sources.
+
+### Privacy Guides Database
+The internal database is extended with entries from [privacyguides/verified-apps](https://github.com/privacyguides/verified-apps), updated with each new build. Hashes from both the original upstream and this database are preserved when they overlap.
+
+---
+
+For the original README with download, community, and contributing info see the main upstream repository at https://github.com/soupslurpr/AppVerifier.

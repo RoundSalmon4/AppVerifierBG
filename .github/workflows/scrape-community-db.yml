@@ -1,0 +1,79 @@
+name: Scrape Community Hash Database
+
+on:
+  schedule:
+    - cron: "0 12 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download previous artifact if exists
+        id: download-prev
+        continue-on-error: true
+        shell: bash
+        run: |
+          PREV_RUN=$(gh run list --workflow scrape-community-db.yml --branch feature/all-enhancements --status success --json databaseId --jq '.[0].databaseId' --limit 1 2>/dev/null)
+          if [ -n "$PREV_RUN" ] && [ "$PREV_RUN" != "null" ]; then
+            echo "Looking for artifact from run #$PREV_RUN"
+            mkdir -p previous
+            gh run download "$PREV_RUN" --name community-database --dir previous 2>/dev/null || true
+            if [ -f previous/community_database.json ]; then
+              echo "prev_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "No community-database artifact in previous run"
+              echo "prev_exists=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No previous successful run found"
+            echo "prev_exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Scrape forum and generate database
+        id: scrape
+        shell: bash
+        run: |
+          DIFF_FLAG=""
+          if [ "${{ steps.download-prev.outputs.prev_exists }}" = "true" ]; then
+            DIFF_FLAG="--diff previous/community_database.json"
+          fi
+          python .github/scripts/scrape_forum_db.py $DIFF_FLAG community_database.json 2>&1 | tee scrape_output.txt
+
+      - name: Check for changes
+        id: check-changes
+        shell: bash
+        run: |
+          if grep -q "NO_CHANGES" scrape_output.txt; then
+            echo "No new hashes since last run."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload community database (text)
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-database-txt
+          path: community_database.txt
+
+      - name: Upload community database (JSON)
+        if: steps.check-changes.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-database
+          path: community_database.json

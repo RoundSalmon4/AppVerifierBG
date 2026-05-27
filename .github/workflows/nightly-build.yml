@@ -1,0 +1,176 @@
+name: Nightly Build
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [nightly]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' }}
+    steps:
+      - name: Check for existing release today
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="nightly-$(date +'%Y-%m-%d')"
+          if gh release view "$TAG" --repo ${{ github.repository }} &>/dev/null; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if release exists
+        if: steps.check.outputs.skip == 'true'
+        run: exit 0
+
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/all-enhancements
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run sync script
+        run: python .github/scripts/generate_internal_db.py
+
+      - name: Commit and push sync changes
+        run: |
+          git config user.name "rss-bot"
+          git config user.email "rss-bot@users.noreply.github.com"
+          git add -A
+          if ! git diff --quiet HEAD; then
+            git commit -m "Sync privacyguides/verified-apps database"
+            git push
+          fi
+
+      - name: Pull latest after sync
+        run: git pull --rebase origin feature/all-enhancements
+
+      - name: Get branch name
+        id: branch
+        run: echo "name=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Count privacyguides database entries
+        id: pgcount
+        run: |
+          TOTAL=$(curl -s "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" | grep -c "\- package:" || true)
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Set up debug keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          printf '%s' "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Get date for release
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Rename APK with date
+        run: |
+          mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk"
+
+      - name: Extract fingerprint from APK
+        id: apkfp
+        run: |
+          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifier-nightly-*.apk' -print -quit 2>/dev/null || true)
+          if [ -z "$APK_FILE" ]; then
+            echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for dir in "$ANDROID_HOME/build-tools" "$ANDROID_SDK_ROOT/build-tools"; do
+            if [ -d "$dir" ]; then
+              APKSIGNER=$(find "$dir" -name apksigner -print -quit 2>/dev/null || true)
+              if [ -n "$APKSIGNER" ]; then break; fi
+            fi
+          done
+          if [ -z "$APKSIGNER" ]; then
+            APKSIGNER=$(command -v apksigner 2>/dev/null || true)
+          fi
+
+          if [ -n "$APKSIGNER" ]; then
+            FINGERPRINT=$("$APKSIGNER" verify --print-certs "$APK_FILE" 2>/dev/null | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT=$(keytool -printcert -jarfile "$APK_FILE" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT=$(unzip -p "$APK_FILE" 'META-INF/CERT.RSA' 2>/dev/null | keytool -printcert -file - 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT=$(keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
+          else
+            echo "fingerprint=$FINGERPRINT" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release body
+        id: body
+        run: |
+          cat > /tmp/release_body.md << BODYEOF
+          **Unofficial build for testing purposes.**
+
+          It is recommended to use the [official AppVerifier](https://github.com/soupslurpr/AppVerifier) instead.
+
+          **Branch:** \`${{ steps.branch.outputs.name }}\`
+
+          **Privacy Guides database entries:** ${{ steps.pgcount.outputs.total }}
+
+          **Certificate fingerprint (SHA-256):** \`${{ steps.apkfp.outputs.fingerprint }}\`
+
+          ---
+
+          This build includes data from the [Privacy Guides Verified Apps](https://github.com/privacyguides/verified-apps) database, used under the MIT License. See each entry's issue link in the data file for details on how it was verified.
+
+          New apps can be submitted at [privacyguides/verified-apps/issues](https://github.com/privacyguides/verified-apps/issues/new?template=app-submission.yml).
+          BODYEOF
+
+          echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly-${{ steps.date.outputs.date }}
+          name: Nightly ${{ steps.date.outputs.date }}
+          body_path: ${{ steps.body.outputs.path }}
+          files: app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk
+          make_latest: true

@@ -25,11 +25,10 @@ import java.security.MessageDigest
 
 class VerifyAppViewModel(application: Application) : AndroidViewModel(application) {
 
-    /**
-     * App verification info
-     */
     private val _uiState = MutableStateFlow(VerifyAppUiState())
     val uiState: StateFlow<VerifyAppUiState> = _uiState.asStateFlow()
+
+    var onVerificationResult: ((VerificationStatus) -> Unit)? = null
 
     fun setAppVerificationInfo(
         name: String,
@@ -48,7 +47,9 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun verifyFromText(text: String) {
-        _uiState.value.verificationStatus.value = parseTextToVerificationStatus(text)
+        val status = parseTextToVerificationStatus(text)
+        _uiState.value.verificationStatus.value = status
+        onVerificationResult?.invoke(status)
     }
 
     fun getVerificationInfoText(text: String): String {
@@ -134,10 +135,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             } else if (verificationStatus.ordinal == VerificationStatus.MATCH.ordinal) {
                 VerificationStatus.MATCH
             } else {
-                TODO(
-                    "This should never happen. If it does, then make sure you accounted for any new verification " +
-                            "statuses that can happen in this function."
-                )
+                VerificationStatus.NOMATCH
             }
         }
 
@@ -232,7 +230,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 return@run InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
             }
 
-            return@run if (verificationInfo.hashes.hasMultipleSigners) { // Has multiple signers
+            return@run if (verificationInfo.hashes.hasMultipleSigners) {
                 val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
                     it ==
                             verificationInfo.hashes

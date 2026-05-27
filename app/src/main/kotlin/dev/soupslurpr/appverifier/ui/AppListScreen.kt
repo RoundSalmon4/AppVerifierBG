@@ -6,11 +6,16 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -29,17 +34,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
 import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
+import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,29 +62,67 @@ fun AppListScreen(
         icon: Drawable,
         internalDatabaseInfo: InternalDatabaseInfo,
     ) -> Unit,
-    onLaunchedEffect: () -> Unit,
     onQueryChange: (query: String) -> Unit,
     onSearch: (query: String) -> Unit,
     onSearchActiveChange: (active: Boolean) -> Unit,
     getHashesFromPackageInfo: (packageInfo: PackageInfo) -> Hashes,
     getInternalDatabaseInfoFromVerificationInfo: (verification: VerificationInfo) -> InternalDatabaseInfo,
+    databaseStatusDisplayMode: DatabaseStatusDisplayMode = DatabaseStatusDisplayMode.BOTH,
+    userDatabaseEntries: List<UserDatabaseEntry> = emptyList(),
+    sharedFilteredEntries: List<UserDatabaseEntry>? = null,
+    onDoneFiltered: (() -> Unit)? = null,
+    onAddAllVerified: ((List<UserDatabaseEntry>) -> Unit)? = null,
+    showClipboardCheckmark: Boolean = false,
+    clipboardVerifiedPackages: Set<String> = emptySet(),
+    showUnverifiedOnly: Boolean = false,
+    unverifiedExcludeUserDb: Boolean = false,
 ) {
     val context = LocalContext.current
 
     val packageManager: PackageManager = context.packageManager
 
-    val systemPackages = packageManager.getInstalledPackages(PackageManager.MATCH_SYSTEM_ONLY)
-
-    val userInstalledPackages = packageManager.getInstalledPackages(0)
-
-    userInstalledPackages.removeIf { userInstalledPackage ->
-        userInstalledPackage.packageName == systemPackages.firstOrNull {
-            it.packageName == userInstalledPackage.packageName
-        }?.packageName
+    val userInstalledPackages = remember {
+        val systemPackages = packageManager.getInstalledPackages(PackageManager.MATCH_SYSTEM_ONLY)
+        val userPackages = packageManager.getInstalledPackages(0)
+        userPackages.removeIf { userInstalledPackage ->
+            userInstalledPackage.packageName == systemPackages.firstOrNull {
+                it.packageName == userInstalledPackage.packageName
+            }?.packageName
+        }
+        userPackages
     }
 
-    LaunchedEffect(key1 = Unit) {
-        onLaunchedEffect()
+    val filteredPackages = if (sharedFilteredEntries != null) {
+        val filterNames = sharedFilteredEntries.map { it.packageName }.toSet()
+        userInstalledPackages.filter { it.packageName in filterNames }
+    } else {
+        userInstalledPackages
+    }
+
+    val showUserDbIcon = databaseStatusDisplayMode == DatabaseStatusDisplayMode.BOTH ||
+            databaseStatusDisplayMode == DatabaseStatusDisplayMode.USER_ONLY
+
+    val showInternalDbIcon = databaseStatusDisplayMode == DatabaseStatusDisplayMode.BOTH ||
+            databaseStatusDisplayMode == DatabaseStatusDisplayMode.INTERNAL_ONLY
+
+    val verifiedEntries = if (sharedFilteredEntries != null) {
+        filteredPackages.mapNotNull { pkg ->
+            val packageInfo = try {
+                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            } catch (_: Exception) { null } ?: return@mapNotNull null
+            val hashes = getHashesFromPackageInfo(packageInfo)
+            val sharedEntry = sharedFilteredEntries.find { it.packageName == pkg.packageName }
+            if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
+                val match = if (hashes.hasMultipleSigners) {
+                    sharedEntry.hashes == hashes.hashes
+                } else {
+                    hashes.hashes.last() in sharedEntry.hashes
+                }
+                if (match) UserDatabaseEntry(pkg.packageName, hashes.hashes, hashes.hasMultipleSigners) else null
+            } else null
+        }
+    } else {
+        emptyList()
     }
 
     Scaffold(
@@ -110,35 +157,127 @@ fun AppListScreen(
                 innerPadding.calculateEndPadding(LayoutDirection.Ltr)
             )
         ) {
-            items(userInstalledPackages) {
+            if (sharedFilteredEntries != null) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "Showing ${filteredPackages.size} installed of ${sharedFilteredEntries.size} total",
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                            )
+                            androidx.compose.material3.TextButton(onClick = { onDoneFiltered?.invoke() }) {
+                                Text("Done")
+                            }
+                        }
+                        if (verifiedEntries.isNotEmpty()) {
+                            androidx.compose.material3.TextButton(
+                                onClick = { onAddAllVerified?.invoke(verifiedEntries) }
+                            ) {
+                                Text("Add ${verifiedEntries.size} verified to database")
+                            }
+                        }
+                    }
+                }
+            }
+            if (filteredPackages.isEmpty() && sharedFilteredEntries != null) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "No installed apps match the shared package names.",
+                            modifier = Modifier.padding(32.dp),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                }
+            }
+            items(filteredPackages, key = { it.packageName }) {
                 // Do not show AppVerifier in the list as there is no point in using it to verify itself.
                 if (it.packageName == context.packageName) return@items
 
-                val packageInfo = packageManager.getPackageInfo(
-                    it.packageName,
-                    PackageManager.GET_SIGNING_CERTIFICATES
-                )
-                val name = packageInfo.applicationInfo?.let { it1 ->
-                    packageManager.getApplicationLabel(it1)
-                        .toString()
-                } ?: null.toString()
+                val packageInfo = remember(it.packageName) {
+                    packageManager.getPackageInfo(
+                        it.packageName,
+                        PackageManager.GET_SIGNING_CERTIFICATES
+                    )
+                }
+                val name = remember(it.packageName) {
+                    packageInfo.applicationInfo?.let { appInfo ->
+                        packageManager.getApplicationLabel(appInfo)
+                            .toString()
+                    } ?: it.packageName
+                }
 
                 if (searchQuery == "" || name.contains(searchQuery, true) ||
                     it.packageName.contains(searchQuery, true))
                 {
-                    val hashes = getHashesFromPackageInfo(packageInfo)
+                    val hashes = remember(it.packageName) {
+                        getHashesFromPackageInfo(packageInfo)
+                    }
 
-                    val verificationInfo = VerificationInfo(packageInfo.packageName, hashes)
+                    val internalDbInfo = remember(it.packageName) {
+                        getInternalDatabaseInfoFromVerificationInfo(
+                            VerificationInfo(packageInfo.packageName, hashes)
+                        )
+                    }
 
+                    if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
+
+                    val userDbEntry = userDatabaseEntries.find {
+                        it.packageName == packageInfo.packageName
+                    }
+                    val userDbMatch = if (userDbEntry != null) {
+                        if (hashes.hasMultipleSigners) {
+                            userDbEntry.hashes == hashes.hashes
+                        } else {
+                            hashes.hashes.last() in userDbEntry.hashes
+                        }
+                    } else {
+                        false
+                    }
+
+                    if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
+
+                    val sharedEntry = sharedFilteredEntries?.find {
+                        it.packageName == packageInfo.packageName
+                    }
+                    val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
+                        if (hashes.hasMultipleSigners) {
+                            sharedEntry.hashes == hashes.hashes
+                        } else {
+                            hashes.hashes.last() in sharedEntry.hashes
+                        }
+                    } else {
+                        null
+                    }
+
+                    val icon = remember(it.packageName) {
+                        packageManager.getApplicationIcon(
+                            packageInfo.applicationInfo ?: ApplicationInfo()
+                        )
+                    }
                     AppItem(
                         name = name,
                         packageName = packageInfo.packageName,
                         hashes = hashes,
-                        icon = packageManager.getApplicationIcon(
-                            packageInfo.applicationInfo ?: ApplicationInfo()
-                        ),
+                        icon = icon,
                         onClickAppItem = onClickAppItem,
-                        internalDatabaseInfo = getInternalDatabaseInfoFromVerificationInfo(verificationInfo),
+                        internalDatabaseInfo = internalDbInfo,
+                        showInternalDbIcon = showInternalDbIcon,
+                        showUserDbIcon = showUserDbIcon,
+                        internalDbStatus = internalDbInfo.internalDatabaseStatus,
+                        userDbMatch = userDbMatch,
+                        sharedHashMatch = sharedHashMatch,
+                        showClipboardCheckmark = showClipboardCheckmark,
+                        isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
                     )
                 }
             }
@@ -163,6 +302,13 @@ fun AppItem(
         internalDatabaseInfo: InternalDatabaseInfo
     ) -> Unit,
     internalDatabaseInfo: InternalDatabaseInfo,
+    showInternalDbIcon: Boolean = true,
+    showUserDbIcon: Boolean = false,
+    internalDbStatus: InternalDatabaseStatus = InternalDatabaseStatus.NOT_FOUND,
+    userDbMatch: Boolean = false,
+    sharedHashMatch: Boolean? = null,
+    showClipboardCheckmark: Boolean = false,
+    isClipboardVerified: Boolean = false,
 ) {
     ListItem(
         modifier = Modifier.clickable {
@@ -182,21 +328,59 @@ fun AppItem(
             )
         },
         trailingContent = {
-            when (internalDatabaseInfo.internalDatabaseStatus) {
-                InternalDatabaseStatus.NOT_FOUND -> null
-                InternalDatabaseStatus.MATCH -> Icon(
-                    Icons.Filled.Verified,
-                    "Verified successfully with internal database",
-                    Modifier,
-                    SimpleVerificationStatus.SUCCESS.color,
-                )
-
-                InternalDatabaseStatus.NOMATCH -> Icon(
-                    Icons.Filled.Error,
-                    "Verification with internal database NOT successful!",
-                    Modifier,
-                    SimpleVerificationStatus.FAILURE.color,
-                )
+            Row {
+                if (showInternalDbIcon) {
+                    when (internalDbStatus) {
+                        InternalDatabaseStatus.MATCH -> Icon(
+                            Icons.Filled.Verified,
+                            "Verified successfully with internal database",
+                            Modifier,
+                            SimpleVerificationStatus.SUCCESS.color,
+                        )
+                        InternalDatabaseStatus.NOMATCH -> {
+                            Icon(
+                                Icons.Filled.Error,
+                                "Verification with internal database NOT successful!",
+                                Modifier,
+                                SimpleVerificationStatus.FAILURE.color,
+                            )
+                        }
+                        InternalDatabaseStatus.NOT_FOUND -> {}
+                    }
+                }
+                if (showClipboardCheckmark && isClipboardVerified &&
+                    internalDbStatus != InternalDatabaseStatus.MATCH
+                ) {
+                    Icon(
+                        Icons.Filled.Verified,
+                        "Verified successfully with clipboard verification",
+                        Modifier,
+                        Color.Blue,
+                    )
+                }
+                if (showUserDbIcon && userDbMatch) {
+                    Icon(
+                        Icons.Filled.Verified,
+                        "Verified with user database",
+                        Modifier,
+                        Color(0xFF9C27B0),
+                    )
+                }
+                when (sharedHashMatch) {
+                    true -> Icon(
+                        Icons.Filled.Verified,
+                        "Shared text hashes match installed app",
+                        Modifier,
+                        Color(0xFFFF9800),
+                    )
+                    false -> Icon(
+                        Icons.Filled.Error,
+                        "Shared text hashes do NOT match installed app",
+                        Modifier,
+                        Color(0xFFFF9800),
+                    )
+                    null -> {}
+                }
             }
         }
     )

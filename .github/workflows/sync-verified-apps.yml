@@ -1,0 +1,36 @@
+name: Sync privacyguides/verified-apps database
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/all-enhancements
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install pyyaml
+      - name: Run sync script
+        run: python .github/scripts/generate_internal_db.py
+      - name: Commit changes
+        id: commit
+        run: |
+          git config user.name "rss-bot"
+          git config user.email "rss-bot@users.noreply.github.com"
+          git add -A
+          if git diff --quiet HEAD; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Sync privacyguides/verified-apps database"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            git push
+          fi
