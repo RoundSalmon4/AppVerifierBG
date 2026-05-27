@@ -105,8 +105,10 @@ fun AppListScreen(
     val showInternalDbIcon = databaseStatusDisplayMode == DatabaseStatusDisplayMode.BOTH ||
             databaseStatusDisplayMode == DatabaseStatusDisplayMode.INTERNAL_ONLY
 
+    val existingPackageNames = userDatabaseEntries.map { it.packageName }.toSet()
     val verifiedEntries = if (sharedFilteredEntries != null) {
         filteredPackages.mapNotNull { pkg ->
+            if (pkg.packageName in existingPackageNames) return@mapNotNull null
             val packageInfo = try {
                 packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
             } catch (_: Exception) { null } ?: return@mapNotNull null
