@@ -152,7 +152,10 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
         var newCount = 0
         var updatedCount = 0
         if (replace) {
-            newCount = entries.size
+            newCount = entries.count { entry ->
+                _userDatabaseEntries.value.none { it.packageName == entry.packageName }
+            }
+            updatedCount = entries.size - newCount
             _userDatabaseEntries.value = entries
         } else {
             val current = _userDatabaseEntries.value.toMutableList()
