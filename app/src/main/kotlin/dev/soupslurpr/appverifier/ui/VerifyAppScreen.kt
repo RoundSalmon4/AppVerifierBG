@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,7 +49,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import androidx.compose.ui.graphics.painter.DrawablePainter
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -173,7 +174,7 @@ fun VerifyAppScreen(
             }
             if (icon != null) {
                 Image(
-                    rememberDrawablePainter(drawable = icon),
+                    remember(icon) { DrawablePainter(drawable = icon) },
                     null,
                     Modifier.size(150.dp),
                 )
