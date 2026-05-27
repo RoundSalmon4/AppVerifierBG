@@ -192,6 +192,15 @@ def main():
             print("NO_CHANGES", file=sys.stderr)
             return
 
+    yaml_path = root + ".yaml"
+    with open(yaml_path, "w") as f:
+        for entry in merged:
+            f.write("---\n")
+            f.write(f"packageName: {entry['packageName']}\n")
+            f.write("hashes:\n")
+            for h in entry["hashes"]:
+                f.write(f"  - {h}\n")
+
     with open(args.output, "w") as f:
         json.dump(merged, f, indent=2)
 
