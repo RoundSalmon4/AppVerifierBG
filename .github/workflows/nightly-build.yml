@@ -63,6 +63,10 @@ jobs:
       - name: Pull latest after sync
         run: git pull --rebase origin feature/all-enhancements
 
+      - name: Scrape GrapheneOS forum for community hashes
+        continue-on-error: true
+        run: python .github/scripts/scrape_forum_db.py grapheneos-forum-hashes.json; rm -f grapheneos-forum-hashes.json
+
       - name: Get branch name
         id: branch
         run: echo "name=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
@@ -101,6 +105,10 @@ jobs:
       - name: Rename APK with date
         run: |
           mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk"
+
+      - name: Rename community hashes file
+        if: hashFiles('grapheneos-forum-hashes.txt') != ''
+        run: mv grapheneos-forum-hashes.txt grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
 
       - name: Extract fingerprint from APK
         id: apkfp
@@ -162,6 +170,8 @@ jobs:
           This build includes data from the [Privacy Guides Verified Apps](https://github.com/privacyguides/verified-apps) database, used under the MIT License. See each entry's issue link in the data file for details on how it was verified.
 
           New apps can be submitted at [privacyguides/verified-apps/issues](https://github.com/privacyguides/verified-apps/issues/new?template=app-submission.yml).
+
+          **Community hashes:** \`grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt\` is included in the release assets — hashes shared by users on the GrapheneOS forum, in text format for import into the user database. These are community-submitted with no guarantee of accuracy. Cross-verify against multiple sources before trusting.
           BODYEOF
 
           echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
@@ -172,5 +182,7 @@ jobs:
           tag_name: nightly-${{ steps.date.outputs.date }}
           name: Nightly ${{ steps.date.outputs.date }}
           body_path: ${{ steps.body.outputs.path }}
-          files: app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk
+          files: |
+            app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk
+            grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
           make_latest: true

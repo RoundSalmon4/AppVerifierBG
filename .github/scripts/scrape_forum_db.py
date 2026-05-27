@@ -10,12 +10,12 @@ import urllib.error
 
 FORUM_URL = "https://discuss.grapheneos.org/d/15368-lets-compare-hashes-for-apps-not-in-appverifiers-database"
 
-PACKAGE_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)+$')
+PACKAGE_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$')
 HASH_RE = re.compile(r'^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){31}$')
 
 # Known non-package lines to skip
 SKIP_WORDS = {
-    "source:", "location:", "edit:", "note:", "app", "i", "you", "it", "is", "are", "was",
+    "source:", "location:", "edit:", "note:", "i", "you", "it", "is", "are", "was",
     "the", "this", "that", "these", "those", "for", "with", "from", "has",
 }
 
@@ -88,8 +88,8 @@ def parse_entries(lines):
                     "hashes": current_hashes,
                     "hasMultipleSigners": len(current_hashes) > 1,
                 })
-            current_pkg = None
-            current_hashes = []
+                current_pkg = None
+                current_hashes = []
     if current_pkg is not None and current_hashes:
         entries.append({
             "packageName": current_pkg,
