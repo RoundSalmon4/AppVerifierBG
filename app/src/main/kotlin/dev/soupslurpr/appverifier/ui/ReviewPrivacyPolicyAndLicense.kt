@@ -11,8 +11,6 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,7 +28,6 @@ import kotlinx.coroutines.launch
 fun ReviewPrivacyPolicyAndLicense(
     preferencesViewModel: PreferencesViewModel,
 ) {
-    val preferencesUiState by preferencesViewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var checked by remember { mutableStateOf(false) }
 
@@ -65,10 +62,7 @@ fun ReviewPrivacyPolicyAndLicense(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        preferencesViewModel.setPreference(
-                            preferencesUiState.acceptedPrivacyPolicyAndLicense.first,
-                            checked
-                        )
+                        preferencesViewModel.acceptPrivacyPolicy()
                     }
                 },
                 enabled = checked

@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.lifecycle.ViewModel
@@ -51,11 +52,11 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
         dataStore.data.map { settings ->
             _uiState.update { currentState ->
                 currentState.copy(
-                    acceptedPrivacyPolicyAndLicense = Pair(
-                        uiState.value.acceptedPrivacyPolicyAndLicense.first,
+                    acceptedPrivacyPolicyVersion = Pair(
+                        uiState.value.acceptedPrivacyPolicyVersion.first,
                         mutableStateOf(
-                            settings[uiState.value.acceptedPrivacyPolicyAndLicense.first] ?: uiState.value
-                                .acceptedPrivacyPolicyAndLicense.second.value
+                            settings[uiState.value.acceptedPrivacyPolicyVersion.first] ?: uiState.value
+                                .acceptedPrivacyPolicyVersion.second.value
                         )
                     ),
                     showHasMultipleSigners = Pair(
@@ -208,6 +209,13 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     suspend fun setPreference(key: Preferences.Key<Boolean>, value: Boolean) {
         dataStore.edit { preferences ->
             preferences[key] = value
+        }
+    }
+
+    suspend fun acceptPrivacyPolicy() {
+        dataStore.edit { preferences ->
+            preferences[uiState.value.acceptedPrivacyPolicyVersion.first] = CURRENT_PRIVACY_POLICY_VERSION
+            preferences.remove(booleanPreferencesKey("ACCEPTED_PRIVACY_POLICY_AND_LICENSE_DATE_1/4/2024"))
         }
     }
 
