@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.datastore.preferences)
+    implementation(libs.accompanist.drawablepainter)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)
