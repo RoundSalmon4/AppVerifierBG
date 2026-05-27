@@ -47,6 +47,8 @@ hashes:
 
 **Privacy Guides Database.** The internal database is extended with entries from [privacyguides/verified-apps](https://github.com/privacyguides/verified-apps), updated with each build.
 
+**Community Database.** Nightly builds include hashes collected from the GrapheneOS forum, submitted by other users. Cross-verify against multiple sources before relying on these entries.
+
 ---
 
 For the original README with download, community, and contributing info see https://github.com/soupslurpr/AppVerifier.
