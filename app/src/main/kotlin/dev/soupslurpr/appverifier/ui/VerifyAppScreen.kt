@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -47,9 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
 import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
+import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
+import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationStatus
 
 @Composable
@@ -66,6 +71,11 @@ fun VerifyAppScreen(
     apkFailedToParse: Boolean,
     showHasMultipleSigners: Boolean,
     showClipboardEmptyMessage: () -> Unit,
+    databaseStatusDisplayMode: DatabaseStatusDisplayMode = DatabaseStatusDisplayMode.BOTH,
+    userDbEntry: UserDatabaseEntry? = null,
+    userDbMatch: Boolean = false,
+    onAddToUserDatabase: () -> Unit = {},
+    sharedTextHashMatch: Boolean? = null,
 ) {
     val context = LocalContext.current
 
@@ -76,6 +86,8 @@ fun VerifyAppScreen(
     var showMoreInfoAboutVerificationStatusDialog by rememberSaveable { mutableStateOf(false) }
 
     var showMoreInfoAboutInternalDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
+
+    var showMoreInfoAboutUserDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (hashes.hashes.isEmpty()) {
@@ -88,7 +100,6 @@ fun VerifyAppScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
             .verticalScroll(verticalScroll),
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (apkFailedToParse) {
@@ -109,26 +120,57 @@ fun VerifyAppScreen(
                         "\n\nThere may be multiple hashes, which is normal."
             )
         } else {
-            Text(
-                "Internal Database Status:"
-            )
-            Row {
-                FilledTonalButton(
-                    onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
+            val showInternal = databaseStatusDisplayMode != DatabaseStatusDisplayMode.USER_ONLY
+            val showUser = databaseStatusDisplayMode != DatabaseStatusDisplayMode.INTERNAL_ONLY
+            if (showInternal || showUser) {
+            Text("Database Status:", style = typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            if (showInternal) {
+                Row(
+                    modifier = Modifier.clickable { showMoreInfoAboutInternalDatabaseStatusDialog = true },
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' '),
-                        style = typography.headlineLarge
-                    )
-                    Spacer(Modifier.width(8.dp))
                     Icon(
                         Icons.Default.Info,
                         "More info about internal database status",
                         tint = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Internal: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
+                        style = typography.titleLarge,
+                    )
+                }
+            }
+            if (showUser) {
+                val userStatusText = if (userDbEntry != null) {
+                    if (userDbMatch) "MATCH" else "NOMATCH"
+                } else {
+                    "NOT FOUND"
+                }
+                val userStatusColor = if (userDbEntry != null) {
+                    if (userDbMatch) Color(0xFF9C27B0) else SimpleVerificationStatus.FAILURE.color
+                } else {
+                    Color.Gray
+                }
+                Row(
+                    modifier = Modifier.clickable { showMoreInfoAboutUserDatabaseStatusDialog = true },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Default.Info,
+                        "More info about user database status",
+                        tint = userStatusColor,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "User: $userStatusText",
+                        style = typography.titleLarge,
+                    )
                 }
             }
             Spacer(Modifier.height(8.dp))
+            }
             if (icon != null) {
                 Image(
                     rememberDrawablePainter(drawable = icon),
@@ -187,6 +229,21 @@ fun VerifyAppScreen(
             }) {
                 Text("Verify from clipboard")
             }
+            if (databaseStatusDisplayMode != DatabaseStatusDisplayMode.INTERNAL_ONLY) {
+                Button(onClick = onAddToUserDatabase) {
+                    Text("Add to user database")
+                }
+            }
+            val displayVerificationStatus = if (sharedTextHashMatch != null) {
+                if (sharedTextHashMatch) "MATCH" else "NOMATCH"
+            } else {
+                verificationStatus.simpleVerificationStatus.name
+            }
+            val displayVerificationColor = if (sharedTextHashMatch != null) {
+                if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
+            } else {
+                verificationStatus.simpleVerificationStatus.color
+            }
             Text(
                 "Verification Status:",
             )
@@ -195,14 +252,14 @@ fun VerifyAppScreen(
                     onClick = { showMoreInfoAboutVerificationStatusDialog = true },
                 ) {
                     Text(
-                        verificationStatus.simpleVerificationStatus.name,
+                        displayVerificationStatus,
                         style = typography.headlineLarge
                     )
                     Spacer(Modifier.width(8.dp))
                     Icon(
                         Icons.Default.Info,
                         "More info about verification status",
-                        tint = verificationStatus.simpleVerificationStatus.color,
+                        tint = displayVerificationColor,
                     )
                 }
             }
@@ -256,7 +313,86 @@ fun VerifyAppScreen(
         )
     }
 
+    if (showMoreInfoAboutUserDatabaseStatusDialog) {
+        val userDialogTitle = if (userDbEntry != null) {
+            if (userDbMatch) "MATCH" else "NOMATCH"
+        } else {
+            "NOT FOUND"
+        }
+        val userDialogColor = if (userDbEntry != null) {
+            if (userDbMatch) Color(0xFF9C27B0) else SimpleVerificationStatus.FAILURE.color
+        } else {
+            Color.Gray
+        }
+        AlertDialog(
+            onDismissRequest = { showMoreInfoAboutUserDatabaseStatusDialog = false },
+            confirmButton = {
+                TextButton(
+                    { showMoreInfoAboutUserDatabaseStatusDialog = false }
+                ) {
+                    Text(stringResource(id = android.R.string.ok))
+                }
+            },
+            title = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        userDialogTitle,
+                        style = typography.headlineSmall,
+                        color = userDialogColor,
+                    )
+                }
+            },
+            text = {
+                LazyColumn {
+                    item {
+                        Text("Package Name: ${userDbEntry?.packageName ?: packageName}")
+                    }
+                    item {
+                        if (userDbEntry != null) {
+                            Text("\nStored hashes:")
+                            Text(
+                                text = userDbEntry.hashes.joinToString("\n"),
+                                fontFamily = FontFamily.Monospace,
+                            )
+                        }
+                    }
+                    item {
+                        if (userDbEntry == null) {
+                            Text("\nThis app has no entry in the user database.")
+                        } else if (userDbMatch) {
+                            Text("\nThe current app hashes match the user database entry.")
+                        } else {
+                            Text("\nThe current app hashes do NOT match the user database entry.")
+                        }
+                    }
+                }
+            }
+        )
+    }
+
     if (showMoreInfoAboutVerificationStatusDialog) {
+        val dialogTitle = if (sharedTextHashMatch != null) {
+            if (sharedTextHashMatch) "MATCH" else "NOMATCH"
+        } else {
+            verificationStatus.name
+        }
+        val dialogColor = if (sharedTextHashMatch != null) {
+            if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
+        } else {
+            verificationStatus.simpleVerificationStatus.color
+        }
+        val dialogInfo = if (sharedTextHashMatch != null) {
+            if (sharedTextHashMatch) {
+                "The app's hashes match the shared text's expected values."
+            } else {
+                "The app's hashes do NOT match the shared text's expected values."
+            }
+        } else {
+            verificationStatus.info
+        }
         AlertDialog(
             onDismissRequest = { showMoreInfoAboutVerificationStatusDialog = false },
             confirmButton = {
@@ -272,16 +408,16 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        verificationStatus.name,
+                        dialogTitle,
                         style = typography.headlineSmall,
-                        color = verificationStatus.simpleVerificationStatus.color,
+                        color = dialogColor,
                     )
                 }
             },
             text = {
                 LazyColumn {
                     item {
-                        Text(verificationStatus.info)
+                        Text(dialogInfo)
                     }
                 }
             }

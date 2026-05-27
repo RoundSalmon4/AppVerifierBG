@@ -4,9 +4,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
+import dev.soupslurpr.appverifier.data.ImportResult
+import dev.soupslurpr.appverifier.data.ImportSummary
+import dev.soupslurpr.appverifier.data.UserDatabaseEntry
+import dev.soupslurpr.appverifier.data.toJson
+import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
+import dev.soupslurpr.appverifier.data.toUserDatabaseEntries
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,22 +25,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : ViewModel() {
-    /**
-     * Settings state
-     */
     private val _uiState = MutableStateFlow(PreferencesUiState())
     val uiState: StateFlow<PreferencesUiState> = _uiState.asStateFlow()
+
+    private val _userDatabaseEntries = MutableStateFlow<List<UserDatabaseEntry>>(emptyList())
+    val userDatabaseEntries: StateFlow<List<UserDatabaseEntry>> = _userDatabaseEntries.asStateFlow()
+
+    private val _clipboardVerifiedPackages = MutableStateFlow<Set<String>>(emptySet())
+    val clipboardVerifiedPackages: StateFlow<Set<String>> = _clipboardVerifiedPackages.asStateFlow()
 
     init {
         viewModelScope.launch {
             populateSettingsFromDatastore()
         }
+        viewModelScope.launch {
+            populateUserDatabase()
+        }
+        viewModelScope.launch {
+            populateClipboardVerifiedPackages()
+        }
     }
 
-    /**
-     * Populate the values of the settings from the Preferences DataStore.
-     * This function is only called from this ViewModel's init
-     */
     private suspend fun populateSettingsFromDatastore() {
         dataStore.data.map { settings ->
             _uiState.update { currentState ->
@@ -57,18 +71,151 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                                 .pitchBlackBackground.second.value
                         )
                     ),
+                    databaseStatusDisplayMode = Pair(
+                        uiState.value.databaseStatusDisplayMode.first,
+                        mutableStateOf(
+                            settings[uiState.value.databaseStatusDisplayMode.first] ?: uiState.value
+                                .databaseStatusDisplayMode.second.value
+                        )
+                    ),
+                    showClipboardCheckmark = Pair(
+                        uiState.value.showClipboardCheckmark.first,
+                        mutableStateOf(
+                            settings[uiState.value.showClipboardCheckmark.first] ?: uiState.value
+                                .showClipboardCheckmark.second.value
+                        )
+                    ),
+                    showUnverifiedOnly = Pair(
+                        uiState.value.showUnverifiedOnly.first,
+                        mutableStateOf(
+                            settings[uiState.value.showUnverifiedOnly.first] ?: uiState.value
+                                .showUnverifiedOnly.second.value
+                        )
+                    ),
+                    unverifiedExcludeUserDb = Pair(
+                        uiState.value.unverifiedExcludeUserDb.first,
+                        mutableStateOf(
+                            settings[uiState.value.unverifiedExcludeUserDb.first] ?: uiState.value
+                                .unverifiedExcludeUserDb.second.value
+                        )
+                    ),
                 )
             }
         }.collect()
     }
 
-    /**
-     * Set a preference to a value and save to Preferences DataStore
-     */
+    private suspend fun populateUserDatabase() {
+        dataStore.data.map { settings ->
+            val json = settings[USER_DATABASE_JSON] ?: return@map
+            _userDatabaseEntries.value = json.toUserDatabaseEntries().entries
+        }.collect()
+    }
+
+    suspend fun addUserDatabaseEntry(entry: UserDatabaseEntry) {
+        val current = _userDatabaseEntries.value.toMutableList()
+        val existingIndex = current.indexOfFirst { it.packageName == entry.packageName }
+        if (existingIndex != -1) {
+            current[existingIndex] = entry
+        } else {
+            current.add(entry)
+        }
+        _userDatabaseEntries.value = current
+        dataStore.edit { preferences ->
+            preferences[USER_DATABASE_JSON] = current.toJson()
+        }
+    }
+
+    suspend fun removeUserDatabaseEntry(packageName: String) {
+        val current = _userDatabaseEntries.value.filter { it.packageName != packageName }
+        _userDatabaseEntries.value = current
+        dataStore.edit { preferences ->
+            preferences[USER_DATABASE_JSON] = current.toJson()
+        }
+    }
+
+    suspend fun clearUserDatabase() {
+        _userDatabaseEntries.value = emptyList()
+        dataStore.edit { preferences ->
+            preferences.remove(USER_DATABASE_JSON)
+        }
+    }
+
+    fun exportUserDatabase(): String {
+        return _userDatabaseEntries.value.toJson()
+    }
+
+    suspend fun importUserDatabase(data: String, replace: Boolean = true): ImportSummary {
+        val result = parseUserDatabaseEntriesFromAny(data)
+        val entries = result.entries
+        if (entries.isEmpty()) return ImportSummary(0, 0, result.skippedLines)
+
+        var newCount = 0
+        var updatedCount = 0
+        if (replace) {
+            newCount = entries.size
+            _userDatabaseEntries.value = entries
+        } else {
+            val current = _userDatabaseEntries.value.toMutableList()
+            for (entry in entries) {
+                val index = current.indexOfFirst { it.packageName == entry.packageName }
+                if (index != -1) {
+                    updatedCount++
+                    val existing = current[index]
+                    current[index] = existing.copy(
+                        hashes = (existing.hashes + entry.hashes).distinct(),
+                        hasMultipleSigners = existing.hasMultipleSigners || entry.hasMultipleSigners,
+                    )
+                } else {
+                    newCount++
+                    current.add(entry)
+                }
+            }
+            _userDatabaseEntries.value = current
+        }
+        dataStore.edit { preferences ->
+            preferences[USER_DATABASE_JSON] = _userDatabaseEntries.value.toJson()
+        }
+        return ImportSummary(newCount, updatedCount, result.skippedLines)
+    }
+
+    private suspend fun populateClipboardVerifiedPackages() {
+        dataStore.data.map { settings ->
+            _clipboardVerifiedPackages.value =
+                settings[CLIPBOARD_VERIFIED_PACKAGES] ?: emptySet()
+        }.collect()
+    }
+
+    suspend fun clearClipboardVerifiedPackages() {
+        _clipboardVerifiedPackages.value = emptySet()
+        dataStore.edit { preferences ->
+            preferences.remove(CLIPBOARD_VERIFIED_PACKAGES)
+        }
+    }
+
+    suspend fun addClipboardVerifiedPackage(packageName: String) {
+        val current = _clipboardVerifiedPackages.value
+        if (packageName !in current) {
+            dataStore.edit { preferences ->
+                preferences[CLIPBOARD_VERIFIED_PACKAGES] = current + packageName
+            }
+        }
+    }
+
     suspend fun setPreference(key: Preferences.Key<Boolean>, value: Boolean) {
         dataStore.edit { preferences ->
             preferences[key] = value
         }
+    }
+
+    suspend fun setDatabaseStatusDisplayMode(mode: DatabaseStatusDisplayMode) {
+        dataStore.edit { preferences ->
+            preferences[uiState.value.databaseStatusDisplayMode.first] = mode.name
+        }
+    }
+
+    companion object {
+        val USER_DATABASE_JSON = stringPreferencesKey("USER_DATABASE_JSON")
+        val CLIPBOARD_VERIFIED_PACKAGES = stringSetPreferencesKey("CLIPBOARD_VERIFIED_PACKAGES")
     }
 
     class PreferencesViewModelFactory(private val dataStore: DataStore<Preferences>) : ViewModelProvider.Factory {

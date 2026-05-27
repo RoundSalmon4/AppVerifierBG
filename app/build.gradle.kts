@@ -11,7 +11,7 @@ android {
     ndkVersion = "28.1.13356709"
 
     defaultConfig {
-        applicationId = "dev.soupslurpr.appverifier"
+        applicationId = "com.roundsalmon4.appverifier"
         minSdk = 28
         targetSdk = 35
         versionCode = 13
@@ -42,6 +42,17 @@ android {
         generateLocaleConfig = true
         localeFilters += listOf("en")
     }
+    signingConfigs {
+        create("fromKeystore") {
+            val keystoreFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -50,26 +61,22 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("fromKeystore")
         }
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("fromKeystore")
         }
         create("staging") {
             initWith(getByName("release"))
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("fromKeystore")
         }
     }
-    // Useless since we don't publish to the Google Play Store and they are the only ones who can
-    // view it.
-    // Reference: https://developer.android.com/reference/tools/gradle-api/8.6/com/android/build/api/dsl/DependenciesInfo
     dependenciesInfo {
-        // Disables dependency metadata when building APKs.
         includeInApk = false
-        // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
 }
