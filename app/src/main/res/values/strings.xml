@@ -32,8 +32,6 @@
     <string name="show_hasmultiplesigners_setting_name">Show hasMultipleSigners</string>
     <string name="show_hasmultiplesigners_setting_description">"Shows hasMultipleSigners in the app verification screen. This is useful for contributing to the internal verification info database."</string>
     <string name="user_database">User Database</string>
-    <string name="user_database_status_setting_name">Show user database status</string>
-    <string name="user_database_status_setting_description">Show user database results alongside internal database results in app list and verification screen</string>
     <string name="export_user_database">Export user database</string>
     <string name="export_user_database_description">Share your database as JSON</string>
     <string name="import_user_database">Import user database</string>
@@ -43,7 +41,6 @@
     <string name="import_replace">Replace existing</string>
     <string name="clear_user_database">Clear user database</string>
     <string name="clear_user_database_description">Remove all entries from your database</string>
-    <string name="add_to_user_database">Add to user database</string>
     <string name="clipboard_verification_setting_name">Clipboard verification checkmark</string>
     <string name="clipboard_verification_setting_description">Shows a checkmark next to apps in the list that have been successfully verified from clipboard</string>
     <string name="clear_clipboard_checkmarks_setting_name">Clear clipboard checkmarks</string>

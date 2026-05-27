@@ -42,7 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import androidx.compose.ui.graphics.painter.DrawablePainter
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -322,7 +322,7 @@ fun AppItem(
         },
         leadingContent = {
             Image(
-                rememberDrawablePainter(drawable = icon),
+                remember(icon) { DrawablePainter(drawable = icon) },
                 null,
                 Modifier.size(50.dp),
             )
