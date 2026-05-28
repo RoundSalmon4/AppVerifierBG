@@ -398,23 +398,6 @@ fun NavGraphBuilder.composableWithDefaultSlideTransitions(
         null
     }, sizeTransform, content)
 }
-
-fun NavGraphBuilder.navigationWithDefaultSlideTransitions(
-    startDestination: String,
-    route: AppVerifierScreens,
-    arguments: List<NamedNavArgument> = emptyList(),
-    deepLinks: List<NavDeepLink> = emptyList(),
-    enterTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
-    exitTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
-    popEnterTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = enterTransition,
-    popExitTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = exitTransition,
-    sizeTransform: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> SizeTransform?)? = null,
-    builder: NavGraphBuilder.() -> Unit,
-) {
-    navigation(startDestination, route.name, arguments, deepLinks, if (enterTransition == null) {
-        {
-            getEnterTransition(initialState, targetState)
-        }
     } else {
         null
     }, if (exitTransition == null) {
