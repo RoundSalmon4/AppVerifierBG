@@ -1,4 +1,4 @@
-# AppVerifier Privacy Policy
+# AppVerifier BG Privacy Policy
 
 This app does not connect to the internet on its own and requires no
 network permissions. The "View source code" button in settings opens

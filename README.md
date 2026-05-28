@@ -1,4 +1,4 @@
-# AppVerifier
+# AppVerifier BG
 
 Verify installed apps against shared signature hashes, the internal database, or a user-created database.
 
