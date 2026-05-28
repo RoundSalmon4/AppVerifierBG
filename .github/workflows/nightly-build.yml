@@ -1,7 +1,5 @@
 name: Nightly Build
 on:
-  schedule:
-    - cron: '0 2 * * *'
   workflow_dispatch:
   repository_dispatch:
     types: [nightly]
@@ -16,7 +14,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'repository_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' }}
     steps:
       - name: Check for existing release today
         id: check
