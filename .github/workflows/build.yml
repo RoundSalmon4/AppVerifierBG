@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  attestations: read
 
 jobs:
   build:
@@ -41,8 +42,16 @@ jobs:
       - name: Pull latest
         run: git pull --rebase origin ${{ github.event.inputs.branch }}
 
+      - name: Download verified-apps database
+        run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
+
+      - name: Verify database attestation
+        run: gh attestation verify --owner privacyguides "$RUNNER_TEMP/data.yml"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run sync script
-        run: python .github/scripts/generate_internal_db.py
+        run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
