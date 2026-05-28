@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Generate InternalVerificationInfoDatabase.kt from privacyguides/verified-apps data.yml."""
 
+import argparse
 import re
 import sys
 import urllib.request
 import codecs
 
 import yaml
-
-PRIVACYGUIDES_URL = "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
 
 UPSTREAM_DB_URL = (
     "https://raw.githubusercontent.com/soupslurpr/AppVerifier/main/"
@@ -122,9 +121,9 @@ def privacyguides_to_source(name, extra_map=None):
     return None
 
 
-def fetch_yaml(url):
-    with urllib.request.urlopen(url) as f:
-        return yaml.safe_load(f.read().decode("utf-8"))
+def load_yaml_file(path):
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
 def fetch_upstream_database(url):
@@ -393,7 +392,19 @@ def check_schema(raw):
 
 
 def main():
-    privacyguides_data = fetch_yaml(PRIVACYGUIDES_URL)
+    parser = argparse.ArgumentParser(
+        description="Sync InternalVerificationInfoDatabase.kt from privacyguides/verified-apps."
+    )
+    parser.add_argument(
+        "--data-yml",
+        metavar="PATH",
+        required=True,
+        help="Path to attestation-verified privacyguides/verified-apps data.yml",
+    )
+    args = parser.parse_args()
+
+    privacyguides_data = load_yaml_file(args.data_yml)
+
     check_schema(privacyguides_data)
     if isinstance(privacyguides_data, dict):
         privacyguides_data = privacyguides_data.get("packages", [])
