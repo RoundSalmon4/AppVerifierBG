@@ -4,23 +4,32 @@ on:
 
 permissions:
   contents: write
+  attestations: read
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      PRIVACYGUIDES_DATA_URL: https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml
     steps:
       - uses: actions/checkout@v6
         with:
           ref: feature/all-enhancements
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download verified-apps database
+        run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "$PRIVACYGUIDES_DATA_URL"
+      - name: Verify database attestation
+        run: gh attestation verify --owner privacyguides "$RUNNER_TEMP/data.yml"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Install dependencies
         run: pip install pyyaml
       - name: Run sync script
-        run: python .github/scripts/generate_internal_db.py
+        run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
       - name: Commit changes
         id: commit
         run: |
@@ -30,7 +39,9 @@ jobs:
           if git diff --quiet HEAD; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
-            git commit -m "Sync privacyguides/verified-apps database"
+            git commit \
+              -m "Sync privacyguides/verified-apps database" \
+              -m "Co-authored-by: Privacy Guides [bot] <github-bot@privacyguides.net>"
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             git push
           fi
