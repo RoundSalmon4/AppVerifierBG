@@ -97,7 +97,7 @@ jobs:
 
       - name: Build release APK
         if: ${{ github.event.inputs.build_type == 'release' }}
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PversionSuffix=-$(date +'%Y-%m-%d')
 
       - name: Upload debug APK
         if: ${{ github.event.inputs.build_type == 'debug' }}
