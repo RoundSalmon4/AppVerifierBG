@@ -10,18 +10,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-/**
- * Dark color scheme for devices < Android 12, which do not support dynamic color.
- */
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80,
 )
 
-/**
- * Light color scheme for devices < Android 12, which do not support dynamic color.
- */
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,

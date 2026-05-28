@@ -294,7 +294,6 @@ fun CreditsScreen() {
             )
         }
 
-        // This MUST stay at the bottom or else when fully scrolled some credits will be blocked.
         item {
             Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
         }

@@ -39,7 +39,6 @@ import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes

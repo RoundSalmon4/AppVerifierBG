@@ -246,7 +246,7 @@ fun SettingsScreen(
                 }
             )
         }
- 
+
         Column {
             SettingsCategoryText(category = stringResource(id = R.string.user_database))
             Text(

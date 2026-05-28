@@ -202,7 +202,6 @@ fun AppListScreen(
                 }
             }
             items(filteredPackages, key = { it.packageName }) {
-                // Do not show AppVerifier in the list as there is no point in using it to verify itself.
                 if (it.packageName == context.packageName) return@items
 
                 val packageInfo = remember(it.packageName) {
