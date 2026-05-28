@@ -21,11 +21,6 @@ data class PreferencesUiState(
         mutableStateOf(false)
     ),
 
-    val pitchBlackBackground: Pair<Preferences.Key<Boolean>, MutableState<Boolean>> = Pair(
-        (booleanPreferencesKey("PITCH_BLACK_BACKGROUND")),
-        mutableStateOf(false)
-    ),
-
     val databaseStatusDisplayMode: Pair<Preferences.Key<String>, MutableState<String>> = Pair(
         (stringPreferencesKey("DATABASE_STATUS_DISPLAY_MODE")),
         mutableStateOf(DatabaseStatusDisplayMode.BOTH.name)
