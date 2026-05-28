@@ -183,6 +183,14 @@ jobs:
           **Community hashes:** \`grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt\` is included in the release assets — hashes shared by users on the [GrapheneOS forum](https://discuss.grapheneos.org/d/15368-lets-compare-hashes-for-apps-not-in-appverifiers-database), in text format for import into the user database. These are community-submitted with no guarantee of accuracy. Cross-verify against multiple sources before trusting.
           BODYEOF
 
+          DATE="${{ steps.date.outputs.date }}"
+          if grep -q "^## $DATE$" CHANGELOG.md; then
+            echo "" >> /tmp/release_body.md
+            echo "## What's Changed" >> /tmp/release_body.md
+            echo "" >> /tmp/release_body.md
+            awk "/^## $DATE"'$/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md >> /tmp/release_body.md
+          fi
+
           echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
