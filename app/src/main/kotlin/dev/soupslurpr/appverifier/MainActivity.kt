@@ -119,9 +119,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            AppVerifierTheme(
-                preferencesViewModel = preferencesViewModel
-            ) {
+            AppVerifierTheme {
                 AppVerifierApp(
                     modifier = Modifier,
                     verifyAppViewModel = verifyAppViewModel,

@@ -66,13 +66,6 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                                 .showHasMultipleSigners.second.value
                         )
                     ),
-                    pitchBlackBackground = Pair(
-                        uiState.value.pitchBlackBackground.first,
-                        mutableStateOf(
-                            settings[uiState.value.pitchBlackBackground.first] ?: uiState.value
-                                .pitchBlackBackground.second.value
-                        )
-                    ),
                     databaseStatusDisplayMode = Pair(
                         uiState.value.databaseStatusDisplayMode.first,
                         mutableStateOf(
