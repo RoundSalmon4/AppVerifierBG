@@ -1,6 +1,8 @@
 # Changelog
 
-## 2026-05-28
+Dates are based on UTC.
+
+## 2026-05-29
 
 - Removed pitch black background option
 - Added version number to settings screen
@@ -8,11 +10,34 @@
 - Added CHANGELOG.md — nightly release notes are sourced from this file
 - Renamed to AppVerifier BG with its own signing key and nightly builds
 
-## Earlier
+## 2026-05-28
+
+- Added nightly community hashes from GrapheneOS forum
+- Added multi-format export (JSON, YAML, text) for user database
+- Updated privacy policy to cover fork features
+- Fixed import counting when combining or replacing database entries
+- Skip already-imported entries in shared list verified count
+- Removed donation screen, trimmed credits
+
+## 2026-05-27
+
+- Added import result report with download for skipped lines
+- Added clear database confirmation dialog
+- Fixed import format detection and error messaging
+
+## 2026-05-26
 
 - Added user database with import and export (JSON, YAML, text)
-- Added multi-app text sharing, filtered app lists, and clipboard verification with checkmark
-- Added share all verification info for every installed app
 - Added combined internal and user database status display
-- Extended internal database with Privacy Guides entries
-- Added nightly community hashes from GrapheneOS forum
+- Added Privacy Guides database sync, updated with each build
+
+## 2026-05-25
+
+- Added multi-app text sharing and filtered app lists
+- Added share all verification info for every installed app
+- Added clipboard verification with checkmark
+
+## Earlier
+
+- Version 13 release
+- Initial upstream development by soupslurpr

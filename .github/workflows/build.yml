@@ -41,17 +41,7 @@ jobs:
       - name: Run sync script
         run: python .github/scripts/generate_internal_db.py
 
-      - name: Commit and push sync changes
-        run: |
-          git config user.name "rss-bot"
-          git config user.email "rss-bot@users.noreply.github.com"
-          git add -A
-          if ! git diff --quiet HEAD; then
-            git commit -m "Sync privacyguides/verified-apps database"
-            git push
-          fi
-
-      - name: Pull latest after sync
+      - name: Pull latest
         run: git pull --rebase origin ${{ github.event.inputs.branch }}
 
       - name: Set up JDK 17
