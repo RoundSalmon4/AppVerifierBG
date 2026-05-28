@@ -90,11 +90,19 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
-      - name: Set up debug keystore
+      - name: Set up release keystore
+        env:
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          mkdir -p "$HOME/.android"
-          printf '%s' "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
+          printf '%s' "$RELEASE_KEYSTORE" | base64 -d > release.keystore
+          echo "RELEASE_KEYSTORE_PATH=$PWD/release.keystore" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASSWORD=$RELEASE_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+          keytool -list -keystore release.keystore -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1
 
       - name: Build release APK
         run: ./gradlew assembleRelease
@@ -142,8 +150,8 @@ jobs:
             FINGERPRINT=$(unzip -p "$APK_FILE" 'META-INF/CERT.RSA' 2>/dev/null | keytool -printcert -file - 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
           fi
 
-          if [ -z "$FINGERPRINT" ]; then
-            FINGERPRINT=$(keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          if [ -z "$FINGERPRINT" ] && [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then
+            FINGERPRINT=$(keytool -list -keystore "$RELEASE_KEYSTORE_PATH" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
           fi
 
           if [ -z "$FINGERPRINT" ]; then
