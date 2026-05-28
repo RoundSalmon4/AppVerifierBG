@@ -398,25 +398,3 @@ fun NavGraphBuilder.composableWithDefaultSlideTransitions(
         null
     }, sizeTransform, content)
 }
-    } else {
-        null
-    }, if (exitTransition == null) {
-        {
-            getExitTransition(initialState, targetState)
-        }
-    } else {
-        null
-    }, if (popEnterTransition == null) {
-        {
-            getEnterTransition(initialState, targetState)
-        }
-    } else {
-        null
-    }, if (popExitTransition == null) {
-        {
-            getExitTransition(initialState, targetState)
-        }
-    } else {
-        null
-    }, sizeTransform, builder)
-}
