@@ -47,7 +47,7 @@ hashes:
 
 **Privacy Guides Database.** The internal database is extended with entries from [privacyguides/verified-apps](https://github.com/privacyguides/verified-apps), updated with each build.
 
-**Community Database.** Nightly builds include hashes collected from the GrapheneOS forum, submitted by other users. Cross-verify against multiple sources before relying on these entries.
+**Community Hashes.** Nightly builds include a downloadable text file with hashes shared by users on the GrapheneOS forum. These are not added to the internal database — import them into your user database if you wish. Cross-verify against multiple sources before relying on any entry.
 
 ---
 
