@@ -329,6 +329,14 @@ fun AppItem(
             )
         },
         trailingContent = {
+            if (hashes.isDebug) {
+                Icon(
+                    Icons.Filled.Error,
+                    "This app is signed with a debug certificate",
+                    Modifier,
+                    SimpleVerificationStatus.FAILURE.color,
+                )
+            } else {
             Row {
                 if (showInternalDbIcon) {
                     when (internalDbStatus) {
@@ -382,6 +390,7 @@ fun AppItem(
                     )
                     null -> {}
                 }
+            }
             }
         }
     )

@@ -5,6 +5,7 @@ Dates are based on UTC.
 ## 2026-05-30
 
 - Renamed repository to AppVerifierBG
+- Debug signing certificates are now detected and shown as insecure
 
 ## 2026-05-29
 

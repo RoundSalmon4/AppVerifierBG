@@ -195,6 +195,27 @@ fun VerifyAppScreen(
                     fontWeight = FontWeight.Black
                 )
             }
+            if (hashes.isDebug) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Info,
+                        "Debug certificate",
+                        tint = SimpleVerificationStatus.FAILURE.color,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "DEBUG",
+                        color = SimpleVerificationStatus.FAILURE.color,
+                        fontWeight = FontWeight.Black,
+                        style = typography.titleLarge,
+                    )
+                }
+                Text(
+                    "This app is signed with a debug certificate and may not be genuine.",
+                    color = SimpleVerificationStatus.FAILURE.color,
+                )
+            }
             val verificationData = "$packageName\n${hashes.hashes.joinToString("\n")}"
             val mimeType = "text/plain"
             Button(onClick = {
