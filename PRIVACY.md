@@ -64,7 +64,7 @@ to contact anyone to modify or delete your data.
 ## Contact
 
 If you have questions about this privacy policy, you can open an issue
-at: https://github.com/RoundSalmon4/AppVerifier
+at: https://github.com/RoundSalmon4/AppVerifierBG
 
 ## Changes to this policy
 
