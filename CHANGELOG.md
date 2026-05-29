@@ -4,8 +4,11 @@ Dates are based on UTC.
 
 ## 2026-05-29
 
-- Rebranded to AppVerifier BG with its own release signing key and nightly builds
-- Removed pitch black background option, added version number to settings screen
+- Removed pitch black background option
+- Added version number to settings screen
+- Updated references from "AppVerifier" to "AppVerifier BG" throughout the app
+- Added CHANGELOG.md — nightly release notes are sourced from this file
+- Renamed to AppVerifier BG with its own signing key and nightly builds
 - Privacy Guides database is now verified against GitHub attestations before each build ([#12](https://github.com/RoundSalmon4/AppVerifier/pull/12))
 
 ## 2026-05-28
@@ -13,7 +16,7 @@ Dates are based on UTC.
 - Added nightly community hashes from GrapheneOS forum
 - Added multi-format export (JSON, YAML, text) for user database
 - Updated privacy policy to cover fork features
-- Fixed import counting, format detection, and error handling
+- Fixed import counting when combining or replacing database entries
 - Skip already-imported entries in shared list verified count
 - Removed donation screen, trimmed credits
 
@@ -21,6 +24,7 @@ Dates are based on UTC.
 
 - Added import result report with download for skipped lines
 - Added clear database confirmation dialog
+- Fixed import format detection and error messaging
 
 ## 2026-05-26
 
