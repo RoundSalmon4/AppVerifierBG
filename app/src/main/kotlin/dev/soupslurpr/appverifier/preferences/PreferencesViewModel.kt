@@ -113,17 +113,17 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
         } else {
             current.add(entry)
         }
-        _userDatabaseEntries.value = current
         dataStore.edit { preferences ->
             preferences[USER_DATABASE_JSON] = current.toJson()
         }
+        _userDatabaseEntries.value = current
     }
 
     suspend fun clearUserDatabase() {
-        _userDatabaseEntries.value = emptyList()
         dataStore.edit { preferences ->
             preferences.remove(USER_DATABASE_JSON)
         }
+        _userDatabaseEntries.value = emptyList()
     }
 
     fun exportUserDatabase(): String {
@@ -137,12 +137,13 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
 
         var newCount = 0
         var updatedCount = 0
+        val updated: List<UserDatabaseEntry>
         if (replace) {
             newCount = entries.count { entry ->
                 _userDatabaseEntries.value.none { it.packageName == entry.packageName }
             }
             updatedCount = entries.size - newCount
-            _userDatabaseEntries.value = entries
+            updated = entries
         } else {
             val current = _userDatabaseEntries.value.toMutableList()
             for (entry in entries) {
@@ -159,11 +160,12 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                     current.add(entry)
                 }
             }
-            _userDatabaseEntries.value = current
+            updated = current
         }
         dataStore.edit { preferences ->
-            preferences[USER_DATABASE_JSON] = _userDatabaseEntries.value.toJson()
+            preferences[USER_DATABASE_JSON] = updated.toJson()
         }
+        _userDatabaseEntries.value = updated
         return ImportSummary(newCount, updatedCount, result.skippedLines)
     }
 
