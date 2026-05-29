@@ -173,9 +173,7 @@ jobs:
         id: body
         run: |
           cat > /tmp/release_body.md << BODYEOF
-          **Unofficial build for testing purposes.**
-
-          It is recommended to use the [official AppVerifier](https://github.com/soupslurpr/AppVerifier) instead.
+          **This build is considered beta software.** While I believe it is stable and fully functional, you may encounter issues. Please report any problems via the issue tracker.
 
           **Branch:** \`${{ steps.branch.outputs.name }}\`
 
