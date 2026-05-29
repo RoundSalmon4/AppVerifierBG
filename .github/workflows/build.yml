@@ -70,9 +70,11 @@ jobs:
 
       - name: Set up debug keystore
         if: ${{ github.event.inputs.build_type == 'debug' }}
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
         run: |
           mkdir -p "$HOME/.android"
-          printf '%s' "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > "$HOME/.android/debug.keystore"
+          printf '%s' "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
 
       - name: Set up release keystore
