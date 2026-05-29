@@ -2,6 +2,10 @@
 
 Dates are based on UTC.
 
+## 2026-05-30
+
+- Renamed repository to AppVerifierBG
+
 ## 2026-05-29
 
 - Removed pitch black background option
@@ -9,7 +13,7 @@ Dates are based on UTC.
 - Updated references from "AppVerifier" to "AppVerifier BG" throughout the app
 - Added CHANGELOG.md — nightly release notes are sourced from this file
 - Renamed to AppVerifier BG with its own signing key and nightly builds
-- Privacy Guides database is now verified against GitHub attestations before each build ([#12](https://github.com/RoundSalmon4/AppVerifier/pull/12))
+- Privacy Guides database is now verified against GitHub attestations before each build ([#12](https://github.com/RoundSalmon4/AppVerifierBG/pull/12))
 
 ## 2026-05-28
 

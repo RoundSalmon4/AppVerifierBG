@@ -453,7 +453,7 @@ fun SettingsScreen(
                 description = stringResource(id = R.string.view_source_code_setting_description),
                 hasIcon = true,
                 onClickIconSetting = {
-                    localUriHandler.openUri("https://github.com/RoundSalmon4/AppVerifier")
+                    localUriHandler.openUri("https://github.com/RoundSalmon4/AppVerifierBG")
                 },
                 icon = {
                     Icon(
