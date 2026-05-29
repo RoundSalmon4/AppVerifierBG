@@ -19,9 +19,12 @@ import dev.soupslurpr.appverifier.internalVerificationInfoDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 
 class VerifyAppViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -150,31 +153,36 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         val signingInfo = packageInfo.signingInfo
         val hasMultipleSigners = signingInfo!!.hasMultipleSigners()
 
-        val signatures = if (hasMultipleSigners) {
+        val certFactory = CertificateFactory.getInstance("X.509")
+
+        val signatureList = if (hasMultipleSigners) {
             signingInfo.apkContentsSigners
-                .map { signature ->
-                    MessageDigest
-                        .getInstance("SHA-256")
-                        .digest(signature.toByteArray())
-                        .joinToString(":") {
-                            "%02x".format(it)
-                        }
-                        .uppercase()
-                }
         } else {
             signingInfo.signingCertificateHistory
-                .map { signature ->
-                    MessageDigest
-                        .getInstance("SHA-256")
-                        .digest(signature.toByteArray())
-                        .joinToString(":") {
-                            "%02x".format(it)
-                        }
-                        .uppercase()
-                }
         }
 
-        return Hashes(listOf(Source.NONE), signatures, hasMultipleSigners)
+        val isDebug = signatureList.any { signature ->
+            try {
+                val cert = certFactory.generateCertificate(
+                    ByteArrayInputStream(signature.toByteArray())
+                ) as X509Certificate
+                cert.subjectX500Principal.name.contains("Android Debug")
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        val signatures = signatureList.map { signature ->
+            MessageDigest
+                .getInstance("SHA-256")
+                .digest(signature.toByteArray())
+                .joinToString(":") {
+                    "%02x".format(it)
+                }
+                .uppercase()
+        }
+
+        return Hashes(listOf(Source.NONE), signatures, hasMultipleSigners, isDebug)
     }
 
     fun findAndSetAppVerificationInfoFromPackageName(packageName: String, packageManager: PackageManager) {

@@ -58,7 +58,8 @@ enum class SimpleInternalDatabaseStatus(val color: Color) {
 data class Hashes(
     val sources: List<Source>,
     val hashes: List<String>,
-    val hasMultipleSigners: Boolean
+    val hasMultipleSigners: Boolean,
+    val isDebug: Boolean = false
 )
 
 data class VerificationInfo(val packageName: String, val hashes: Hashes)
