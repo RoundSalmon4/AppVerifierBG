@@ -131,28 +131,34 @@ fun AppListScreen(
         val hasSharedText: Boolean,
     )
 
-    val packageStatuses = remember(filteredPackages, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
+    val packageHashes = remember(filteredPackages) {
         filteredPackages.mapNotNull { pkg ->
             if (pkg.packageName == context.packageName) return@mapNotNull null
             val packageInfo = try {
                 packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
             } catch (_: Exception) { null } ?: return@mapNotNull null
             val hashes = getHashesFromPackageInfo(packageInfo)
-            val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(pkg.packageName, hashes))
-            val userDbEntry = userDatabaseEntries.find { it.packageName == pkg.packageName }
+            pkg.packageName to hashes
+        }.toMap()
+    }
+
+    val packageStatuses = remember(packageHashes, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
+        packageHashes.mapValues { (packageName, hashes) ->
+            val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes))
+            val userDbEntry = userDatabaseEntries.find { it.packageName == packageName }
             val userDbMatch = if (userDbEntry != null) {
                 if (hashes.hasMultipleSigners) userDbEntry.hashes == hashes.hashes
                 else hashes.hashes.last() in userDbEntry.hashes
             } else false
-            val sharedEntry = sharedFilteredEntries?.find { it.packageName == pkg.packageName }
-            pkg.packageName to AppSortStatus(
+            val sharedEntry = sharedFilteredEntries?.find { it.packageName == packageName }
+            AppSortStatus(
                 internalDbStatus = internalDbInfo.internalDatabaseStatus,
                 userDbMatch = userDbMatch,
                 isDebug = hashes.isDebug,
-                isClipboardVerified = pkg.packageName in clipboardVerifiedPackages,
+                isClipboardVerified = packageName in clipboardVerifiedPackages,
                 hasSharedText = sharedEntry != null && sharedEntry.hashes.isNotEmpty(),
             )
-        }.toMap()
+        }
     }
 
     val availableSortModes = remember(packageStatuses) {
