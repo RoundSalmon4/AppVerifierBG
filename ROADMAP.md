@@ -1,5 +1,16 @@
 # Roadmap
 
+## □ .apks split APK support
+
+The file picker and shared APK handling assume a single `.apk` file, but
+split APKs (` .apks` ) are common for large apps (e.g., from APKMirror,
+Aurora Store backups). Should handle the container format, extract the base
+APK, and verify signatures.
+
+Ref: [#227](https://github.com/soupslurpr/AppVerifier/issues/227)
+
+**Status: Not started.**
+
 ## ✅ Reorder the app list
 
 The list has a lot of icons now — internal DB matches, user DB, clipboard, shared text, debug. Sorting by name or status and filtering would help find what you're looking for. Also would let you quickly see all the failures at once instead of scrolling through everything.
