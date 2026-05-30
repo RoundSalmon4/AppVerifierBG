@@ -314,54 +314,56 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         uri: Uri,
         packageManager: PackageManager,
     ) {
-        val inputStream = contentResolver.openInputStream(uri)
-        if (inputStream == null) {
-            Log.e("VerifyAppViewModel", "openInputStream returned null for URI: $uri")
-            setApkFailedToParse(true)
-            return
-        }
-
-        val tempFile = File.createTempFile("temp", null, getApplication<Application>().cacheDir)
-
         try {
-            inputStream.use { fileIn ->
-                tempFile.outputStream().use { fileOut ->
-                    fileIn.copyTo(fileOut)
-                }
-            }
-
-            val packageInfo = packageManager.getPackageArchiveInfo(
-                tempFile.path,
-                PackageManager.GET_SIGNING_CERTIFICATES
-            )
-            val applicationInfo = packageInfo?.applicationInfo ?: ApplicationInfo()
-
-            if (packageInfo == null) {
+            val inputStream = contentResolver.openInputStream(uri)
+            if (inputStream == null) {
+                Log.e("VerifyAppViewModel", "openInputStream returned null for URI: $uri")
                 setApkFailedToParse(true)
                 return
             }
 
-            applicationInfo.sourceDir = tempFile.path
-            applicationInfo.publicSourceDir = tempFile.path
+            val tempFile = File.createTempFile("temp", null, getApplication<Application>().cacheDir)
 
-            val packageName = packageInfo.packageName
+            try {
+                inputStream.use { fileIn ->
+                    tempFile.outputStream().use { fileOut ->
+                        fileIn.copyTo(fileOut)
+                    }
+                }
 
-            val hashes = getHashesFromPackageInfo(packageInfo)
+                val packageInfo = packageManager.getPackageArchiveInfo(
+                    tempFile.path,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
+                val applicationInfo = packageInfo?.applicationInfo ?: ApplicationInfo()
 
-            setAppVerificationInfo(
-                packageManager.getApplicationLabel(applicationInfo).toString(),
-                packageName,
-                hashes,
-                getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes)),
-            )
-            setAppIcon(packageManager.getApplicationIcon(applicationInfo))
+                if (packageInfo == null) {
+                    setApkFailedToParse(true)
+                    return
+                }
+
+                applicationInfo.sourceDir = tempFile.path
+                applicationInfo.publicSourceDir = tempFile.path
+
+                val packageName = packageInfo.packageName
+
+                val hashes = getHashesFromPackageInfo(packageInfo)
+
+                setAppVerificationInfo(
+                    packageManager.getApplicationLabel(applicationInfo).toString(),
+                    packageName,
+                    hashes,
+                    getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes)),
+                )
+                setAppIcon(packageManager.getApplicationIcon(applicationInfo))
+            } finally {
+                if (!tempFile.delete()) {
+                    Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
+                }
+            }
         } catch (e: Exception) {
             Log.e("VerifyAppViewModel", "Failed to process APK file", e)
             setApkFailedToParse(true)
-        } finally {
-            if (!tempFile.delete()) {
-                Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
-            }
         }
     }
 
