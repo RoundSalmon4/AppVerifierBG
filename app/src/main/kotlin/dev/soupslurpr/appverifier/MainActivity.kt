@@ -94,11 +94,13 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         val verificationInfoText = verifyAppViewModel.getVerificationInfoText(sharedText)
-                        verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
-                            verificationInfoText.lines()[0],
-                            packageManager
-                        )
-                        verifyAppViewModel.verifyFromText(verificationInfoText)
+                        if (verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
+                                verificationInfoText.lines()[0],
+                                packageManager
+                            )
+                        ) {
+                            verifyAppViewModel.verifyFromText(verificationInfoText)
+                        }
                     }
                 } else if (extraStream != null) {
                     verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(

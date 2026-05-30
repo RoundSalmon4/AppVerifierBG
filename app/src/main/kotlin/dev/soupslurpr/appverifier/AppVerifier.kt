@@ -175,11 +175,13 @@ fun AppVerifierApp(
                                 }
                             } else {
                                 val verificationInfoText = verifyAppViewModel.getVerificationInfoText(trimmed)
-                                verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
-                                    verificationInfoText.lines()[0],
-                                    context.packageManager
-                                )
-                                verifyAppViewModel.verifyFromText(verificationInfoText)
+                                if (verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
+                                        verificationInfoText.lines()[0],
+                                        context.packageManager
+                                    )
+                                ) {
+                                    verifyAppViewModel.verifyFromText(verificationInfoText)
+                                }
                                 navController.navigate(AppVerifierScreens.VerifyApp.name)
                             }
                         } else {

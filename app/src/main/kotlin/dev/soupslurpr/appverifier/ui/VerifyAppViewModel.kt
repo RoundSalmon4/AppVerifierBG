@@ -214,7 +214,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         return Hashes(listOf(Source.NONE), signatures, hasMultipleSigners, isDebug)
     }
 
-    fun findAndSetAppVerificationInfoFromPackageName(packageName: String, packageManager: PackageManager) {
+    fun findAndSetAppVerificationInfoFromPackageName(packageName: String, packageManager: PackageManager): Boolean {
         val systemPackages = packageManager.getInstalledPackages(PackageManager.MATCH_SYSTEM_ONLY)
 
         val userInstalledPackages = packageManager.getInstalledPackages(0)
@@ -225,28 +225,29 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             }?.packageName
         }
 
-        userInstalledPackages.find { packageInfo: PackageInfo? -> packageInfo?.packageName == packageName }.run {
-            if (this != null) {
-                val packageInfo =
-                    packageManager.getPackageInfo(this.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val found = userInstalledPackages.find { it.packageName == packageName }
+        if (found != null) {
+            val packageInfo =
+                packageManager.getPackageInfo(found.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
 
-                val applicationInfo = packageInfo.applicationInfo ?: ApplicationInfo()
+            val applicationInfo = packageInfo.applicationInfo ?: ApplicationInfo()
 
-                val hashes = getHashesFromPackageInfo(packageInfo)
+            val hashes = getHashesFromPackageInfo(packageInfo)
 
-                setAppVerificationInfo(
-                    packageManager.getApplicationLabel(
-                        applicationInfo
-                    )
-                        .toString(),
-                    packageInfo.packageName,
-                    hashes,
-                    getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes)),
+            setAppVerificationInfo(
+                packageManager.getApplicationLabel(
+                    applicationInfo
                 )
-                setAppIcon(packageManager.getApplicationIcon(applicationInfo))
-            } else {
-                setAppNotFoundOrInvalidFormat(true)
-            }
+                    .toString(),
+                packageInfo.packageName,
+                hashes,
+                getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes)),
+            )
+            setAppIcon(packageManager.getApplicationIcon(applicationInfo))
+            return true
+        } else {
+            setAppNotFoundOrInvalidFormat(true)
+            return false
         }
     }
 
