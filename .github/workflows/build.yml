@@ -9,7 +9,6 @@ on:
         type: choice
         options:
           - feature/all-enhancements
-          - feature/hash-validation
       build_type:
         description: 'Build type'
         required: true
