@@ -2,6 +2,10 @@
 
 Dates are based on UTC.
 
+## 2026-05-31
+
+- Nightly builds are now reproducible — the same tag always produces the same APK
+
 ## 2026-05-30
 
 - Renamed repository to AppVerifierBG
