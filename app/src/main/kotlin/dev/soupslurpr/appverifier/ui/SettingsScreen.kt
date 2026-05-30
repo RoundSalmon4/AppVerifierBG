@@ -47,6 +47,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.startActivity
 import dev.soupslurpr.appverifier.R
@@ -194,25 +196,50 @@ fun SettingsScreen(
                 style = typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
-            SortMode.entries.forEach { mode ->
-                val selected = defaultSortMode == mode.name
-                SettingsItem(
-                    name = when (mode) {
-                        SortMode.NAME_ASC -> stringResource(R.string.sort_mode_name_asc)
-                        SortMode.NAME_DESC -> stringResource(R.string.sort_mode_name_desc)
-                        SortMode.STATUS -> stringResource(R.string.sort_mode_status)
-                    },
-                    description = "",
-                    hasSwitch = true,
-                    checked = selected,
-                    onCheckedChange = {
-                        if (!selected) {
-                            coroutineScope.launch {
-                                preferencesViewModel.setDefaultSortMode(mode.name)
-                            }
-                        }
+            var expanded by remember { mutableStateOf(false) }
+            val selectedSortMode = SortMode.entries.find { it.name == defaultSortMode } ?: SortMode.NAME_ASC
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                TextButton(onClick = { expanded = true }) {
+                    Text(
+                        text = when (selectedSortMode) {
+                            SortMode.NAME_ASC -> stringResource(R.string.sort_mode_name_asc)
+                            SortMode.NAME_DESC -> stringResource(R.string.sort_mode_name_desc)
+                            SortMode.INTERNAL_DB -> stringResource(R.string.sort_mode_internal_db)
+                            SortMode.USER_DB -> stringResource(R.string.sort_mode_user_db)
+                            SortMode.DEBUG -> stringResource(R.string.sort_mode_debug)
+                            SortMode.CLIPBOARD -> stringResource(R.string.sort_mode_clipboard)
+                            SortMode.SHARED_TEXT -> stringResource(R.string.sort_mode_shared_text)
+                        },
+                    )
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    SortMode.entries.forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(
+                                when (mode) {
+                                    SortMode.NAME_ASC -> stringResource(R.string.sort_mode_name_asc)
+                                    SortMode.NAME_DESC -> stringResource(R.string.sort_mode_name_desc)
+                                    SortMode.INTERNAL_DB -> stringResource(R.string.sort_mode_internal_db)
+                                    SortMode.USER_DB -> stringResource(R.string.sort_mode_user_db)
+                                    SortMode.DEBUG -> stringResource(R.string.sort_mode_debug)
+                                    SortMode.CLIPBOARD -> stringResource(R.string.sort_mode_clipboard)
+                                    SortMode.SHARED_TEXT -> stringResource(R.string.sort_mode_shared_text)
+                                },
+                            ) },
+                            onClick = {
+                                if (defaultSortMode != mode.name) {
+                                    coroutineScope.launch {
+                                        preferencesViewModel.setDefaultSortMode(mode.name)
+                                    }
+                                }
+                                expanded = false
+                            },
+                        )
                     }
-                )
+                }
             }
         }
 
