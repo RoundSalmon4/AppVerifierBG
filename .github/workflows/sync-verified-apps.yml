@@ -19,7 +19,19 @@ jobs:
       - name: Download verified-apps database
         run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "$PRIVACYGUIDES_DATA_URL"
       - name: Verify database attestation
-        run: gh attestation verify --owner privacyguides "$RUNNER_TEMP/data.yml"
+        run: |
+          for i in 1 2 3 4 5; do
+            if gh attestation verify -R privacyguides/verified-apps \
+              --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+              "$RUNNER_TEMP/data.yml" 2>/dev/null; then
+              exit 0
+            fi
+            echo "Attestation not yet available, retrying in 10s (attempt $i/5)..."
+            sleep 10
+          done
+          gh attestation verify -R privacyguides/verified-apps \
+            --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+            "$RUNNER_TEMP/data.yml"
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Set up Python

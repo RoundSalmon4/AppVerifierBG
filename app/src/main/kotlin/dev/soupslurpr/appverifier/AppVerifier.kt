@@ -102,6 +102,15 @@ fun AppVerifierApp(
 
     val clipboardManager = LocalClipboardManager.current
 
+    var pendingNavigation by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(pendingNavigation) {
+        pendingNavigation?.let { route ->
+            navController.navigate(route)
+            pendingNavigation = null
+        }
+    }
+
     val openApkFileLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
@@ -110,7 +119,7 @@ fun AppVerifierApp(
                     uri,
                     context.packageManager,
                 )
-                navController.navigate(AppVerifierScreens.VerifyApp.name)
+                pendingNavigation = AppVerifierScreens.VerifyApp.name
             }
         }
 
