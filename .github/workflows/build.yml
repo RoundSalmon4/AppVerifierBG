@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - feature/all-enhancements
+          - fix/bugs-195-223-205
       build_type:
         description: 'Build type'
         required: true
