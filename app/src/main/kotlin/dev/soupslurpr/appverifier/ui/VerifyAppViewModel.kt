@@ -33,25 +33,6 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
     var onVerificationResult: ((VerificationStatus) -> Unit)? = null
 
-    private var previousStateSnapshot: VerifyAppUiState? = null
-    private var navCommitted = false
-
-    fun saveCurrentState() {
-        previousStateSnapshot = _uiState.value
-        navCommitted = false
-    }
-
-    fun markNavCommitted() {
-        navCommitted = true
-    }
-
-    fun restoreIfNavCancelled() {
-        if (!navCommitted && previousStateSnapshot != null) {
-            _uiState.value = previousStateSnapshot!!
-            previousStateSnapshot = null
-        }
-    }
-
     fun setAppVerificationInfo(
         name: String,
         packageName: String,
@@ -333,11 +314,20 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         uri: Uri,
         packageManager: PackageManager,
     ) {
-        contentResolver.openInputStream(uri).use { inputStream ->
-            val tempFile = File.createTempFile("temp", null, getApplication<Application>().cacheDir)
+        val inputStream = contentResolver.openInputStream(uri)
+        if (inputStream == null) {
+            Log.e("VerifyAppViewModel", "openInputStream returned null for URI: $uri")
+            setApkFailedToParse(true)
+            return
+        }
 
-            tempFile.outputStream().use { fileOut ->
-                inputStream.use { it!!.copyTo(fileOut) }
+        val tempFile = File.createTempFile("temp", null, getApplication<Application>().cacheDir)
+
+        try {
+            inputStream.use { fileIn ->
+                tempFile.outputStream().use { fileOut ->
+                    fileIn.copyTo(fileOut)
+                }
             }
 
             val packageInfo = packageManager.getPackageArchiveInfo(
@@ -348,11 +338,6 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
             if (packageInfo == null) {
                 setApkFailedToParse(true)
-
-                if (!tempFile.delete()) {
-                    Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
-                }
-
                 return
             }
 
@@ -370,7 +355,10 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes)),
             )
             setAppIcon(packageManager.getApplicationIcon(applicationInfo))
-
+        } catch (e: Exception) {
+            Log.e("VerifyAppViewModel", "Failed to process APK file", e)
+            setApkFailedToParse(true)
+        } finally {
             if (!tempFile.delete()) {
                 Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
             }
