@@ -64,6 +64,7 @@ fun VerifyAppScreen(
     hashes: Hashes,
     verificationStatus: VerificationStatus,
     appNotFound: Boolean,
+    invalidHashFormat: Boolean,
     onVerifyFromClipboard: (String) -> Unit,
     onLaunchedEffectHashEmpty: () -> Unit,
     internalDatabaseInfo: InternalDatabaseInfo,
@@ -117,6 +118,13 @@ fun VerifyAppScreen(
                         "following:\n\ncom.example" +
                         ".app\n96:C0:2C:55:75:5C:17:1C:68:13:70:29:3B:37:11:2B:4A:5D:F7:B9:82:C2:C5:58:05:4C:45:51:AD:F5:50:DC" +
                         "\n\nThere may be multiple hashes, which is normal."
+            )
+        } else if (invalidHashFormat) {
+            Text("INVALID HASH FORMAT")
+            Text(
+                "The provided verification info does not contain a valid SHA-256 hash. " +
+                        "A valid hash is 64 hexadecimal characters or 95 characters in " +
+                        "XX:XX:XX:... format."
             )
         } else {
             val showInternal = databaseStatusDisplayMode != DatabaseStatusDisplayMode.USER_ONLY

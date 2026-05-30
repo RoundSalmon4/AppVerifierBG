@@ -253,6 +253,7 @@ fun AppVerifierApp(
                     currentHashes,
                     verifyAppUiState.value.verificationStatus.value,
                     verifyAppUiState.value.appNotFoundOrInvalidFormat.value,
+                    verifyAppUiState.value.invalidHashFormat.value,
                     { verifyAppViewModel.verifyFromText(it) },
                     { navController.navigateUp() },
                     verifyAppUiState.value.internalDatabaseInfo.value,
