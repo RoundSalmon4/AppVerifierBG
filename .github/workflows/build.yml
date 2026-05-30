@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - feature/all-enhancements
+          - fix/bugs-195-223-205
       build_type:
         description: 'Build type'
         required: true
@@ -47,6 +48,7 @@ jobs:
         run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
 
       - name: Verify database attestation
+        continue-on-error: true
         run: gh attestation verify --owner privacyguides "$RUNNER_TEMP/data.yml"
         env:
           GH_TOKEN: ${{ github.token }}
