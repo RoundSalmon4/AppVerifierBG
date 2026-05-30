@@ -17,6 +17,7 @@ on:
         options:
           - debug
           - release
+          - verify
 
 permissions:
   contents: write
@@ -78,7 +79,7 @@ jobs:
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
 
       - name: Set up release keystore
-        if: ${{ github.event.inputs.build_type == 'release' }}
+        if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'verify' }}
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -96,9 +97,59 @@ jobs:
         if: ${{ github.event.inputs.build_type == 'debug' }}
         run: ./gradlew assembleDebug
 
+      - name: Set build date
+        if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'verify' }}
+        run: echo "BUILD_DATE=$(git log -1 --format=%cd --date=format:'%Y-%m-%d')" >> "$GITHUB_ENV"
+
       - name: Build release APK
-        if: ${{ github.event.inputs.build_type == 'release' }}
-        run: ./gradlew assembleRelease -PversionSuffix=-$(date +'%Y-%m-%d')
+        if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'verify' }}
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+          ./gradlew assembleRelease -PversionSuffix=-$BUILD_DATE
+
+      - name: Save first APK for verification
+        if: ${{ github.event.inputs.build_type == 'verify' }}
+        run: |
+          mkdir -p /tmp/verify
+          cp app/build/outputs/apk/release/*.apk /tmp/verify/original.apk
+
+      - name: Rebuild APK from same source
+        if: ${{ github.event.inputs.build_type == 'verify' }}
+        run: |
+          rm -f app/build/outputs/apk/release/*.apk
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+          ./gradlew assembleRelease -PversionSuffix=-$BUILD_DATE --rerun-tasks
+          cp app/build/outputs/apk/release/*.apk /tmp/verify/rebuild.apk
+
+      - name: Compare APKs for reproducibility
+        if: ${{ github.event.inputs.build_type == 'verify' }}
+        run: |
+          ORIGINAL=/tmp/verify/original.apk
+          REBUILT=/tmp/verify/rebuild.apk
+          RESULT=$(python3 .github/scripts/compare_apks.py "$ORIGINAL" "$REBUILT")
+          echo "$RESULT"
+          if echo "$RESULT" | grep -q "All non-signature files match"; then
+            VERDICT="✅ REPRODUCIBLE"
+          else
+            VERDICT="❌ NOT REPRODUCIBLE"
+          fi
+          echo "::notice::$VERDICT — see step summary for details"
+          echo "$VERDICT"
+          {
+            echo "## Verify Result"
+            echo ""
+            echo "**Branch:** ${{ github.event.inputs.branch }}"
+            echo "**Commit:** $(git rev-parse HEAD)"
+            echo ""
+            echo "**Original:** $(basename "$ORIGINAL") ($(stat --format=%s "$ORIGINAL") bytes)"
+            echo "**Rebuilt:**  $(basename "$REBUILT") ($(stat --format=%s "$REBUILT") bytes)"
+            echo ""
+            echo '```'
+            echo "$RESULT"
+            echo '```'
+            echo ""
+            echo "### $VERDICT"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug APK
         if: ${{ github.event.inputs.build_type == 'debug' }}
@@ -113,3 +164,17 @@ jobs:
         with:
           name: app-release
           path: app/build/outputs/apk/release/*.apk
+
+      - name: Upload verify original APK
+        if: ${{ github.event.inputs.build_type == 'verify' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-release-original
+          path: /tmp/verify/original.apk
+
+      - name: Upload verify rebuilt APK
+        if: ${{ github.event.inputs.build_type == 'verify' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-release-rebuilt
+          path: /tmp/verify/rebuild.apk

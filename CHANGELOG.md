@@ -2,9 +2,12 @@
 
 Dates are based on UTC.
 
+## 2026-05-31
+
+- Nightly builds are now reproducible — the same tag always produces the same APK. The 5/30 build had timestamps pinned to the build time instead of the commit date, and R8's output ordering wasn't deterministic. Both issues are now fixed.
+
 ## 2026-05-30
 
-- Nightly builds are now reproducible — the same tag always produces the same APK
 - Renamed repository to AppVerifierBG
 - Debug signing certificates are now detected and shown as insecure
 
