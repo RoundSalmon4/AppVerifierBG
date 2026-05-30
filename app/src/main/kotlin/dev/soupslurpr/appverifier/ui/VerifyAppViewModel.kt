@@ -47,6 +47,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.value.searchQuery.value = ""
         _uiState.value.appNotFoundOrInvalidFormat.value = false
         _uiState.value.apkFailedToParse.value = false
+        _uiState.value.invalidHashFormat.value = false
     }
 
     fun setAppIcon(icon: Drawable) {
@@ -54,9 +55,35 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun verifyFromText(text: String) {
+        val verificationInfoText = getVerificationInfoText(text)
+        val lines = verificationInfoText.lines().filter { it.isNotBlank() }
+        val packageName = _uiState.value.packageName.value
+
+        val hashLines = if (lines.isNotEmpty() && lines[0] == packageName) {
+            lines.drop(1)
+        } else {
+            lines
+        }
+
+        val allHashesAreValid = hashLines.all { isValidSha256Hash(it.trim()) }
+
+        if (!allHashesAreValid) {
+            _uiState.value.invalidHashFormat.value = true
+            _uiState.value.verificationStatus.value = VerificationStatus.UNKNOWN
+            onVerificationResult?.invoke(VerificationStatus.UNKNOWN)
+            return
+        }
+
+        _uiState.value.invalidHashFormat.value = false
         val status = parseTextToVerificationStatus(text)
         _uiState.value.verificationStatus.value = status
         onVerificationResult?.invoke(status)
+    }
+
+    private fun isValidSha256Hash(hash: String): Boolean {
+        if (Regex("^[0-9A-Fa-f]{64}$").matches(hash)) return true
+        if (Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}$").matches(hash)) return true
+        return false
     }
 
     fun getVerificationInfoText(text: String): String {
@@ -233,6 +260,10 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         if (b) {
             _uiState.value.appNotFoundOrInvalidFormat.value = false
         }
+    }
+
+    fun setInvalidHashFormat(b: Boolean) {
+        _uiState.value.invalidHashFormat.value = b
     }
 
     fun getInternalDatabaseInfoFromVerificationInfo(verificationInfo: VerificationInfo): InternalDatabaseInfo {
