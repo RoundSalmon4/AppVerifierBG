@@ -264,10 +264,6 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun setInvalidHashFormat(b: Boolean) {
-        _uiState.value.invalidHashFormat.value = b
-    }
-
     fun getInternalDatabaseInfoFromVerificationInfo(verificationInfo: VerificationInfo): InternalDatabaseInfo {
         return internalVerificationInfoDatabase.run {
             val packageNameMatchedInternalDatabaseVerificationInfo = try {
