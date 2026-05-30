@@ -19,9 +19,9 @@ import dev.soupslurpr.appverifier.internalVerificationInfoDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import android.util.Log
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.IOException
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -32,6 +32,25 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     val uiState: StateFlow<VerifyAppUiState> = _uiState.asStateFlow()
 
     var onVerificationResult: ((VerificationStatus) -> Unit)? = null
+
+    private var previousStateSnapshot: VerifyAppUiState? = null
+    private var navCommitted = false
+
+    fun saveCurrentState() {
+        previousStateSnapshot = _uiState.value
+        navCommitted = false
+    }
+
+    fun markNavCommitted() {
+        navCommitted = true
+    }
+
+    fun restoreIfNavCancelled() {
+        if (!navCommitted && previousStateSnapshot != null) {
+            _uiState.value = previousStateSnapshot!!
+            previousStateSnapshot = null
+        }
+    }
 
     fun setAppVerificationInfo(
         name: String,
@@ -330,13 +349,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             if (packageInfo == null) {
                 setApkFailedToParse(true)
 
-                val isFileDeleted = tempFile.delete()
-
-                if (!isFileDeleted) {
-                    throw IOException(
-                        "Temporary APK file couldn't be deleted! Report this bug please with instructions " +
-                                "on how to reproduce!"
-                    )
+                if (!tempFile.delete()) {
+                    Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
                 }
 
                 return
@@ -357,13 +371,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             )
             setAppIcon(packageManager.getApplicationIcon(applicationInfo))
 
-            val isFileDeleted = tempFile.delete()
-
-            if (!isFileDeleted) {
-                throw IOException(
-                    "Temporary APK file couldn't be deleted! Report this bug please with instructions " +
-                            "on how to reproduce!"
-                )
+            if (!tempFile.delete()) {
+                Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
             }
         }
     }
