@@ -60,7 +60,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         val lines = verificationInfoText.lines().filter { it.isNotBlank() }
         val packageName = _uiState.value.packageName.value
 
-        val hashLines = if (lines.isNotEmpty() && lines[0] == packageName) {
+        val hashLines = if (lines.isNotEmpty() && (lines[0] == packageName || !isValidSha256Hash(lines[0].trim()))) {
             lines.drop(1)
         } else {
             lines
