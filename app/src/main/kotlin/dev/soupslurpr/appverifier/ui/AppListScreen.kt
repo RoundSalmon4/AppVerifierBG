@@ -172,6 +172,7 @@ fun AppListScreen(
         if (packageStatuses.values.any { it.hasSharedText }) {
             modes.add(SortMode.SHARED_TEXT)
         }
+        if (sortMode !in modes) modes.add(sortMode)
         modes
     }
 
