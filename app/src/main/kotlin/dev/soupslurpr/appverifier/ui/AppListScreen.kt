@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -58,11 +60,13 @@ import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationInfo
 
 enum class SortMode(val label: String) {
-    NAME_ASC("Name \u2191"),
-    NAME_DESC("Name \u2193"),
-    STATUS("Status");
-
-    fun next() = entries[(ordinal + 1) % entries.size]
+    NAME_ASC("Name A-Z"),
+    NAME_DESC("Name Z-A"),
+    INTERNAL_DB("Internal DB"),
+    USER_DB("User DB"),
+    DEBUG("Debug"),
+    CLIPBOARD("Clipboard"),
+    SHARED_TEXT("Shared text");
 }
 
 enum class FilterMode { ALL, FAILURES_ONLY }
@@ -121,10 +125,13 @@ fun AppListScreen(
 
     data class AppSortStatus(
         val internalDbStatus: InternalDatabaseStatus,
-        val isFailure: Boolean,
+        val userDbMatch: Boolean,
+        val isDebug: Boolean,
+        val isClipboardVerified: Boolean,
+        val hasSharedText: Boolean,
     )
 
-    val packageStatuses = remember(filteredPackages) {
+    val packageStatuses = remember(filteredPackages, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
         filteredPackages.mapNotNull { pkg ->
             if (pkg.packageName == context.packageName) return@mapNotNull null
             val packageInfo = try {
@@ -132,17 +139,48 @@ fun AppListScreen(
             } catch (_: Exception) { null } ?: return@mapNotNull null
             val hashes = getHashesFromPackageInfo(packageInfo)
             val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(pkg.packageName, hashes))
+            val userDbEntry = userDatabaseEntries.find { it.packageName == pkg.packageName }
+            val userDbMatch = if (userDbEntry != null) {
+                if (hashes.hasMultipleSigners) userDbEntry.hashes == hashes.hashes
+                else hashes.hashes.last() in userDbEntry.hashes
+            } else false
+            val sharedEntry = sharedFilteredEntries?.find { it.packageName == pkg.packageName }
             pkg.packageName to AppSortStatus(
                 internalDbStatus = internalDbInfo.internalDatabaseStatus,
-                isFailure = internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.NOMATCH,
+                userDbMatch = userDbMatch,
+                isDebug = hashes.isDebug,
+                isClipboardVerified = pkg.packageName in clipboardVerifiedPackages,
+                hasSharedText = sharedEntry != null && sharedEntry.hashes.isNotEmpty(),
             )
         }.toMap()
     }
 
+    val availableSortModes = remember(packageStatuses) {
+        val modes = mutableListOf(SortMode.NAME_ASC, SortMode.NAME_DESC)
+        if (packageStatuses.values.any { it.internalDbStatus != InternalDatabaseStatus.NOT_FOUND }) {
+            modes.add(SortMode.INTERNAL_DB)
+        }
+        if (packageStatuses.values.any { it.userDbMatch }) {
+            modes.add(SortMode.USER_DB)
+        }
+        if (packageStatuses.values.any { it.isDebug }) {
+            modes.add(SortMode.DEBUG)
+        }
+        if (packageStatuses.values.any { it.isClipboardVerified }) {
+            modes.add(SortMode.CLIPBOARD)
+        }
+        if (packageStatuses.values.any { it.hasSharedText }) {
+            modes.add(SortMode.SHARED_TEXT)
+        }
+        modes
+    }
+
+    var showSortMenu by remember { mutableStateOf(false) }
+
     val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses) {
         val filtered = if (filterMode == FilterMode.FAILURES_ONLY) {
             filteredPackages.filter { pkg ->
-                packageStatuses[pkg.packageName]?.isFailure == true
+                packageStatuses[pkg.packageName]?.let { it.internalDbStatus == InternalDatabaseStatus.NOMATCH } == true
             }
         } else {
             filteredPackages
@@ -157,14 +195,25 @@ fun AppListScreen(
                 try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
                 catch (_: Exception) { pkg.packageName.lowercase() }
             }
-            SortMode.STATUS -> filtered.sortedBy { pkg ->
-                val status = packageStatuses[pkg.packageName]
-                when {
-                    status == null -> 2
-                    status.isFailure -> 0
-                    status.internalDbStatus == InternalDatabaseStatus.MATCH -> 2
+            SortMode.INTERNAL_DB -> filtered.sortedBy { pkg ->
+                val s = packageStatuses[pkg.packageName]
+                when (s?.internalDbStatus) {
+                    InternalDatabaseStatus.MATCH -> 0
+                    InternalDatabaseStatus.NOMATCH -> 2
                     else -> 1
                 }
+            }
+            SortMode.USER_DB -> filtered.sortedBy { pkg ->
+                if (packageStatuses[pkg.packageName]?.userDbMatch == true) 0 else 1
+            }
+            SortMode.DEBUG -> filtered.sortedByDescending { pkg ->
+                if (packageStatuses[pkg.packageName]?.isDebug == true) 1 else 0
+            }
+            SortMode.CLIPBOARD -> filtered.sortedByDescending { pkg ->
+                if (packageStatuses[pkg.packageName]?.isClipboardVerified == true) 1 else 0
+            }
+            SortMode.SHARED_TEXT -> filtered.sortedByDescending { pkg ->
+                if (packageStatuses[pkg.packageName]?.hasSharedText == true) 1 else 0
             }
         }
     }
@@ -242,8 +291,21 @@ fun AppListScreen(
                             label = { Text("Failures only") },
                         )
                     }
-                    TextButton(onClick = { sortMode = sortMode.next() }) {
-                        Text(sortMode.label)
+                    Box {
+                        TextButton(onClick = { showSortMenu = true }) {
+                            Text(sortMode.label)
+                        }
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false },
+                        ) {
+                            availableSortModes.forEach { mode ->
+                                DropdownMenuItem(
+                                    text = { Text(mode.label) },
+                                    onClick = { sortMode = mode; showSortMenu = false },
+                                )
+                            }
+                        }
                     }
                 }
             }
