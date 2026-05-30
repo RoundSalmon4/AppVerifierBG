@@ -65,6 +65,7 @@ fun VerifyAppScreen(
     verificationStatus: VerificationStatus,
     appNotFound: Boolean,
     invalidHashFormat: Boolean,
+    expectedHashes: List<String>,
     onVerifyFromClipboard: (String) -> Unit,
     onLaunchedEffectHashEmpty: () -> Unit,
     internalDatabaseInfo: InternalDatabaseInfo,
@@ -190,10 +191,24 @@ fun VerifyAppScreen(
                 style = typography.titleLarge
             )
             Text(text = packageName)
-            Text(
-                text = hashes.hashes.joinToString("\n"),
-                fontFamily = FontFamily.Monospace
-            )
+            if (expectedHashes.isNotEmpty() && (verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.FAILURE || verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.WARNING)) {
+                Text("Expected:", fontWeight = FontWeight.Bold)
+                Text(
+                    text = expectedHashes.joinToString("\n"),
+                    fontFamily = FontFamily.Monospace
+                )
+                Spacer(Modifier.height(8.dp))
+                Text("Found:", fontWeight = FontWeight.Bold)
+                Text(
+                    text = hashes.hashes.joinToString("\n"),
+                    fontFamily = FontFamily.Monospace
+                )
+            } else {
+                Text(
+                    text = hashes.hashes.joinToString("\n"),
+                    fontFamily = FontFamily.Monospace
+                )
+            }
             if (showHasMultipleSigners) {
                 Text(
                     "hasMultipleSigners: "

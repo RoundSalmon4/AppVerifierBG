@@ -48,6 +48,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.value.appNotFoundOrInvalidFormat.value = false
         _uiState.value.apkFailedToParse.value = false
         _uiState.value.invalidHashFormat.value = false
+        _uiState.value.expectedHashes.value = emptyList()
     }
 
     fun setAppIcon(icon: Drawable) {
@@ -74,6 +75,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             return
         }
 
+        _uiState.value.expectedHashes.value = hashLines
         _uiState.value.invalidHashFormat.value = false
         val status = parseTextToVerificationStatus(text)
         _uiState.value.verificationStatus.value = status

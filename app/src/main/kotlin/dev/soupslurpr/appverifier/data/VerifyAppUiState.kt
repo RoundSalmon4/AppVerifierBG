@@ -15,6 +15,7 @@ data class VerifyAppUiState(
     val appNotFoundOrInvalidFormat: MutableState<Boolean> = mutableStateOf(false),
     val apkFailedToParse: MutableState<Boolean> = mutableStateOf(false),
     val invalidHashFormat: MutableState<Boolean> = mutableStateOf(false),
+    val expectedHashes: MutableState<List<String>> = mutableStateOf(emptyList()),
     val internalDatabaseInfo: MutableState<InternalDatabaseInfo> = mutableStateOf(
         InternalDatabaseInfo(
             InternalDatabaseStatus.NOT_FOUND,
