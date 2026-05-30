@@ -39,4 +39,9 @@ data class PreferencesUiState(
         (booleanPreferencesKey("UNVERIFIED_EXCLUDE_USER_DB")),
         mutableStateOf(false)
     ),
+
+    val defaultSortMode: Pair<Preferences.Key<String>, MutableState<String>> = Pair(
+        (stringPreferencesKey("DEFAULT_SORT_MODE")),
+        mutableStateOf("NAME_ASC")
+    ),
 )

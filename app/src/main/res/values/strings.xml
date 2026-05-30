@@ -44,6 +44,10 @@
     <string name="clipboard_verification_setting_description">Shows a checkmark next to apps in the list that have been successfully verified from clipboard</string>
     <string name="clear_clipboard_checkmarks_setting_name">Clear clipboard checkmarks</string>
     <string name="clear_clipboard_checkmarks_setting_description">Remove all clipboard verification checkmarks from the app list</string>
+    <string name="default_sort_mode_name">Default sort order</string>
+    <string name="sort_mode_name_asc">Name A-Z</string>
+    <string name="sort_mode_name_desc">Name Z-A</string>
+    <string name="sort_mode_status">Failures first</string>
     <string name="show_unverified_only_setting_name">Show unverified apps only</string>
     <string name="show_unverified_only_setting_description">Only show apps that are not found in the internal database</string>
     <string name="unverified_exclude_user_db_setting_name">Exclude user-database verified</string>
