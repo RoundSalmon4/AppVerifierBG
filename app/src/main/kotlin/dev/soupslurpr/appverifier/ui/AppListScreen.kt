@@ -28,13 +28,19 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +56,16 @@ import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationInfo
+
+enum class SortMode(val label: String) {
+    NAME_ASC("Name \u2191"),
+    NAME_DESC("Name \u2193"),
+    STATUS("Status");
+
+    fun next() = entries[(ordinal + 1) % entries.size]
+}
+
+enum class FilterMode { ALL, FAILURES_ONLY }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +92,7 @@ fun AppListScreen(
     clipboardVerifiedPackages: Set<String> = emptySet(),
     showUnverifiedOnly: Boolean = false,
     unverifiedExcludeUserDb: Boolean = false,
+    defaultSortMode: SortMode = SortMode.NAME_ASC,
 ) {
     val context = LocalContext.current
 
@@ -97,6 +114,59 @@ fun AppListScreen(
         userInstalledPackages.filter { it.packageName in filterNames }
     } else {
         userInstalledPackages
+    }
+
+    var sortMode by rememberSaveable { mutableStateOf(defaultSortMode) }
+    var filterMode by rememberSaveable { mutableStateOf(FilterMode.ALL) }
+
+    data class AppSortStatus(
+        val internalDbStatus: InternalDatabaseStatus,
+        val isFailure: Boolean,
+    )
+
+    val packageStatuses = remember(filteredPackages) {
+        filteredPackages.mapNotNull { pkg ->
+            if (pkg.packageName == context.packageName) return@mapNotNull null
+            val packageInfo = try {
+                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            } catch (_: Exception) { null } ?: return@mapNotNull null
+            val hashes = getHashesFromPackageInfo(packageInfo)
+            val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(pkg.packageName, hashes))
+            pkg.packageName to AppSortStatus(
+                internalDbStatus = internalDbInfo.internalDatabaseStatus,
+                isFailure = internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.NOMATCH,
+            )
+        }.toMap()
+    }
+
+    val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses) {
+        val filtered = if (filterMode == FilterMode.FAILURES_ONLY) {
+            filteredPackages.filter { pkg ->
+                packageStatuses[pkg.packageName]?.isFailure == true
+            }
+        } else {
+            filteredPackages
+        }
+
+        when (sortMode) {
+            SortMode.NAME_ASC -> filtered.sortedBy { pkg ->
+                try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
+                catch (_: Exception) { pkg.packageName.lowercase() }
+            }
+            SortMode.NAME_DESC -> filtered.sortedByDescending { pkg ->
+                try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
+                catch (_: Exception) { pkg.packageName.lowercase() }
+            }
+            SortMode.STATUS -> filtered.sortedBy { pkg ->
+                val status = packageStatuses[pkg.packageName]
+                when {
+                    status == null -> 2
+                    status.isFailure -> 0
+                    status.internalDbStatus == InternalDatabaseStatus.MATCH -> 2
+                    else -> 1
+                }
+            }
+        }
     }
 
     val showUserDbIcon = databaseStatusDisplayMode == DatabaseStatusDisplayMode.BOTH ||
@@ -151,7 +221,7 @@ fun AppListScreen(
                 colors = colors1
             ) {}
         }
-    ) { innerPadding ->
+        ) { innerPadding ->
         LazyColumn(
             Modifier.padding(
                 innerPadding.calculateStartPadding(LayoutDirection.Ltr),
@@ -159,6 +229,24 @@ fun AppListScreen(
                 innerPadding.calculateEndPadding(LayoutDirection.Ltr)
             )
         ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = filterMode == FilterMode.FAILURES_ONLY,
+                            onClick = { filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL else FilterMode.FAILURES_ONLY },
+                            label = { Text("Failures only") },
+                        )
+                    }
+                    TextButton(onClick = { sortMode = sortMode.next() }) {
+                        Text(sortMode.label)
+                    }
+                }
+            }
             if (sharedFilteredEntries != null) {
                 item {
                     Column(
@@ -201,7 +289,7 @@ fun AppListScreen(
                     }
                 }
             }
-            items(filteredPackages, key = { it.packageName }) {
+            items(displayPackages, key = { it.packageName }) {
                 if (it.packageName == context.packageName) return@items
 
                 val packageInfo = remember(it.packageName) {

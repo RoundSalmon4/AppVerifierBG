@@ -94,6 +94,13 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                                 .unverifiedExcludeUserDb.second.value
                         )
                     ),
+                    defaultSortMode = Pair(
+                        uiState.value.defaultSortMode.first,
+                        mutableStateOf(
+                            settings[uiState.value.defaultSortMode.first] ?: uiState.value
+                                .defaultSortMode.second.value
+                        )
+                    ),
                 )
             }
         }.collect()
@@ -209,6 +216,12 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     suspend fun setDatabaseStatusDisplayMode(mode: DatabaseStatusDisplayMode) {
         dataStore.edit { preferences ->
             preferences[uiState.value.databaseStatusDisplayMode.first] = mode.name
+        }
+    }
+
+    suspend fun setDefaultSortMode(mode: String) {
+        dataStore.edit { preferences ->
+            preferences[uiState.value.defaultSortMode.first] = mode
         }
     }
 

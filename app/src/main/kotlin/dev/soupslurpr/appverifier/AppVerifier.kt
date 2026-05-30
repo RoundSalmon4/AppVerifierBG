@@ -48,6 +48,7 @@ import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.CURRENT_PRIVACY_POLICY_VERSION
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import dev.soupslurpr.appverifier.ui.AppListScreen
+import dev.soupslurpr.appverifier.ui.SortMode
 import dev.soupslurpr.appverifier.ui.CreditsScreen
 import dev.soupslurpr.appverifier.ui.LicenseScreen
 import dev.soupslurpr.appverifier.ui.ReviewPrivacyPolicyAndLicense
@@ -232,6 +233,7 @@ fun AppVerifierApp(
                     preferencesViewModel.clipboardVerifiedPackages.collectAsState().value,
                     preferencesUiState.value.showUnverifiedOnly.second.value,
                     preferencesUiState.value.unverifiedExcludeUserDb.second.value,
+                    SortMode.valueOf(preferencesUiState.value.defaultSortMode.second.value),
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {

@@ -72,6 +72,7 @@ fun SettingsScreen(
     val databaseStatusDisplayMode = DatabaseStatusDisplayMode.valueOf(
         preferencesUiState.databaseStatusDisplayMode.second.value
     )
+    val defaultSortMode = preferencesUiState.defaultSortMode.second.value
     val userDatabaseEntries by preferencesViewModel.userDatabaseEntries.collectAsState()
     val clipboardVerifiedPackages by preferencesViewModel.clipboardVerifiedPackages.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -187,6 +188,31 @@ fun SettingsScreen(
                             )
                         }
                         )
+            }
+            Text(
+                text = stringResource(R.string.default_sort_mode_name),
+                style = typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+            SortMode.entries.forEach { mode ->
+                val selected = defaultSortMode == mode.name
+                SettingsItem(
+                    name = when (mode) {
+                        SortMode.NAME_ASC -> stringResource(R.string.sort_mode_name_asc)
+                        SortMode.NAME_DESC -> stringResource(R.string.sort_mode_name_desc)
+                        SortMode.STATUS -> stringResource(R.string.sort_mode_status)
+                    },
+                    description = "",
+                    hasSwitch = true,
+                    checked = selected,
+                    onCheckedChange = {
+                        if (!selected) {
+                            coroutineScope.launch {
+                                preferencesViewModel.setDefaultSortMode(mode.name)
+                            }
+                        }
+                    }
+                )
             }
         }
 
