@@ -5,6 +5,11 @@ Dates are based on UTC.
 ## 2026-05-31
 
 - Nightly builds are now reproducible — the same tag always produces the same APK. The 5/30 build had timestamps pinned to the build time instead of the commit date, and R8's output ordering wasn't deterministic. Both issues are now fixed.
+- Pasted hashes are validated as proper SHA-256 before comparing, with a clear error if the format is wrong.
+- Failed verifications now label hashes as "Expected" and "Found" so you can tell which is which.
+- App list can be sorted by name, database status, debug builds, clipboard verified, and shared text with a dropdown that hides unavailable options.
+- Added a filter chip to show only failures in the app list.
+- Default sort order is now configurable in settings.
 
 ## 2026-05-30
 
