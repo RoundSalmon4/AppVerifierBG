@@ -79,6 +79,7 @@ fun VerifyAppScreen(
     sharedTextHashMatch: Boolean? = null,
 ) {
     val context = LocalContext.current
+    val isSelfVerification = packageName == context.packageName
 
     val clipboardManager = LocalClipboardManager.current
 
@@ -147,13 +148,6 @@ fun VerifyAppScreen(
                     Text(
                         "Internal: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
                         style = typography.titleLarge,
-                    )
-                }
-                if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.NOT_FOUND && packageName == context.packageName) {
-                    Text(
-                        "Self-verification skipped: the signing key depends on the build environment.",
-                        color = Color.Gray,
-                        style = typography.bodySmall,
                     )
                 }
             }
@@ -284,12 +278,16 @@ fun VerifyAppScreen(
                     Text("Add to user database")
                 }
             }
-            val displayVerificationStatus = if (sharedTextHashMatch != null) {
+            val displayVerificationStatus = if (isSelfVerification) {
+                "SKIPPED"
+            } else if (sharedTextHashMatch != null) {
                 if (sharedTextHashMatch) "MATCH" else "NOMATCH"
             } else {
                 verificationStatus.simpleVerificationStatus.name
             }
-            val displayVerificationColor = if (sharedTextHashMatch != null) {
+            val displayVerificationColor = if (isSelfVerification) {
+                Color.Gray
+            } else if (sharedTextHashMatch != null) {
                 if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
             } else {
                 verificationStatus.simpleVerificationStatus.color
@@ -424,17 +422,23 @@ fun VerifyAppScreen(
     }
 
     if (showMoreInfoAboutVerificationStatusDialog) {
-        val dialogTitle = if (sharedTextHashMatch != null) {
+        val dialogTitle = if (isSelfVerification) {
+            "SKIPPED"
+        } else if (sharedTextHashMatch != null) {
             if (sharedTextHashMatch) "MATCH" else "NOMATCH"
         } else {
             verificationStatus.name
         }
-        val dialogColor = if (sharedTextHashMatch != null) {
+        val dialogColor = if (isSelfVerification) {
+            Color.Gray
+        } else if (sharedTextHashMatch != null) {
             if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
         } else {
             verificationStatus.simpleVerificationStatus.color
         }
-        val dialogInfo = if (sharedTextHashMatch != null) {
+        val dialogInfo = if (isSelfVerification) {
+            "Self-verification skipped: you cannot verify an app using itself."
+        } else if (sharedTextHashMatch != null) {
             if (sharedTextHashMatch) {
                 "The app's hashes match the shared text's expected values."
             } else {
