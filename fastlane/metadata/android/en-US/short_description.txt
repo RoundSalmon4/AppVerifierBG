@@ -1,0 +1,1 @@
+Verify installed apps against shared signature hashes and databases.
