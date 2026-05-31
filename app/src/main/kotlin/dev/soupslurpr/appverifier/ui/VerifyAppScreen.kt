@@ -149,6 +149,13 @@ fun VerifyAppScreen(
                         style = typography.titleLarge,
                     )
                 }
+                if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.NOT_FOUND && packageName == context.packageName) {
+                    Text(
+                        "Self-verification skipped: the signing key depends on the build environment.",
+                        color = Color.Gray,
+                        style = typography.bodySmall,
+                    )
+                }
             }
             if (showUser) {
                 val userStatusText = if (userDbEntry != null) {

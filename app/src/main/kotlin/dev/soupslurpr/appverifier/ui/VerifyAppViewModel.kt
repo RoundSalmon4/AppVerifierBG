@@ -266,6 +266,10 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun getInternalDatabaseInfoFromVerificationInfo(verificationInfo: VerificationInfo): InternalDatabaseInfo {
+        if (verificationInfo.packageName == getApplication<Application>().packageName) {
+            return InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
+        }
+
         return internalVerificationInfoDatabase.run {
             val packageNameMatchedInternalDatabaseVerificationInfo = try {
                 this.first {

@@ -2,6 +2,10 @@
 
 Dates are based on UTC.
 
+## 2026-06-01
+
+- Internal database no longer reports a false hash mismatch when verifying the app's own APK. The signing key varies between debug and release builds, so comparing against a single stored hash was misleading — the check is now skipped with a note explaining why.
+
 ## 2026-05-31
 
 - Nightly builds are now reproducible — the same tag always produces the same APK. The 5/30 build had timestamps pinned to the build time instead of the commit date, and R8's output ordering wasn't deterministic. Both issues are now fixed.
