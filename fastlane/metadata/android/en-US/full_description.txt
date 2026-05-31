@@ -1,0 +1,31 @@
+AppVerifier BG verifies that installed Android apps match their expected signing certificate fingerprints. Compare an app's signing hash against shared text, an internal database synced from Privacy Guides, or your own user database.
+
+<b>App List</b>
+
+Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text. A filter chip hides everything except failures. Search by name or package name.
+
+<b>Internal Database</b>
+
+Built-in database of verified app hashes synced from privacyguides/verified-apps, updated with each build. The download is verified against GitHub attestations.
+
+<b>User Database</b>
+
+Save verification info for later. Add entries individually or bulk-add from shared text. Import and export in JSON, text, and YAML formats.
+
+<b>Shared Text</b>
+
+Share verification info for several apps at once. Multiple entries separated by blank lines are accepted. Shared text with multiple entries filters the app list to show matching apps only, with hash match status icons. Bulk-add all verified matches to your database.
+
+<b>Clipboard Verification</b>
+
+Verify from clipboard with a single button. Successful verifications add a checkmark in the app list.
+
+<b>Community Hashes</b>
+
+Nightly builds include a downloadable text file with hashes shared by users on the GrapheneOS forum. Import them into your user database if you wish.
+
+<b>Reproducible Builds</b>
+
+Release builds use SOURCE_DATE_EPOCH and deterministic R8 so the same tag always produces the same APK.
+
+This is a fork of soupslurpr/AppVerifier with additional features.
