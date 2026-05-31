@@ -123,16 +123,17 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
     private fun parseTextToVerificationStatus(text: String): VerificationStatus {
         fun parseVerificationInfoTextToVerificationStatus(verificationInfoText: String): VerificationStatus {
-            if (uiState.value.hashes.value.hashes.toSet() == verificationInfoText.lines().toSet()) {
+            val lines = verificationInfoText.trimEnd().lines()
+            if (uiState.value.hashes.value.hashes.toSet() == lines.toSet()) {
                 return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
             }
 
-            if (verificationInfoText.lines().size == 1 && verificationInfoText.lines()[0].length == 64) {
-                val convertedHash = verificationInfoText.lines()[0].trim().iterator().run {
+            if (lines.size == 1 && lines[0].length == 64) {
+                val convertedHash = lines[0].trim().iterator().run {
                     var result = ""
                     this.withIndex().forEach {
                         result += it.value
-                        if (it.index % 2 != 0 && (it.index != verificationInfoText.lines()[0].trim().length.dec())) {
+                        if (it.index % 2 != 0 && (it.index != lines[0].trim().length.dec())) {
                             result += ":"
                         }
                     }
@@ -141,28 +142,28 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 if (convertedHash.uppercase() in uiState.value.hashes.value.hashes) {
                     return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
                 }
-                if (verificationInfoText.lines()[0].length == 95) {
+                if (lines[0].length == 95) {
                     return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
                 }
             }
 
-            if (verificationInfoText.lines().size == 2 &&
-                verificationInfoText.lines()[1].length == 64 &&
-                verificationInfoText.lines()[0].trim().length + verificationInfoText.lines()[1].trim().length == 128
+            if (lines.size == 2 &&
+                lines[1].length == 64 &&
+                lines[0].trim().length + lines[1].trim().length == 128
             ) {
-                if (verificationInfoText.lines()[0].trim() + ":" + verificationInfoText.lines()[1].trim()
+                if (lines[0].trim() + ":" + lines[1].trim()
                     in uiState.value.hashes.value.hashes
                 ) {
                     return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
                 }
             }
 
-            if (verificationInfoText.lines().all { it.length == 95 || isValidSha256Hash(it) }) {
+            if (lines.all { it.length == 95 || isValidSha256Hash(it) }) {
                 return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
             }
 
-            val isPackageNameMatch = verificationInfoText.lines()[0] == uiState.value.packageName.value
-            val verificationStatus = if (verificationInfoText.lines().drop(1).toSet() == uiState.value.hashes.value.hashes.toSet()) {
+            val isPackageNameMatch = lines[0] == uiState.value.packageName.value
+            val verificationStatus = if (lines.drop(1).toSet() == uiState.value.hashes.value.hashes.toSet()) {
                 VerificationStatus.MATCH
             } else {
                 VerificationStatus.NOMATCH
