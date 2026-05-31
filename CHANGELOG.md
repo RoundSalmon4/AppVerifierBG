@@ -4,7 +4,7 @@ Dates are based on UTC.
 
 ## 2026-06-01
 
-- Internal database no longer reports a false hash mismatch when verifying the app's own APK.
+- Self-verification now shows a SKIPPED status instead of a misleading hash mismatch.
 - Apps using signature rotation no longer show false hash mismatches.
 
 ## 2026-05-31
