@@ -143,13 +143,13 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 } else if (verificationInfoText.lines()[0].length == 95) {
                     return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
                 }
-            } else if (uiState.value.hashes.value.hashes == verificationInfoText.lines()) {
+            } else if (uiState.value.hashes.value.hashes.toSet() == verificationInfoText.lines().toSet()) {
                 return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
             }
 
             val isPackageNameMatch = verificationInfoText.lines()[0] == uiState.value.packageName.value
             val verificationStatus = if (uiState.value.hashes.value.hasMultipleSigners) {
-                if (verificationInfoText.lines().drop(1) == uiState.value.hashes.value.hashes) {
+                if (verificationInfoText.lines().drop(1).toSet() == uiState.value.hashes.value.hashes.toSet()) {
                     VerificationStatus.MATCH
                 } else {
                     VerificationStatus.NOMATCH
@@ -281,8 +281,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
             return@run if (verificationInfo.hashes.hasMultipleSigners) {
                 val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
-                    it ==
-                            verificationInfo.hashes
+                    it.hashes.toSet() ==
+                            verificationInfo.hashes.hashes.toSet()
                 }
                 if (maybeMatchedHashes != null) {
                     InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)

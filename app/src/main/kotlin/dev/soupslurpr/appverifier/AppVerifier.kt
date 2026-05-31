@@ -253,7 +253,7 @@ fun AppVerifierApp(
 
                 val sharedTextEntryForVerify = filteredEntries?.find { it.packageName == currentPackageName }
                 val sharedTextHashMatchForVerify = if (sharedTextEntryForVerify != null && sharedTextEntryForVerify.hashes.isNotEmpty()) {
-                    if (currentHashes.hasMultipleSigners) sharedTextEntryForVerify.hashes == currentHashes.hashes
+                    if (currentHashes.hasMultipleSigners) sharedTextEntryForVerify.hashes.toSet() == currentHashes.hashes.toSet()
                     else currentHashes.hashes.last() in sharedTextEntryForVerify.hashes
                 } else {
                     null
@@ -281,7 +281,7 @@ fun AppVerifierApp(
                     DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode.second.value),
                     userDatabaseEntries.find { it.packageName == currentPackageName },
                     userDatabaseEntries.find { it.packageName == currentPackageName }?.let { entry ->
-                        if (currentHashes.hasMultipleSigners) entry.hashes == currentHashes.hashes
+                        if (currentHashes.hasMultipleSigners) entry.hashes.toSet() == currentHashes.hashes.toSet()
                         else currentHashes.hashes.last() in entry.hashes
                     } ?: false,
                     {
