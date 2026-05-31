@@ -147,7 +147,7 @@ fun AppListScreen(
             val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes))
             val userDbEntry = userDatabaseEntries.find { it.packageName == packageName }
             val userDbMatch = if (userDbEntry != null) {
-                if (hashes.hasMultipleSigners) userDbEntry.hashes == hashes.hashes
+                if (hashes.hasMultipleSigners) userDbEntry.hashes.toSet() == hashes.hashes.toSet()
                 else hashes.hashes.last() in userDbEntry.hashes
             } else false
             val sharedEntry = sharedFilteredEntries?.find { it.packageName == packageName }
@@ -242,7 +242,7 @@ fun AppListScreen(
             val sharedEntry = sharedFilteredEntries.find { it.packageName == pkg.packageName }
             if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
                 val match = if (hashes.hasMultipleSigners) {
-                    sharedEntry.hashes == hashes.hashes
+                    sharedEntry.hashes.toSet() == hashes.hashes.toSet()
                 } else {
                     hashes.hashes.last() in sharedEntry.hashes
                 }
@@ -394,7 +394,7 @@ fun AppListScreen(
                     }
                     val userDbMatch = if (userDbEntry != null) {
                         if (hashes.hasMultipleSigners) {
-                            userDbEntry.hashes == hashes.hashes
+                            userDbEntry.hashes.toSet() == hashes.hashes.toSet()
                         } else {
                             hashes.hashes.last() in userDbEntry.hashes
                         }
@@ -409,7 +409,7 @@ fun AppListScreen(
                     }
                     val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
                         if (hashes.hasMultipleSigners) {
-                            sharedEntry.hashes == hashes.hashes
+                            sharedEntry.hashes.toSet() == hashes.hashes.toSet()
                         } else {
                             hashes.hashes.last() in sharedEntry.hashes
                         }
