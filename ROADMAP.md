@@ -11,6 +11,10 @@ Ref: [#227](https://github.com/soupslurpr/AppVerifier/issues/227)
 
 **Status: Not started.**
 
+## □ Submit to F-Droid
+
+**Status: Not started.**
+
 ## ✅ Reorder the app list
 
 The list has a lot of icons now — internal DB matches, user DB, clipboard, shared text, debug. Sorting by name or status and filtering would help find what you're looking for. Also would let you quickly see all the failures at once instead of scrolling through everything.
@@ -34,7 +38,3 @@ When verification fails it shows a hash but doesn't say if thats the one from th
 Ref: [#180](https://github.com/soupslurpr/AppVerifier/issues/180)
 
 **Status: Completed.** Failed verifications now label hashes as "Expected" (what was pasted) and "Found" (on-device fingerprint), so you can tell which is which.
-
-## □ Submit to F-Droid
-
-**Status: Not started.**
