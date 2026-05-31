@@ -4,7 +4,7 @@ Dates are based on UTC.
 
 ## 2026-06-01
 
-- Internal database no longer reports a false hash mismatch when verifying the app's own APK. The signing key varies between debug and release builds, so comparing against a single stored hash was misleading — the check is now skipped with a note explaining why.
+- Internal database no longer reports a false hash mismatch when verifying the app's own APK.
 
 ## 2026-05-31
 
