@@ -34,3 +34,7 @@ When verification fails it shows a hash but doesn't say if thats the one from th
 Ref: [#180](https://github.com/soupslurpr/AppVerifier/issues/180)
 
 **Status: Completed.** Failed verifications now label hashes as "Expected" (what was pasted) and "Found" (on-device fingerprint), so you can tell which is which.
+
+## □ Submit to F-Droid
+
+**Status: Not started.**
