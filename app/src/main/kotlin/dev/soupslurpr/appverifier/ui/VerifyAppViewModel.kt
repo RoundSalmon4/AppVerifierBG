@@ -285,16 +285,14 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 return@run InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
             }
 
-            return@run {
-                val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
-                    it.hashes.toSet() ==
-                            verificationInfo.hashes.hashes.toSet()
-                }
-                if (maybeMatchedHashes != null) {
-                    InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
-                } else {
-                    InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
-                }
+            val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
+                it.hashes.toSet() ==
+                        verificationInfo.hashes.hashes.toSet()
+            }
+            if (maybeMatchedHashes != null) {
+                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
+            } else {
+                InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
             }
         }
     }
