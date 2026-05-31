@@ -147,8 +147,7 @@ fun AppListScreen(
             val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes))
             val userDbEntry = userDatabaseEntries.find { it.packageName == packageName }
             val userDbMatch = if (userDbEntry != null) {
-                if (hashes.hasMultipleSigners) userDbEntry.hashes.toSet() == hashes.hashes.toSet()
-                else hashes.hashes.last() in userDbEntry.hashes
+                userDbEntry.hashes.toSet() == hashes.hashes.toSet()
             } else false
             val sharedEntry = sharedFilteredEntries?.find { it.packageName == packageName }
             AppSortStatus(
@@ -241,11 +240,7 @@ fun AppListScreen(
             val hashes = getHashesFromPackageInfo(packageInfo)
             val sharedEntry = sharedFilteredEntries.find { it.packageName == pkg.packageName }
             if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                val match = if (hashes.hasMultipleSigners) {
-                    sharedEntry.hashes.toSet() == hashes.hashes.toSet()
-                } else {
-                    hashes.hashes.last() in sharedEntry.hashes
-                }
+                val match = sharedEntry.hashes.toSet() == hashes.hashes.toSet()
                 if (match) UserDatabaseEntry(pkg.packageName, hashes.hashes, hashes.hasMultipleSigners) else null
             } else null
         }
@@ -393,11 +388,7 @@ fun AppListScreen(
                         it.packageName == packageInfo.packageName
                     }
                     val userDbMatch = if (userDbEntry != null) {
-                        if (hashes.hasMultipleSigners) {
-                            userDbEntry.hashes.toSet() == hashes.hashes.toSet()
-                        } else {
-                            hashes.hashes.last() in userDbEntry.hashes
-                        }
+                        userDbEntry.hashes.toSet() == hashes.hashes.toSet()
                     } else {
                         false
                     }
@@ -408,11 +399,7 @@ fun AppListScreen(
                         it.packageName == packageInfo.packageName
                     }
                     val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                        if (hashes.hasMultipleSigners) {
-                            sharedEntry.hashes.toSet() == hashes.hashes.toSet()
-                        } else {
-                            hashes.hashes.last() in sharedEntry.hashes
-                        }
+                        sharedEntry.hashes.toSet() == hashes.hashes.toSet()
                     } else {
                         null
                     }

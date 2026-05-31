@@ -123,40 +123,46 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
     private fun parseTextToVerificationStatus(text: String): VerificationStatus {
         fun parseVerificationInfoTextToVerificationStatus(verificationInfoText: String): VerificationStatus {
-            if (!uiState.value.hashes.value.hasMultipleSigners) {
-                if (
-                    (uiState.value.hashes.value.hashes.last() == verificationInfoText.lines()[0])
-                    || (verificationInfoText.lines()[0].trim().iterator().run {
-                        var convertedHash = ""
-                        this.withIndex().forEach {
-                            convertedHash += it.value
-                            if (it.index % 2 != 0 && (it.index != verificationInfoText.lines()[0].trim().length.dec())) {
-                                convertedHash += ":"
-                            }
-                        }
-                        uiState.value.hashes.value.hashes.last() == convertedHash.uppercase()
-                    })
-                    || uiState.value.hashes.value.hashes.last() ==
-                        verificationInfoText.lines()[0].trim() + ":" + verificationInfoText.lines()[1].trim()
-                ) {
-                    return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
-                } else if (verificationInfoText.lines()[0].length == 95) {
-                    return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
-                }
-            } else if (uiState.value.hashes.value.hashes.toSet() == verificationInfoText.lines().toSet()) {
+            if (uiState.value.hashes.value.hashes.toSet() == verificationInfoText.lines().toSet()) {
                 return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
             }
 
-            val isPackageNameMatch = verificationInfoText.lines()[0] == uiState.value.packageName.value
-            val verificationStatus = if (uiState.value.hashes.value.hasMultipleSigners) {
-                if (verificationInfoText.lines().drop(1).toSet() == uiState.value.hashes.value.hashes.toSet()) {
-                    VerificationStatus.MATCH
-                } else {
-                    VerificationStatus.NOMATCH
+            if (verificationInfoText.lines().size == 1 && verificationInfoText.lines()[0].length == 64) {
+                val convertedHash = verificationInfoText.lines()[0].trim().iterator().run {
+                    var result = ""
+                    this.withIndex().forEach {
+                        result += it.value
+                        if (it.index % 2 != 0 && (it.index != verificationInfoText.lines()[0].trim().length.dec())) {
+                            result += ":"
+                        }
+                    }
+                    result
                 }
-            } else if (verificationInfoText.lines().drop(1).any {
-                    uiState.value.hashes.value.hashes.last() == it
-                }) {
+                if (convertedHash.uppercase() in uiState.value.hashes.value.hashes) {
+                    return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
+                }
+                if (verificationInfoText.lines()[0].length == 95) {
+                    return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
+                }
+            }
+
+            if (verificationInfoText.lines().size == 2 &&
+                verificationInfoText.lines()[1].length == 64 &&
+                verificationInfoText.lines()[0].trim().length + verificationInfoText.lines()[1].trim().length == 128
+            ) {
+                if (verificationInfoText.lines()[0].trim() + ":" + verificationInfoText.lines()[1].trim()
+                    in uiState.value.hashes.value.hashes
+                ) {
+                    return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
+                }
+            }
+
+            if (verificationInfoText.lines().all { it.length == 95 || isValidSha256Hash(it) }) {
+                return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
+            }
+
+            val isPackageNameMatch = verificationInfoText.lines()[0] == uiState.value.packageName.value
+            val verificationStatus = if (verificationInfoText.lines().drop(1).toSet() == uiState.value.hashes.value.hashes.toSet()) {
                 VerificationStatus.MATCH
             } else {
                 VerificationStatus.NOMATCH
@@ -279,7 +285,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 return@run InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
             }
 
-            return@run if (verificationInfo.hashes.hasMultipleSigners) {
+            return@run {
                 val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
                     it.hashes.toSet() ==
                             verificationInfo.hashes.hashes.toSet()
@@ -289,26 +295,6 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 } else {
                     InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
                 }
-            } else {
-                packageNameMatchedInternalDatabaseVerificationInfo
-                    .hashesList
-                    .forEach { internalDatabaseHashes ->
-                        if (internalDatabaseHashes
-                                .hasMultipleSigners
-                            == verificationInfo.hashes
-                                .hasMultipleSigners
-                        ) {
-                            verificationInfo.hashes.hashes.last().let { hash ->
-                                if (internalDatabaseHashes.hashes.last() == hash) {
-                                    return@run InternalDatabaseInfo(
-                                        InternalDatabaseStatus.MATCH,
-                                        internalDatabaseHashes.sources
-                                    )
-                                }
-                            }
-                        }
-                    }
-                return InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
             }
         }
     }
