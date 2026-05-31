@@ -4340,20 +4340,6 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
-        "com.roundsalmon4.appverifier",
-        listOf(
-            Hashes(
-                listOf(
-                    Source.ACCRESCENT
-                ),
-                listOf(
-                    "3A:04:A8:0B:2A:88:33:4C:74:74:85:F0:B2:15:16:40:A3:8B:B3:D2:D7:3A:8E:AB:81:DF:50:3E:0F:02:02:B2"
-                ),
-                false
-            )
-        )
-    ),
-    InternalDatabaseVerificationInfo(
         "com.ryanair.cheapflights",
         listOf(
             Hashes(
