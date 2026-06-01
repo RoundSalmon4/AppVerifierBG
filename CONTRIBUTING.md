@@ -16,7 +16,7 @@ The internal verification info database is sourced from:
 - ~~[soupslurpr/AppVerifier](https://github.com/soupslurpr/AppVerifier) — entries from the upstream
   internal database that are not already covered by Privacy Guides are preserved~~
   Removed as upstream source 6/2/2026 — all 91 preserved entries with Source.APPVERIFIER are also
-  backed by privacyguides sources.
+  backed by Privacy Guides sources.
 
 Individual contributions to the internal database are not accepted. If you would like an app to be
 added, please submit it to [privacyguides/verified-apps](https://github.com/privacyguides/verified-apps/issues/new?template=app-submission.yml).
