@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-apply(from = "gradle/version.gradle.kts")
+apply(from = rootProject.file("gradle/version.gradle.kts"))
 
 val appVersionCode: Int by extra
 val appVersionMajor: Int by extra
