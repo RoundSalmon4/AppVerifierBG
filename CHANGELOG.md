@@ -4,7 +4,7 @@ Dates are based on UTC.
 
 ## 2026-06-02
 
-- Releases now use a proper semver version (1.0.0) with its own release workflow instead of piggybacking on the nightly tag. Version lives in a single file now — no more digging through build configs to find the current version number.
+- Releases now use a proper semver version with its own release workflow instead of piggybacking on the nightly tag.
 
 ## 2026-06-01
 
