@@ -437,7 +437,7 @@ fun VerifyAppScreen(
             verificationStatus.simpleVerificationStatus.color
         }
         val dialogInfo = if (isSelfVerification) {
-            "Self-verification skipped: you cannot verify an app using itself."
+            "Self-verification skipped: you cannot verify this app using itself."
         } else if (sharedTextHashMatch != null) {
             if (sharedTextHashMatch) {
                 "The app's hashes match the shared text's expected values."
