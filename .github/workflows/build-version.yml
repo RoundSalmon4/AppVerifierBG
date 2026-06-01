@@ -1,0 +1,121 @@
+name: Build Versioned Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.0.0)'
+        required: true
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: versioned-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Set up release keystore
+        env:
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          printf '%s' "$RELEASE_KEYSTORE" | base64 -d > release.keystore
+          echo "RELEASE_KEYSTORE_PATH=$PWD/release.keystore" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASSWORD=$RELEASE_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+          keytool -list -keystore release.keystore -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1
+
+      - name: Build release APK
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+          ./gradlew assembleRelease -PversionOverride=${{ steps.version.outputs.version }}
+
+      - name: Rename APK with version
+        run: |
+          mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk"
+
+      - name: Extract fingerprint from APK
+        id: apkfp
+        run: |
+          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifier-*.apk' -print -quit 2>/dev/null || true)
+          if [ -z "$APK_FILE" ]; then
+            echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for dir in "$ANDROID_HOME/build-tools" "$ANDROID_SDK_ROOT/build-tools"; do
+            if [ -d "$dir" ]; then
+              APKSIGNER=$(find "$dir" -name apksigner -print -quit 2>/dev/null || true)
+              if [ -n "$APKSIGNER" ]; then break; fi
+            fi
+          done
+          if [ -z "$APKSIGNER" ]; then
+            APKSIGNER=$(command -v apksigner 2>/dev/null || true)
+          fi
+
+          if [ -n "$APKSIGNER" ]; then
+            FINGERPRINT=$("$APKSIGNER" verify --print-certs "$APK_FILE" 2>/dev/null | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT=$(keytool -printcert -jarfile "$APK_FILE" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT=$(unzip -p "$APK_FILE" 'META-INF/CERT.RSA' 2>/dev/null | keytool -printcert -file - 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ] && [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then
+            FINGERPRINT=$(keytool -list -keystore "$RELEASE_KEYSTORE_PATH" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+
+          if [ -z "$FINGERPRINT" ]; then
+            echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
+          else
+            echo "fingerprint=$FINGERPRINT" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload APK to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk
+          make_latest: true

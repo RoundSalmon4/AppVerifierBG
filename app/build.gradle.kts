@@ -4,6 +4,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+apply(from = "gradle/version.gradle.kts")
+
+val appVersionCode: Int by extra
+val appVersionMajor: Int by extra
+val appVersionMinor: Int by extra
+val appVersionPatch: Int by extra
+
 android {
     namespace = "dev.soupslurpr.appverifier"
     compileSdk = 35
@@ -12,8 +19,8 @@ android {
         applicationId = "com.roundsalmon4.appverifier"
         minSdk = 28
         targetSdk = 35
-        versionCode = 13
-        versionName = versionCode.toString() + (project.findProperty("versionSuffix") ?: "")
+        versionCode = appVersionCode
+        versionName = (project.findProperty("versionOverride") as? String) ?: ("$appVersionMajor.$appVersionMinor.$appVersionPatch" + (project.findProperty("versionSuffix") ?: ""))
 
         vectorDrawables {
             useSupportLibrary = true
