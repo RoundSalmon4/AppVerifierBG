@@ -292,7 +292,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             }
             if (maybeMatchedHashes != null) {
-                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
+                val isSubset = maybeMatchedHashes.hashes.size > verificationInfo.hashes.hashes.size
+                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources, isSubset)
             } else {
                 InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
             }
