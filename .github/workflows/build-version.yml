@@ -2,14 +2,21 @@ name: Build Versioned Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version number (e.g. 1.0.0)'
+      mode:
+        description: 'Build mode'
         required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - verify
+          - publish
   release:
     types: [published]
 
 permissions:
   contents: write
+  attestations: read
 
 concurrency:
   group: versioned-build
@@ -23,16 +30,68 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
             TAG="${{ github.event.release.tag_name }}"
             VERSION="${TAG#v}"
           else
-            VERSION="${{ github.event.inputs.version }}"
+            MAJOR=$(grep 'appVersionMajor' gradle/version.gradle.kts | grep -oP '\d+')
+            MINOR=$(grep 'appVersionMinor' gradle/version.gradle.kts | grep -oP '\d+')
+            PATCH=$(grep 'appVersionPatch' gradle/version.gradle.kts | grep -oP '\d+')
+            VERSION="$MAJOR.$MINOR.$PATCH"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Pull latest
+        run: git pull --rebase origin feature/all-enhancements
+
+      - name: Download verified-apps database
+        run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
+
+      - name: Verify database attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in 1 2 3 4 5; do
+            if gh attestation verify -R privacyguides/verified-apps \
+              --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+              "$RUNNER_TEMP/data.yml" 2>/dev/null; then
+              exit 0
+            fi
+            echo "Attestation not yet available, retrying in 10s (attempt $i/5)..."
+            sleep 10
+          done
+          gh attestation verify -R privacyguides/verified-apps \
+            --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+            "$RUNNER_TEMP/data.yml"
+
+      - name: Run sync script
+        run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
+
+      - name: Commit and push sync changes
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        run: |
+          git config user.name "rss-bot"
+          git config user.email "rss-bot@users.noreply.github.com"
+          git add -A
+          if ! git diff --quiet HEAD; then
+            git commit -m "Sync privacyguides/verified-apps database"
+            git push
+          fi
+
+      - name: Pull latest after sync
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        run: git pull --rebase origin feature/all-enhancements
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -68,54 +127,82 @@ jobs:
           SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
           ./gradlew assembleRelease -PversionOverride=${{ steps.version.outputs.version }}
 
+      - name: Save original APK for verify
+        if: github.event.inputs.mode == 'verify'
+        run: |
+          mkdir -p /tmp/verify
+          cp app/build/outputs/apk/release/*.apk /tmp/verify/original.apk
+
+      - name: Rebuild APK from same source (verify)
+        if: github.event.inputs.mode == 'verify'
+        run: |
+          rm -f app/build/outputs/apk/release/*.apk
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+          ./gradlew assembleRelease -PversionOverride=${{ steps.version.outputs.version }} --rerun-tasks
+          cp app/build/outputs/apk/release/*.apk /tmp/verify/rebuild.apk
+
+      - name: Compare APKs for reproducibility
+        if: github.event.inputs.mode == 'verify'
+        run: |
+          ORIGINAL=/tmp/verify/original.apk
+          REBUILT=/tmp/verify/rebuild.apk
+          RESULT=$(python3 .github/scripts/compare_apks.py "$ORIGINAL" "$REBUILT")
+          echo "$RESULT"
+          if echo "$RESULT" | grep -q "All non-signature files match"; then
+            VERDICT="PASS"
+          else
+            VERDICT="FAIL"
+          fi
+          echo "$VERDICT" > /tmp/verify/verdict.txt
+          echo "$VERSION" > /tmp/verify/version.txt
+          {
+            echo "## Reproducibility Verify — v${{ steps.version.outputs.version }}"
+            echo ""
+            echo "**Original:** $(basename "$ORIGINAL") ($(stat --format=%s "$ORIGINAL") bytes)"
+            echo "**Rebuilt:**  $(basename "$REBUILT") ($(stat --format=%s "$REBUILT") bytes)"
+            echo ""
+            echo '```'
+            echo "$RESULT"
+            echo '```'
+            echo ""
+            echo "### Verdict: $VERDICT"
+            echo ""
+            echo "The verify mode produces release-quality APKs with the same params"
+            echo "used by the publish mode."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload verify APKs
+        if: github.event.inputs.mode == 'verify'
+        uses: actions/upload-artifact@v7
+        with:
+          name: AppVerifier-${{ steps.version.outputs.version }}-verify
+          path: /tmp/verify/*.apk
+
       - name: Rename APK with version
+        if: github.event.inputs.mode != 'verify'
         run: |
           mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk"
 
-      - name: Extract fingerprint from APK
-        id: apkfp
+      - name: Upload APK artifact
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
+        uses: actions/upload-artifact@v7
+        with:
+          name: AppVerifier-${{ steps.version.outputs.version }}
+          path: app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk
+
+      - name: Create git tag
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
         run: |
-          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifier-*.apk' -print -quit 2>/dev/null || true)
-          if [ -z "$APK_FILE" ]; then
-            echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          git config user.name "rss-bot"
+          git config user.email "rss-bot@users.noreply.github.com"
+          git tag "v${{ steps.version.outputs.version }}" 2>/dev/null || true
+          git push origin "v${{ steps.version.outputs.version }}" 2>/dev/null || true
 
-          for dir in "$ANDROID_HOME/build-tools" "$ANDROID_SDK_ROOT/build-tools"; do
-            if [ -d "$dir" ]; then
-              APKSIGNER=$(find "$dir" -name apksigner -print -quit 2>/dev/null || true)
-              if [ -n "$APKSIGNER" ]; then break; fi
-            fi
-          done
-          if [ -z "$APKSIGNER" ]; then
-            APKSIGNER=$(command -v apksigner 2>/dev/null || true)
-          fi
-
-          if [ -n "$APKSIGNER" ]; then
-            FINGERPRINT=$("$APKSIGNER" verify --print-certs "$APK_FILE" 2>/dev/null | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
-          fi
-
-          if [ -z "$FINGERPRINT" ]; then
-            FINGERPRINT=$(keytool -printcert -jarfile "$APK_FILE" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
-          fi
-
-          if [ -z "$FINGERPRINT" ]; then
-            FINGERPRINT=$(unzip -p "$APK_FILE" 'META-INF/CERT.RSA' 2>/dev/null | keytool -printcert -file - 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
-          fi
-
-          if [ -z "$FINGERPRINT" ] && [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then
-            FINGERPRINT=$(keytool -list -keystore "$RELEASE_KEYSTORE_PATH" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
-          fi
-
-          if [ -z "$FINGERPRINT" ]; then
-            echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
-          else
-            echo "fingerprint=$FINGERPRINT" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload APK to release
-        if: github.event_name == 'release'
+      - name: Create Release
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
           files: app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk
           make_latest: true

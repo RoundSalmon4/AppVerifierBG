@@ -1,0 +1,91 @@
+name: Build Debug APK
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: feature/all-enhancements
+        type: choice
+        options:
+          - feature/all-enhancements
+          - fix/195-landscape-crash
+
+permissions:
+  contents: write
+  attestations: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Pull latest
+        run: git pull --rebase origin ${{ github.event.inputs.branch }}
+
+      - name: Download verified-apps database
+        run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
+
+      - name: Verify database attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in 1 2 3 4 5; do
+            if gh attestation verify -R privacyguides/verified-apps \
+              --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+              "$RUNNER_TEMP/data.yml" 2>/dev/null; then
+              exit 0
+            fi
+            echo "Attestation not yet available, retrying in 10s (attempt $i/5)..."
+            sleep 10
+          done
+          gh attestation verify -R privacyguides/verified-apps \
+            --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+            "$RUNNER_TEMP/data.yml"
+
+      - name: Run sync script
+        run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Set up debug keystore
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
+        run: |
+          mkdir -p "$HOME/.android"
+          printf '%s' "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-debug-${{ github.event.inputs.branch }}
+          path: app/build/outputs/apk/debug/*.apk
