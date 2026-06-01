@@ -28,7 +28,8 @@ data class VerifyAppUiState(
 
 class InternalDatabaseInfo(
     val internalDatabaseStatus: InternalDatabaseStatus,
-    val sources: List<Source>
+    val sources: List<Source>,
+    val isSubsetMatch: Boolean = false,
 )
 
 enum class InternalDatabaseStatus(

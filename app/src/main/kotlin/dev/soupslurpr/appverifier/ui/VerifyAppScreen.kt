@@ -354,6 +354,13 @@ fun VerifyAppScreen(
                                 "\nThis information can be useful if you distrust a specific source and want to make" +
                                         " sure the app isn't from them."
                             )
+                            if (internalDatabaseInfo.isSubsetMatch) {
+                                Text(
+                                    "\nNote: This app has fewer signing certificates than the database knows" +
+                                            " about. This is normal for signature rotation or older versions.",
+                                    color = Color.Gray,
+                                )
+                            }
                         }
                     }
                 }
