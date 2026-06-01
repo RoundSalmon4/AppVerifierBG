@@ -4,6 +4,7 @@ Dates are based on UTC.
 
 ## 2026-06-02
 
+- Removed upstream soupslurpr/AppVerifier database dependency. Existing APPVERIFIER entries in InternalVerificationInfoDatabase.kt remain as-is. No data is lost.
 - Releases now use a proper semver version with its own release workflow instead of piggybacking on the nightly tag.
 - Hash matching now allows the reference to have extra signatures.
 
