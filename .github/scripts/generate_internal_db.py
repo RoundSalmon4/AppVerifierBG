@@ -4,15 +4,9 @@
 import argparse
 import re
 import sys
-import urllib.request
 import codecs
 
 import yaml
-
-UPSTREAM_DB_URL = (
-    "https://raw.githubusercontent.com/soupslurpr/AppVerifier/main/"
-    "app/src/main/kotlin/dev/soupslurpr/appverifier/InternalVerificationInfoDatabase.kt"
-)
 
 KOTLIN_SOURCE_FILE = (
     "app/src/main/kotlin/dev/soupslurpr/appverifier/InternalVerificationInfoDatabase.kt"
@@ -124,25 +118,6 @@ def privacyguides_to_source(name, extra_map=None):
 def load_yaml_file(path):
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
-
-
-def fetch_upstream_database(url):
-    try:
-        with urllib.request.urlopen(url) as f:
-            raw = f.read()
-        bom = raw[:4]
-        if bom.startswith(codecs.BOM_UTF16_LE):
-            encoding = "utf-16-le"
-        elif bom.startswith(codecs.BOM_UTF16_BE):
-            encoding = "utf-16-be"
-        else:
-            encoding = "utf-8"
-        text = raw.decode(encoding).lstrip("\ufeff")
-        entries, _, _ = parse_entries(text)
-        return entries
-    except Exception as e:
-        print(f"  warning: could not fetch upstream database: {e}", file=sys.stderr)
-        return None
 
 
 def extract_balanced(text, start):
@@ -317,7 +292,7 @@ def insert_preserved_hashes(new_entry_text, preserved_blocks):
     return new_entry_text[:pos] + ",\n" + preserved_text + new_entry_text[pos:]
 
 
-def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map=None, reference_entries=None):
+def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map=None):
     updated = {}
 
     pg_packages = set()
@@ -341,14 +316,6 @@ def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_
         if pkg in existing_entries:
             old_blocks = extract_hashes_blocks(existing_entries[pkg])
             for b in old_blocks:
-                fp = fingerprint_from_hashes(b)
-                if fp and fp not in new_fps and fp not in seen_fps:
-                    preserved.append(b)
-                    seen_fps.add(fp)
-
-        if reference_entries and pkg in reference_entries:
-            ref_blocks = extract_hashes_blocks(reference_entries[pkg])
-            for b in ref_blocks:
                 fp = fingerprint_from_hashes(b)
                 if fp and fp not in new_fps and fp not in seen_fps:
                     preserved.append(b)
@@ -448,8 +415,7 @@ def main():
             new_body = existing_body + ",\n" + body
             header = header[:enum_match.start(2)] + new_body + header[enum_match.end(2):]
 
-    reference_entries = fetch_upstream_database(UPSTREAM_DB_URL)
-    new_kotlin = generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map, reference_entries)
+    new_kotlin = generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map)
 
     with open(KOTLIN_SOURCE_FILE, "w", encoding="utf-8", newline="") as f:
         f.write(new_kotlin)
