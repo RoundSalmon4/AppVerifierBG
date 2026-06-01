@@ -11,6 +11,10 @@ on:
           - build
           - verify
           - publish
+      changelog_date:
+        description: 'Changelog date (YYYY-MM-DD) for release notes. Defaults to today.'
+        required: false
+        default: ''
   release:
     types: [published]
 
@@ -219,8 +223,10 @@ jobs:
       - name: Build release body
         if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
         id: body
+        env:
+          CHANGELOG_DATE: ${{ github.event.inputs.changelog_date }}
         run: |
-          DATE=$(date +'%Y-%m-%d')
+          DATE="${CHANGELOG_DATE:-$(date +'%Y-%m-%d')}"
           cat > /tmp/release_body.md << BODYEOF
           **Version:** v${{ steps.version.outputs.version }}
 
