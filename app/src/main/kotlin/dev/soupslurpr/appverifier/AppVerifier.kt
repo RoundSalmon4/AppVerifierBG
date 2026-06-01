@@ -253,7 +253,7 @@ fun AppVerifierApp(
 
                 val sharedTextEntryForVerify = filteredEntries?.find { it.packageName == currentPackageName }
                 val sharedTextHashMatchForVerify = if (sharedTextEntryForVerify != null && sharedTextEntryForVerify.hashes.isNotEmpty()) {
-                    sharedTextEntryForVerify.hashes.toSet() == currentHashes.hashes.toSet()
+                    sharedTextEntryForVerify.hashes.toSet().containsAll(currentHashes.hashes.toSet())
                 } else {
                     null
                 }
@@ -280,7 +280,7 @@ fun AppVerifierApp(
                     DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode.second.value),
                     userDatabaseEntries.find { it.packageName == currentPackageName },
                     userDatabaseEntries.find { it.packageName == currentPackageName }?.let { entry ->
-                        entry.hashes.toSet() == currentHashes.hashes.toSet()
+                        entry.hashes.toSet().containsAll(currentHashes.hashes.toSet())
                     } ?: false,
                     {
                         snackbarCoroutineScope.launch {
