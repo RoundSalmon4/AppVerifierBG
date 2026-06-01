@@ -5,6 +5,7 @@ Dates are based on UTC.
 ## 2026-06-02
 
 - Releases now use a proper semver version with its own release workflow instead of piggybacking on the nightly tag.
+- Hash matching now allows the reference to have extra signatures.
 
 ## 2026-06-01
 
