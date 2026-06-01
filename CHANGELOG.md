@@ -1,6 +1,6 @@
 # Changelog
 
-Dates are based on UTC.
+Dates are based on UTC (releases typically around 2am UTC).
 
 ## 2026-06-02
 
