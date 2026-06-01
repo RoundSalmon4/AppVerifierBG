@@ -183,6 +183,68 @@ jobs:
         run: |
           mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk"
 
+      - name: Count privacyguides database entries
+        id: pgcount
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        run: |
+          TOTAL=$(curl -s "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" | grep -c "\- package:" || true)
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+
+      - name: Extract fingerprint from APK
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        id: apkfp
+        run: |
+          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifier-*.apk' -print -quit 2>/dev/null || true)
+          if [ -z "$APK_FILE" ]; then echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"; exit 0; fi
+
+          for dir in "$ANDROID_HOME/build-tools" "$ANDROID_SDK_ROOT/build-tools"; do
+            if [ -d "$dir" ]; then
+              APKSIGNER=$(find "$dir" -name apksigner -print -quit 2>/dev/null || true)
+              if [ -n "$APKSIGNER" ]; then break; fi
+            fi
+          done
+          if [ -z "$APKSIGNER" ]; then APKSIGNER=$(command -v apksigner 2>/dev/null || true); fi
+
+          if [ -n "$APKSIGNER" ]; then
+            FINGERPRINT=$("$APKSIGNER" verify --print-certs "$APK_FILE" 2>/dev/null | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT=$(keytool -printcert -jarfile "$APK_FILE" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+          if [ -z "$FINGERPRINT" ] && [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then
+            FINGERPRINT=$(keytool -list -keystore "$RELEASE_KEYSTORE_PATH" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1 | grep -oE '[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}' | head -1 || true)
+          fi
+          echo "fingerprint=${FINGERPRINT:-unknown}" >> "$GITHUB_OUTPUT"
+
+      - name: Build release body
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        id: body
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          cat > /tmp/release_body.md << BODYEOF
+          **Version:** v${{ steps.version.outputs.version }}
+
+          **Branch:** \`feature/all-enhancements\`
+
+          **Privacy Guides database entries:** ${{ steps.pgcount.outputs.total }}
+
+          **Certificate fingerprint (SHA-256):** \`${{ steps.apkfp.outputs.fingerprint }}\`
+
+          ---
+
+          This is a signed release build of AppVerifier BG. Verify the fingerprint above against the source before trusting.
+
+          BODYEOF
+
+          if grep -q "^## $DATE$" CHANGELOG.md; then
+            echo "" >> /tmp/release_body.md
+            echo "## What's Changed" >> /tmp/release_body.md
+            echo "" >> /tmp/release_body.md
+            awk "/^## $DATE"'$/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md >> /tmp/release_body.md
+          fi
+
+          echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+
       - name: Upload APK artifact
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
         uses: actions/upload-artifact@v7
@@ -204,5 +266,6 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
+          body_path: ${{ steps.body.outputs.path }}
           files: app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk
           make_latest: true
