@@ -147,7 +147,7 @@ fun AppListScreen(
             val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes))
             val userDbEntry = userDatabaseEntries.find { it.packageName == packageName }
             val userDbMatch = if (userDbEntry != null) {
-                userDbEntry.hashes.toSet() == hashes.hashes.toSet()
+                userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
             } else false
             val sharedEntry = sharedFilteredEntries?.find { it.packageName == packageName }
             AppSortStatus(
@@ -240,7 +240,7 @@ fun AppListScreen(
             val hashes = getHashesFromPackageInfo(packageInfo)
             val sharedEntry = sharedFilteredEntries.find { it.packageName == pkg.packageName }
             if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                val match = sharedEntry.hashes.toSet() == hashes.hashes.toSet()
+                val match = sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
                 if (match) UserDatabaseEntry(pkg.packageName, hashes.hashes, hashes.hasMultipleSigners) else null
             } else null
         }
@@ -388,7 +388,7 @@ fun AppListScreen(
                         it.packageName == packageInfo.packageName
                     }
                     val userDbMatch = if (userDbEntry != null) {
-                        userDbEntry.hashes.toSet() == hashes.hashes.toSet()
+                        userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
                     } else {
                         false
                     }
@@ -399,7 +399,7 @@ fun AppListScreen(
                         it.packageName == packageInfo.packageName
                     }
                     val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                        sharedEntry.hashes.toSet() == hashes.hashes.toSet()
+                        sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
                     } else {
                         null
                     }
