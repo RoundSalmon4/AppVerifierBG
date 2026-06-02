@@ -179,13 +179,13 @@ jobs:
         if: github.event.inputs.mode == 'verify'
         uses: actions/upload-artifact@v7
         with:
-          name: AppVerifier-${{ steps.version.outputs.version }}-verify
+          name: AppVerifierBG-${{ steps.version.outputs.version }}-verify
           path: /tmp/verify/*.apk
 
       - name: Rename APK with version
         if: github.event.inputs.mode != 'verify'
         run: |
-          mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk"
+          mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk"
 
       - name: Count privacyguides database entries
         id: pgcount
@@ -198,7 +198,7 @@ jobs:
         if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
         id: apkfp
         run: |
-          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifier-*.apk' -print -quit 2>/dev/null || true)
+          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifierBG-*.apk' -print -quit 2>/dev/null || true)
           if [ -z "$APK_FILE" ]; then echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"; exit 0; fi
 
           for dir in "$ANDROID_HOME/build-tools" "$ANDROID_SDK_ROOT/build-tools"; do
@@ -238,7 +238,7 @@ jobs:
 
           ---
 
-          This build is signed with the release key. Compare the SHA-256 fingerprint against the output of `keytool -printcert -jarfile AppVerifier-${{ steps.version.outputs.version }}.apk` to confirm the APK hasn't been tampered with.
+          This build is signed with the release key. Compare the SHA-256 fingerprint against the output of `keytool -printcert -jarfile AppVerifierBG-${{ steps.version.outputs.version }}.apk` to confirm the APK hasn't been tampered with.
 
           This build includes data from the [Privacy Guides Verified Apps](https://github.com/privacyguides/verified-apps) database, used under the MIT License. See each entry's issue link in the data file for details on how it was verified.
 
@@ -259,8 +259,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
         uses: actions/upload-artifact@v7
         with:
-          name: AppVerifier-${{ steps.version.outputs.version }}
-          path: app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk
+          name: AppVerifierBG-${{ steps.version.outputs.version }}
+          path: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
 
       - name: Create git tag
         if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
@@ -277,5 +277,5 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
           body_path: ${{ steps.body.outputs.path }}
-          files: app/build/outputs/apk/release/AppVerifier-${{ steps.version.outputs.version }}.apk
+          files: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
           make_latest: true
