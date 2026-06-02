@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Nightly tag to verify. Leave blank for latest.'
+        description: 'Tag to verify (nightly-YYYY-MM-DD or vX.Y.Z). Leave blank for latest.'
         required: false
         default: ''
 
@@ -31,9 +31,9 @@ jobs:
             echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: List recent nightly tags
+      - name: List recent releases
         run: |
-          echo "Recent nightly releases:"
+          echo "Recent releases:"
           curl -sL \
             -H "Authorization: Bearer ${{ github.token }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases?per_page=5" \
@@ -81,8 +81,19 @@ jobs:
 
       - name: Rebuild APK from tag
         run: |
-          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
-          ./gradlew assembleRelease -PversionSuffix=-nightly-$(echo "${{ steps.tag.outputs.tag }}" | sed 's/^nightly-//') --rerun-tasks
+          TAG="${{ steps.tag.outputs.tag }}"
+          if [[ "$TAG" == nightly-* ]]; then
+            SUFFIX=-nightly-$(echo "$TAG" | sed 's/^nightly-//')
+            SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+              ./gradlew assembleRelease -PversionSuffix="$SUFFIX" --rerun-tasks
+          elif [[ "$TAG" == v* ]]; then
+            VERSION="${TAG#v}"
+            SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+              ./gradlew assembleRelease -PversionOverride="$VERSION" --rerun-tasks
+          else
+            echo "Unrecognized tag format: $TAG (expected nightly-* or v*)"
+            exit 1
+          fi
 
       - name: Compare APKs
         run: |
