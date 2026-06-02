@@ -226,7 +226,7 @@ jobs:
         env:
           CHANGELOG_DATE: ${{ github.event.inputs.changelog_date }}
         run: |
-          DATE="${CHANGELOG_DATE:-$(date +'%Y-%m-%d')}"
+          DATE="${CHANGELOG_DATE:-$(date -u +'%Y-%m-%d')}"
           cat > /tmp/release_body.md << BODYEOF
           **Version:** v${{ steps.version.outputs.version }}
 

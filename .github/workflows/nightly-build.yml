@@ -22,7 +22,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TODAY=$(date +'%Y-%m-%d')
+          TODAY=$(date -u +'%Y-%m-%d')
           TAG="nightly-$TODAY"
 
           # skip if today's nightly already exists
@@ -136,14 +136,14 @@ jobs:
           echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
           keytool -list -keystore release.keystore -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1
 
+      - name: Get date for release
+        id: date
+        run: echo "date=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
       - name: Build release APK
         run: |
           SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
-          ./gradlew assembleRelease -PversionSuffix=-nightly-$(git log -1 --format=%cd --date=format:'%Y-%m-%d')
-
-      - name: Get date for release
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+          ./gradlew assembleRelease -PversionSuffix=-nightly-${{ steps.date.outputs.date }}
 
       - name: Rename APK with date
         run: |
