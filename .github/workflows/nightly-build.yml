@@ -9,8 +9,8 @@ permissions:
   attestations: read
 
 concurrency:
-  group: nightly-build
-  cancel-in-progress: true
+  group: verification-build
+  cancel-in-progress: false
 
 jobs:
   build:

@@ -21,7 +21,7 @@ permissions:
   attestations: read
 
 concurrency:
-  group: versioned-build
+  group: verification-build
   cancel-in-progress: true
 
 jobs:
