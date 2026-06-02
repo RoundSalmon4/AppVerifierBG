@@ -147,7 +147,7 @@ jobs:
 
       - name: Rename APK with date
         run: |
-          mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk"
+          mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apk"
 
       - name: Rename community hashes file
         if: hashFiles('grapheneos-forum-hashes.txt') != ''
@@ -156,7 +156,7 @@ jobs:
       - name: Extract fingerprint from APK
         id: apkfp
         run: |
-          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifier-nightly-*.apk' -print -quit 2>/dev/null || true)
+          APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifierBG-nightly-*.apk' -print -quit 2>/dev/null || true)
           if [ -z "$APK_FILE" ]; then
             echo "fingerprint=unknown" >> "$GITHUB_OUTPUT"
             exit 0
@@ -232,6 +232,6 @@ jobs:
           name: Nightly ${{ steps.date.outputs.date }}
           body_path: ${{ steps.body.outputs.path }}
           files: |
-            app/build/outputs/apk/release/AppVerifier-nightly-${{ steps.date.outputs.date }}.apk
+            app/build/outputs/apk/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apk
             grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
           make_latest: false
