@@ -3,7 +3,7 @@
 ## □ .apks split APK support
 
 The file picker and shared APK handling assume a single `.apk` file, but
-split APKs (` .apks` ) are common for large apps (e.g., from APKMirror,
+split APKs (`.apks`) are common for large apps (e.g., from APKMirror,
 Aurora Store backups). Should handle the container format, extract the base
 APK, and verify signatures.
 

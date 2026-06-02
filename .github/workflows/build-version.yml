@@ -15,8 +15,6 @@ on:
         description: 'Changelog date (YYYY-MM-DD) for release notes. Defaults to today.'
         required: false
         default: ''
-  release:
-    types: [published]
 
 permissions:
   contents: write
@@ -37,15 +35,10 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
-            VERSION="${TAG#v}"
-          else
-            MAJOR=$(grep 'appVersionMajor' gradle/version.gradle.kts | grep -oP '\d+')
-            MINOR=$(grep 'appVersionMinor' gradle/version.gradle.kts | grep -oP '\d+')
-            PATCH=$(grep 'appVersionPatch' gradle/version.gradle.kts | grep -oP '\d+')
-            VERSION="$MAJOR.$MINOR.$PATCH"
-          fi
+          MAJOR=$(grep 'appVersionMajor' gradle/version.gradle.kts | grep -oP '\d+')
+          MINOR=$(grep 'appVersionMinor' gradle/version.gradle.kts | grep -oP '\d+')
+          PATCH=$(grep 'appVersionPatch' gradle/version.gradle.kts | grep -oP '\d+')
+          VERSION="$MAJOR.$MINOR.$PATCH"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
@@ -83,7 +76,7 @@ jobs:
         run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
 
       - name: Commit and push sync changes
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         run: |
           git config user.name "rss-bot"
           git config user.email "rss-bot@users.noreply.github.com"
@@ -94,7 +87,7 @@ jobs:
           fi
 
       - name: Pull latest after sync
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         run: git pull --rebase origin feature/all-enhancements
 
       - name: Set up JDK 17
@@ -189,13 +182,13 @@ jobs:
 
       - name: Count privacyguides database entries
         id: pgcount
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         run: |
           TOTAL=$(curl -s "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" | grep -c "\- package:" || true)
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
 
       - name: Extract fingerprint from APK
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         id: apkfp
         run: |
           APK_FILE=$(find app/build/outputs/apk/release -name 'AppVerifierBG-*.apk' -print -quit 2>/dev/null || true)
@@ -221,7 +214,7 @@ jobs:
           echo "fingerprint=${FINGERPRINT:-unknown}" >> "$GITHUB_OUTPUT"
 
       - name: Build release body
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         id: body
         env:
           CHANGELOG_DATE: ${{ github.event.inputs.changelog_date }}
@@ -263,15 +256,20 @@ jobs:
           path: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
 
       - name: Create git tag
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         run: |
           git config user.name "rss-bot"
           git config user.email "rss-bot@users.noreply.github.com"
-          git tag "v${{ steps.version.outputs.version }}" 2>/dev/null || true
-          git push origin "v${{ steps.version.outputs.version }}" 2>/dev/null || true
+          VERSION_TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$VERSION_TAG" >/dev/null 2>&1; then
+            echo "Tag $VERSION_TAG already exists"
+            exit 1
+          fi
+          git tag "$VERSION_TAG"
+          git push origin "$VERSION_TAG"
 
       - name: Create Release
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') || github.event_name == 'release'
+        if: github.event.inputs.mode == 'publish'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}

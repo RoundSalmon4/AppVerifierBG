@@ -11,7 +11,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 ## 2026-06-01
 
 - Self-verification now shows a SKIPPED status instead of a misleading hash mismatch.
-- Apps using signature rotation no longer show false hash mismatches.
+- Apps using signature rotation / key rotation no longer show false hash mismatches.
 
 ## 2026-05-31
 

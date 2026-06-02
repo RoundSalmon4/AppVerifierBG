@@ -18,7 +18,6 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' }}
     steps:
       - name: Check for existing release today
-        id: check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -27,22 +26,17 @@ jobs:
 
           # skip if today's nightly already exists
           if gh release view "$TAG" --repo ${{ github.repository }} &>/dev/null; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "Nightly release already exists for today: $TAG"
+            exit 1
           fi
 
           # skip if a versioned release was published in the last 24 hours
           if gh release list --repo ${{ github.repository }} --limit 50 \
             --json tagName,publishedAt | python3 -c \
             "import json,sys,datetime; r=json.load(sys.stdin); n=datetime.datetime.now(datetime.timezone.utc); [sys.exit(0) for x in r if x['tagName'].startswith('v') and datetime.datetime.fromisoformat(x['publishedAt'].replace('Z','+00:00'))>=n-datetime.timedelta(hours=24)]; sys.exit(1)"; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Versioned release published within the last 24 hours, skipping nightly"
+            exit 1
           fi
-
-      - name: Skip if release exists
-        if: steps.check.outputs.skip == 'true'
-        run: exit 0
 
       - uses: actions/checkout@v6
         with:

@@ -139,7 +139,7 @@ fun AppVerifierApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = remember(Unit) {
+            startDestination = remember(filteredEntries, isActionSend, isActionView) {
                 if (filteredEntries != null) {
                     AppVerifierScreens.AppList.name
                 } else if (isActionSend || isActionView) {
