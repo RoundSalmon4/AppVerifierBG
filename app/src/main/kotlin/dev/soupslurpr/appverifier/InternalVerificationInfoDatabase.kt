@@ -1013,6 +1013,21 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.aryan.reader.oss",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.FDROID
+                ),
+                listOf(
+                    "4D:77:F5:57:45:74:9B:04:FC:BE:9A:60:E1:A2:ED:CA:5D:D0:CF:BB:D7:2B:B5:8C:E0:DD:15:6C:B1:B8:14:C9"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.audiobookshelf.app",
         listOf(
             Hashes(
@@ -3105,6 +3120,20 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.jgeek00.adguard_home_manager",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK
+                ),
+                listOf(
+                    "6E:60:C8:16:4F:7F:32:2B:93:B4:7D:1E:F2:86:AF:F9:B8:D1:64:24:DB:5E:18:B8:69:95:D3:76:87:06:29:26"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.jmstudios.redmoon",
         listOf(
             Hashes(
@@ -4871,6 +4900,20 @@ val internalVerificationInfoDatabase = setOf(
                 ),
                 listOf(
                     "58:E0:F9:8B:98:5D:45:36:6E:F5:DE:09:63:D2:68:D2:10:7F:52:3C:DD:05:91:1B:39:65:72:43:D3:84:19:DD"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.savvasdalkitsis.uhuruphotos",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK
+                ),
+                listOf(
+                    "FC:A4:79:E1:7B:75:FB:AD:87:81:64:6C:55:E1:40:0D:F3:01:24:9F:7A:09:72:F8:A3:E8:4C:0B:DB:3C:24:A0"
                 ),
                 false
             )
@@ -8393,6 +8436,20 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "nl.moeilijkedingen.jellyfinaudioplayer",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK
+                ),
+                listOf(
+                    "BF:6B:4D:07:C8:62:42:CE:91:D3:4B:47:6E:10:EE:C6:27:BB:4E:61:04:68:CB:2A:98:D4:5B:12:76:62:57:33"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "nodomain.freeyourgadget.gadgetbridge",
         listOf(
             Hashes(
@@ -10216,6 +10273,7 @@ val internalVerificationInfoDatabase = setOf(
         )
     )
 )
+
 
 
 
