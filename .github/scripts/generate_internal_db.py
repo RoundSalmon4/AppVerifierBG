@@ -367,7 +367,7 @@ def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_
     return "\n".join(all_lines)
 
 
-SUPPORTED_SCHEMA_VERSIONS = {2, 3}
+SUPPORTED_SCHEMA_VERSIONS = {2, 3, 4}
 
 
 def check_schema(raw):
