@@ -4,6 +4,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 ## 2026-06-04
 
+- Fixed Privacy Guides import parser to handle `|-` YAML block scalar fingerprints (inline and multi-line).
 - System app filtering now uses `FLAG_SYSTEM` instead of `MATCH_SYSTEM_ONLY`.
 - Added Privacy Guides database license (CC BY 4.0) to app credits. ([#16](https://github.com/RoundSalmon4/AppVerifierBG/pull/16))
 - Internal database and paste verification now use exact hash matching instead of subset checks. ([#13](https://github.com/RoundSalmon4/AppVerifierBG/issues/13))
