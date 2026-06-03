@@ -2,6 +2,7 @@ package dev.soupslurpr.appverifier.ui
 
 import android.app.ActivityOptions
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -263,10 +264,7 @@ fun SettingsScreen(
                 onClickIconSetting = {
                     val packageManager = context.packageManager
                     val userInstalledPackages = packageManager.getInstalledPackages(0)
-                    val systemPackages = packageManager.getInstalledPackages(PackageManager.MATCH_SYSTEM_ONLY)
-                    userInstalledPackages.removeIf { userPkg ->
-                        systemPackages.any { it.packageName == userPkg.packageName }
-                    }
+                        .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
                     val text = userInstalledPackages.joinToString("\n\n") { pkg ->
                         val packageInfo = packageManager.getPackageInfo(
                             pkg.packageName,
