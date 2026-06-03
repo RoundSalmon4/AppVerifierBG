@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
   attestations: read
 
 jobs:
@@ -85,7 +86,26 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        run: |
+          APK_FILE=$(find app/build/outputs/apk/debug -name '*.apk' -print -quit 2>/dev/null || true)
+          if [ -z "$APK_FILE" ]; then
+            echo "No APK found in app/build/outputs/apk/debug/"
+            ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "Directory does not exist"
+            exit 1
+          fi
+          echo "Found APK: $APK_FILE"
+          cp "$APK_FILE" /tmp/app-debug.apk
+        shell: bash
+
+      - name: Sanitize branch name for artifact
+        id: sanitize
+        run: |
+          BRANCH="${{ github.event.inputs.branch }}"
+          SANITIZED="${BRANCH//\//-}"
+          echo "name=$SANITIZED" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: app-debug-${{ github.event.inputs.branch }}
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-debug-${{ steps.sanitize.outputs.name }}
+          path: /tmp/app-debug.apk
