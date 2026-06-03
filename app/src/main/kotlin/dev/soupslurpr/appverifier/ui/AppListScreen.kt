@@ -103,10 +103,8 @@ fun AppListScreen(
     val packageManager: PackageManager = context.packageManager
 
     val userInstalledPackages = remember {
-        val systemPackageNames = packageManager.getInstalledPackages(PackageManager.MATCH_SYSTEM_ONLY)
-            .map { it.packageName }.toSet()
         packageManager.getInstalledPackages(0)
-            .filter { it.packageName !in systemPackageNames }
+            .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
     }
 
     val filteredPackages = if (sharedFilteredEntries != null) {

@@ -222,15 +222,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun findAndSetAppVerificationInfoFromPackageName(packageName: String, packageManager: PackageManager): Boolean {
-        val systemPackages = packageManager.getInstalledPackages(PackageManager.MATCH_SYSTEM_ONLY)
-
         val userInstalledPackages = packageManager.getInstalledPackages(0)
-
-        userInstalledPackages.removeIf { userInstalledPackage ->
-            userInstalledPackage.packageName == systemPackages.firstOrNull {
-                it.packageName == userInstalledPackage.packageName
-            }?.packageName
-        }
+            .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
 
         val found = userInstalledPackages.find { it.packageName == packageName }
         if (found != null) {
@@ -287,7 +280,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
-                it.hashes.toSet() == verificationInfo.hashes.hashes.toSet()
+                it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
             }
             if (maybeMatchedHashes != null) {
                 InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
