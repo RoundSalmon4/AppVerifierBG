@@ -64,19 +64,19 @@ jobs:
           fi
 
       - name: Upload community database (text)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: community-database-txt
           path: community_database.txt
 
       - name: Upload community database (YAML)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: community-database-yaml
           path: community_database.yaml
 
       - name: Upload community database (JSON)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: community-database
           path: community_database.json
