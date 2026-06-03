@@ -182,9 +182,12 @@ fun parseUserDatabaseEntriesFromPrivacyGuides(text: String): ImportResult {
         }
         if (currentPackage != null && trimmed.startsWith("- fingerprint:")) {
             val rest = trimmed.substringAfter("- fingerprint:").trim()
-            if (rest == "|") {
+            if (rest == "|" || rest == "|-") {
                 inBlockFingerprint = true
                 blockContentIndent = -1
+            } else if (rest.startsWith("|-")) {
+                val fp = rest.removePrefix("|-").trim()
+                if (fp.isNotEmpty()) currentFingerprints.add(fp)
             } else {
                 val fp = rest.removeSurrounding("\"").trim()
                 if (fp.isNotEmpty()) {
