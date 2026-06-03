@@ -124,7 +124,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     private fun parseTextToVerificationStatus(text: String): VerificationStatus {
         fun parseVerificationInfoTextToVerificationStatus(verificationInfoText: String): VerificationStatus {
             val lines = verificationInfoText.trimEnd().lines()
-            if (uiState.value.hashes.value.hashes.toSet().isNotEmpty() && lines.toSet().containsAll(uiState.value.hashes.value.hashes.toSet())) {
+            if (uiState.value.hashes.value.hashes.toSet().isNotEmpty() && uiState.value.hashes.value.hashes.toSet() == lines.toSet()) {
                 return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
             }
 
@@ -163,7 +163,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             val isPackageNameMatch = lines[0] == uiState.value.packageName.value
-            val verificationStatus = if (uiState.value.hashes.value.hashes.toSet().isNotEmpty() && lines.drop(1).toSet().containsAll(uiState.value.hashes.value.hashes.toSet())) {
+            val verificationStatus = if (uiState.value.hashes.value.hashes.toSet().isNotEmpty() && uiState.value.hashes.value.hashes.toSet() == lines.drop(1).toSet()) {
                 VerificationStatus.MATCH
             } else {
                 VerificationStatus.NOMATCH
@@ -287,13 +287,10 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
-                it.hashes.toSet().containsAll(
-                        verificationInfo.hashes.hashes.toSet()
-                )
+                it.hashes.toSet() == verificationInfo.hashes.hashes.toSet()
             }
             if (maybeMatchedHashes != null) {
-                val isSubset = maybeMatchedHashes.hashes.size > verificationInfo.hashes.hashes.size
-                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources, isSubset)
+                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
             } else {
                 InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
             }

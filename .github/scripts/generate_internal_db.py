@@ -250,6 +250,28 @@ def format_entry(package, signatures, extra_map=None):
 {S12})"""
         )
 
+    if len(fp_to_sources) > 1:
+        all_sources: set[str] = set()
+        for sources in fp_to_sources.values():
+            all_sources.update(sources)
+        sorted_sources = sorted(all_sources)
+        sorted_all_fps = sorted(fp_to_sources.keys())
+
+        source_lines = ",\n".join(f"{S20}{s}" for s in sorted_sources)
+        fp_lines = ",\n".join(f'{S20}"{fp}"' for fp in sorted_all_fps)
+
+        hashes_blocks.append(
+            f"""{S12}Hashes(
+{S16}listOf(
+{source_lines}
+{S16}),
+{S16}listOf(
+{fp_lines}
+{S16}),
+{S16}false
+{S12})"""
+        )
+
     joined = ",\n".join(hashes_blocks)
 
     return (
