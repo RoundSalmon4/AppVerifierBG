@@ -1,0 +1,64 @@
+Categories:
+  - Security
+License: ISC
+AuthorName: RoundSalmon4
+SourceCode: https://github.com/RoundSalmon4/AppVerifierBG
+IssueTracker: https://github.com/RoundSalmon4/AppVerifierBG/issues
+Changelog: 
+  https://github.com/RoundSalmon4/AppVerifierBG/blob/feature/all-enhancements/CHANGELOG.md
+
+AutoName: AppVerifier BG
+Description: |-
+  AppVerifier BG verifies that installed Android apps match their expected
+  signing certificate fingerprints. Compare an app's signing hash against
+  shared text, an internal database synced from Privacy Guides, or your own
+  user database.
+
+  <b>App List</b>
+  Every installed user app shows status icons for internal database matches,
+  user database entries, clipboard verification, and shared text matches at a
+  glance. Sort by name, database status, debug builds, clipboard verified, or
+  shared text. A filter chip hides everything except failures. Search by name
+  or package name.
+
+  <b>Internal Database</b>
+  Built-in database of verified app hashes synced from
+  privacyguides/verified-apps, updated with each build. The download is
+  verified against GitHub attestations.
+
+  <b>User Database</b>
+  Save verification info for later. Add entries individually or bulk-add from
+  shared text. Import and export in JSON, text, and YAML formats.
+
+  <b>Clipboard Verification</b>
+  Verify from clipboard with a single button. Successful verifications add a
+  checkmark in the app list.
+
+  <b>Shared Text</b>
+  Share verification info for several apps at once. Filter the app list to
+  show matching apps with hash match status icons.
+
+  <b>Reproducible Builds</b>
+  Release builds use SOURCE_DATE_EPOCH and deterministic R8 so the same tag
+  always produces the same APK.
+
+  This is a fork of soupslurpr/AppVerifier with additional features including
+  a persistent user database, clipboard verification, combined database
+  status display, and more.
+
+RepoType: git
+Repo: https://github.com/RoundSalmon4/AppVerifierBG
+
+Builds:
+  - versionName: 0.1.1
+    versionCode: 13
+    commit: 45fd9eb926acc28ec03bc5e749af5950c726bfb9
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: gradle/version.gradle.kts|appVersionCode\D*(\d+)||
+CurrentVersion: 0.1.1
+CurrentVersionCode: 13
