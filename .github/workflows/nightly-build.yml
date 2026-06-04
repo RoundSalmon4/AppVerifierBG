@@ -111,7 +111,7 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
