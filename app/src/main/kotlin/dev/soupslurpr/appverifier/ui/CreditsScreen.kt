@@ -225,6 +225,23 @@ const val APACHE2LICENSE = "\n" +
         "   See the License for the specific language governing permissions and\n" +
         "   limitations under the License."
 
+private const val ISC_LICENSE =
+        "\n" +
+        "ISC License\n" +
+        "\n" +
+        "Copyright (c) 2024-2025 soupslurpr\n" +
+        "\n" +
+        "Permission to use, copy, modify, and/or distribute this software for any purpose " +
+        "with or without fee is hereby granted, provided that the above copyright notice and " +
+        "this permission notice appear in all copies.\n" +
+        "\n" +
+        "THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH " +
+        "REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND " +
+        "FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, " +
+        "OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, " +
+        "DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS " +
+        "ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\n"
+
 private const val CC_BY_4_LICENSE =
         "\n" +
         "Copyright (c) 2026 Privacy Guides & contributors\n" +
@@ -565,6 +582,13 @@ fun CreditsScreen() {
         }
         item {
             CreditsItem(
+                dependencyName = "AppVerifier",
+                dependencyPackageName = "dev.soupslurpr.appverifier (soupslurpr)",
+                dependencyLicense = ISC_LICENSE,
+            )
+        }
+        item {
+            CreditsItem(
                 dependencyName = "Core Ktx",
                 dependencyPackageName = "androidx.core:core-ktx",
                 dependencyLicense = APACHE2LICENSE,
@@ -623,6 +647,20 @@ fun CreditsScreen() {
             CreditsItem(
                 dependencyName = "Compose UI Preview Tooling",
                 dependencyPackageName = "androidx.compose.ui:ui-tooling-preview",
+                dependencyLicense = APACHE2LICENSE,
+            )
+        }
+        item {
+            CreditsItem(
+                dependencyName = "Lifecycle ViewModel Ktx",
+                dependencyPackageName = "androidx.lifecycle:lifecycle-viewmodel-ktx",
+                dependencyLicense = APACHE2LICENSE,
+            )
+        }
+        item {
+            CreditsItem(
+                dependencyName = "Kotlin Coroutines Android",
+                dependencyPackageName = "org.jetbrains.kotlinx:kotlinx-coroutines-android",
                 dependencyLicense = APACHE2LICENSE,
             )
         }
