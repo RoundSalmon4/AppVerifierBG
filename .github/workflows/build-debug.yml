@@ -9,7 +9,6 @@ on:
         type: choice
         options:
           - feature/all-enhancements
-          - fix/195-landscape-crash
 
 permissions:
   contents: write
