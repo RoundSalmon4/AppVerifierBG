@@ -170,7 +170,7 @@ jobs:
 
       - name: Upload verify APKs
         if: github.event.inputs.mode == 'verify'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AppVerifierBG-${{ steps.version.outputs.version }}-verify
           path: /tmp/verify/*.apk
@@ -250,7 +250,7 @@ jobs:
 
       - name: Upload APK artifact
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AppVerifierBG-${{ steps.version.outputs.version }}
           path: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
