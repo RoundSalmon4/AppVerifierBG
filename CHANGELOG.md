@@ -2,6 +2,10 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-05
+
+- Credits now include upstream AppVerifier, Lifecycle ViewModel Ktx, and Kotlin Coroutines Android.
+
 ## 2026-06-04
 
 - Fixed Privacy Guides import parser to handle `|-` YAML block scalar fingerprints (inline and multi-line).
