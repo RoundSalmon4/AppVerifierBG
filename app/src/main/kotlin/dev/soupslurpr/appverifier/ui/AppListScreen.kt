@@ -40,12 +40,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -180,7 +177,7 @@ fun AppListScreen(
 
     var showSortMenu by remember { mutableStateOf(false) }
 
-    val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses, searchQuery) {
+    val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses) {
         val filtered = if (filterMode == FilterMode.FAILURES_ONLY) {
             filteredPackages.filter { pkg ->
                 packageStatuses[pkg.packageName]?.let { it.internalDbStatus == InternalDatabaseStatus.NOMATCH } == true
@@ -189,7 +186,7 @@ fun AppListScreen(
             filteredPackages
         }
 
-        val sorted = when (sortMode) {
+        when (sortMode) {
             SortMode.NAME_ASC -> filtered.sortedBy { pkg ->
                 try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
                 catch (_: Exception) { pkg.packageName.lowercase() }
@@ -218,15 +215,6 @@ fun AppListScreen(
             SortMode.SHARED_TEXT -> filtered.sortedByDescending { pkg ->
                 if (packageStatuses[pkg.packageName]?.hasSharedText == true) 1 else 0
             }
-        }
-
-        if (searchQuery.isNotBlank()) {
-            sorted.filter { pkg ->
-                val name = try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString() } catch (_: Exception) { pkg.packageName }
-                name.contains(searchQuery, true) || pkg.packageName.contains(searchQuery, true)
-            }
-        } else {
-            sorted
         }
     }
 
@@ -375,66 +363,62 @@ fun AppListScreen(
                     } ?: it.packageName
                 }
 
-                val hashes = remember(it.packageName) {
-                    getHashesFromPackageInfo(packageInfo)
-                }
+                if (searchQuery == "" || name.contains(searchQuery, true) ||
+                    it.packageName.contains(searchQuery, true))
+                {
+                    val hashes = remember(it.packageName) {
+                        getHashesFromPackageInfo(packageInfo)
+                    }
 
-                val internalDbInfo = remember(it.packageName) {
-                    getInternalDatabaseInfoFromVerificationInfo(
-                        VerificationInfo(packageInfo.packageName, hashes)
+                    val internalDbInfo = remember(it.packageName) {
+                        getInternalDatabaseInfoFromVerificationInfo(
+                            VerificationInfo(packageInfo.packageName, hashes)
+                        )
+                    }
+
+                    if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
+
+                    val userDbEntry = userDatabaseEntries.find {
+                        it.packageName == packageInfo.packageName
+                    }
+                    val userDbMatch = if (userDbEntry != null) {
+                        userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
+                    } else {
+                        false
+                    }
+
+                    if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
+
+                    val sharedEntry = sharedFilteredEntries?.find {
+                        it.packageName == packageInfo.packageName
+                    }
+                    val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
+                        sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
+                    } else {
+                        null
+                    }
+
+                    val icon = remember(it.packageName) {
+                        packageManager.getApplicationIcon(
+                            packageInfo.applicationInfo ?: ApplicationInfo()
+                        )
+                    }
+                    AppItem(
+                        name = name,
+                        packageName = packageInfo.packageName,
+                        hashes = hashes,
+                        icon = icon,
+                        onClickAppItem = onClickAppItem,
+                        internalDatabaseInfo = internalDbInfo,
+                        showInternalDbIcon = showInternalDbIcon,
+                        showUserDbIcon = showUserDbIcon,
+                        internalDbStatus = internalDbInfo.internalDatabaseStatus,
+                        userDbMatch = userDbMatch,
+                        sharedHashMatch = sharedHashMatch,
+                        showClipboardCheckmark = showClipboardCheckmark,
+                        isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
                     )
                 }
-
-                if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
-
-                val userDbEntry = userDatabaseEntries.find {
-                    it.packageName == packageInfo.packageName
-                }
-                val userDbMatch = if (userDbEntry != null) {
-                    userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                } else {
-                    false
-                }
-
-                if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
-
-                val sharedEntry = sharedFilteredEntries?.find {
-                    it.packageName == packageInfo.packageName
-                }
-                val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                    sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                } else {
-                    null
-                }
-
-                val icon by produceState<Drawable?>(initialValue = AppIconCache.get(it.packageName), key1 = it.packageName) {
-                    if (value == null) {
-                        value = withContext(Dispatchers.IO) {
-                            try {
-                                val loaded = packageManager.getApplicationIcon(
-                                    packageInfo.applicationInfo ?: ApplicationInfo()
-                                )
-                                AppIconCache.put(it.packageName, loaded)
-                                loaded
-                            } catch (_: Exception) { null }
-                        }
-                    }
-                }
-                AppItem(
-                    name = name,
-                    packageName = packageInfo.packageName,
-                    hashes = hashes,
-                    icon = icon,
-                    onClickAppItem = onClickAppItem,
-                    internalDatabaseInfo = internalDbInfo,
-                    showInternalDbIcon = showInternalDbIcon,
-                    showUserDbIcon = showUserDbIcon,
-                    internalDbStatus = internalDbInfo.internalDatabaseStatus,
-                    userDbMatch = userDbMatch,
-                    sharedHashMatch = sharedHashMatch,
-                    showClipboardCheckmark = showClipboardCheckmark,
-                    isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
-                )
             }
             item {
                 Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
@@ -448,7 +432,7 @@ fun AppItem(
     name: String,
     packageName: String,
     hashes: Hashes,
-    icon: Drawable?,
+    icon: Drawable,
     onClickAppItem: (
         name: String,
         packageName: String,
@@ -467,7 +451,7 @@ fun AppItem(
 ) {
     ListItem(
         modifier = Modifier.clickable {
-            icon?.let { onClickAppItem(name, packageName, hashes, it, internalDatabaseInfo) }
+            onClickAppItem(name, packageName, hashes, icon, internalDatabaseInfo)
         },
         headlineContent = {
             Text(name)
@@ -476,13 +460,11 @@ fun AppItem(
             Text(packageName)
         },
         leadingContent = {
-            if (icon != null) {
-                Image(
-                    rememberDrawablePainter(drawable = icon),
-                    null,
-                    Modifier.size(50.dp),
-                )
-            }
+            Image(
+                rememberDrawablePainter(drawable = icon),
+                null,
+                Modifier.size(50.dp),
+            )
         },
         trailingContent = {
             if (hashes.isDebug) {
