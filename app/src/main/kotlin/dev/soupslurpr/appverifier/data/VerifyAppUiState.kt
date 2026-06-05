@@ -53,9 +53,9 @@ enum class InternalDatabaseStatus(
 }
 
 enum class SimpleInternalDatabaseStatus(val color: Color) {
-    NOT_FOUND(Color.Gray),
-    SUCCESS(Color.Green),
-    FAILURE(Color.Red)
+    NOT_FOUND(Color(0xFF9E9E9E)),
+    SUCCESS(Color(0xFF4CAF50)),
+    FAILURE(Color(0xFFE53935))
 }
 
 data class Hashes(
@@ -68,10 +68,10 @@ data class Hashes(
 data class VerificationInfo(val packageName: String, val hashes: Hashes)
 
 enum class SimpleVerificationStatus(val color: Color) {
-    UNKNOWN(Color.Gray),
-    SUCCESS(Color.Green),
-    WARNING(Color.Red.copy(red = 161f / 256f, green = 102f / 256f, blue = 14f / 256f)),
-    FAILURE(Color.Red)
+    UNKNOWN(Color(0xFF9E9E9E)),
+    SUCCESS(Color(0xFF4CAF50)),
+    WARNING(Color(0xFFFF9800)),
+    FAILURE(Color(0xFFE53935))
 }
 
 enum class VerificationStatus(val info: String, val simpleVerificationStatus: SimpleVerificationStatus) {
