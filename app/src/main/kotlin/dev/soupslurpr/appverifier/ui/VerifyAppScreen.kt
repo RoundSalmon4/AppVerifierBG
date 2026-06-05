@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -22,12 +24,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,6 +63,7 @@ import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
 import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
+import dev.soupslurpr.appverifier.data.SimpleInternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationStatus
@@ -100,215 +112,349 @@ fun VerifyAppScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(horizontal = 16.dp)
             .verticalScroll(verticalScroll),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (apkFailedToParse) {
-            Text("APK FAILED TO PARSE")
-            Text(
-                "Make sure you provided a valid apk file."
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                    Text("APK FAILED TO PARSE", fontWeight = FontWeight.Bold)
+                    Text("Make sure you provided a valid apk file.")
+                }
+            }
         } else if (appNotFound) {
-            Text("APP NOT INSTALLED OR INVALID FORMAT")
-            Text(
-                "The package name doesn't seem to correspond to any installed user app." +
-                        "\nPlease note system apps are not included in the search."
-            )
-            Text(
-                "Also please make sure the provided text is in the correct format, like the " +
-                        "following:\n\ncom.example" +
-                        ".app\n96:C0:2C:55:75:5C:17:1C:68:13:70:29:3B:37:11:2B:4A:5D:F7:B9:82:C2:C5:58:05:4C:45:51:AD:F5:50:DC" +
-                        "\n\nThere may be multiple hashes, which is normal."
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                    Text("APP NOT INSTALLED OR INVALID FORMAT", fontWeight = FontWeight.Bold)
+                    Text(
+                        "The package name doesn't seem to correspond to any installed user app." +
+                                "\nPlease note system apps are not included in the search."
+                    )
+                    Text(
+                        "Also please make sure the provided text is in the correct format, like the " +
+                                "following:\n\ncom.example" +
+                                ".app\n96:C0:2C:55:75:5C:17:1C:68:13:70:29:3B:37:11:2B:4A:5D:F7:B9:82:C2:C5:58:05:4C:45:51:AD:F5:50:DC" +
+                                "\n\nThere may be multiple hashes, which is normal."
+                    )
+                }
+            }
         } else if (invalidHashFormat) {
-            Text("INVALID HASH FORMAT")
-            Text(
-                "The provided verification info does not contain a valid SHA-256 hash. " +
-                        "A valid hash is 64 hexadecimal characters or 95 characters in " +
-                        "XX:XX:XX:... format."
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                    Text("INVALID HASH FORMAT", fontWeight = FontWeight.Bold)
+                    Text(
+                        "The provided verification info does not contain a valid SHA-256 hash. " +
+                                "A valid hash is 64 hexadecimal characters or 95 characters in " +
+                                "XX:XX:XX:... format."
+                    )
+                }
+            }
         } else {
             val showInternal = databaseStatusDisplayMode != DatabaseStatusDisplayMode.USER_ONLY
             val showUser = databaseStatusDisplayMode != DatabaseStatusDisplayMode.INTERNAL_ONLY
-            if (showInternal || showUser) {
-            Text("Database Status:", style = typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            if (showInternal) {
-                Row(
-                    modifier = Modifier.clickable { showMoreInfoAboutInternalDatabaseStatusDialog = true },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        "More info about internal database status",
-                        tint = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Internal: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
-                        style = typography.titleLarge,
-                    )
-                }
-            }
-            if (showUser) {
-                val userStatusText = if (userDbEntry != null) {
-                    if (userDbMatch) "MATCH" else "NOMATCH"
-                } else {
-                    "NOT FOUND"
-                }
-                val userStatusColor = if (userDbEntry != null) {
-                    if (userDbMatch) Color(0xFF9C27B0) else SimpleVerificationStatus.FAILURE.color
-                } else {
-                    Color.Gray
-                }
-                Row(
-                    modifier = Modifier.clickable { showMoreInfoAboutUserDatabaseStatusDialog = true },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        "More info about user database status",
-                        tint = userStatusColor,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "User: $userStatusText",
-                        style = typography.titleLarge,
-                    )
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            }
-            if (icon != null) {
-                Image(
-                    rememberDrawablePainter(drawable = icon),
-                    null,
-                    Modifier.size(150.dp),
-                )
-            }
-            Text(
-                text = name,
-                style = typography.titleLarge
-            )
-            Text(text = packageName)
-            if (expectedHashes.isNotEmpty() && (verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.FAILURE || verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.WARNING)) {
-                Text("Expected:", fontWeight = FontWeight.Bold)
-                Text(
-                    text = expectedHashes.joinToString("\n"),
-                    fontFamily = FontFamily.Monospace
-                )
-                Spacer(Modifier.height(8.dp))
-                Text("Found:", fontWeight = FontWeight.Bold)
-                Text(
-                    text = hashes.hashes.joinToString("\n"),
-                    fontFamily = FontFamily.Monospace
-                )
-            } else {
-                Text(
-                    text = hashes.hashes.joinToString("\n"),
-                    fontFamily = FontFamily.Monospace
-                )
-            }
-            if (showHasMultipleSigners) {
-                Text(
-                    "hasMultipleSigners: "
-                )
-                Text(
-                    hashes.hasMultipleSigners.toString(),
-                    fontWeight = FontWeight.Black
-                )
-            }
-            if (hashes.isDebug) {
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Info,
-                        "Debug certificate",
-                        tint = SimpleVerificationStatus.FAILURE.color,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "DEBUG",
-                        color = SimpleVerificationStatus.FAILURE.color,
-                        fontWeight = FontWeight.Black,
-                        style = typography.titleLarge,
-                    )
-                }
-                Text(
-                    "This app is signed with a debug certificate and may not be genuine.",
-                    color = SimpleVerificationStatus.FAILURE.color,
-                )
-            }
-            val verificationData = "$packageName\n${hashes.hashes.joinToString("\n")}"
-            val mimeType = "text/plain"
-            Button(onClick = {
-                val sendIntent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, verificationData)
-                    type = mimeType
-                }
 
-                val shareIntent = Intent.createChooser(
-                    sendIntent,
-                    null,
-                )
-
-                startActivity(context, shareIntent, ActivityOptions.makeBasic().toBundle())
-            }) {
-                Text("Share Verification Info")
-            }
-            Button(onClick = {
-                val clip: ClipData = ClipData.newPlainText(mimeType, verificationData)
-                clipboardManager.setClip(ClipEntry(clip));
-            }) {
-                Text("Copy Verification Info")
-            }
-            Button(onClick = {
-                if (clipboardManager.hasText()) {
-                    onVerifyFromClipboard(clipboardManager.getText()!!.text)
-                } else {
-                    showClipboardEmptyMessage()
-                }
-            }) {
-                Text("Verify from clipboard")
-            }
-            if (databaseStatusDisplayMode != DatabaseStatusDisplayMode.INTERNAL_ONLY) {
-                Button(onClick = onAddToUserDatabase) {
-                    Text("Add to user database")
-                }
-            }
-            val displayVerificationStatus = if (isSelfVerification) {
-                "SKIPPED"
-            } else if (sharedTextHashMatch != null) {
-                if (sharedTextHashMatch) "MATCH" else "NOMATCH"
-            } else {
-                verificationStatus.simpleVerificationStatus.name
-            }
-            val displayVerificationColor = if (isSelfVerification) {
-                Color.Gray
-            } else if (sharedTextHashMatch != null) {
-                if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
-            } else {
-                verificationStatus.simpleVerificationStatus.color
-            }
-            Text(
-                "Verification Status:",
-            )
-            Row {
-                FilledTonalButton(
-                    onClick = { showMoreInfoAboutVerificationStatusDialog = true },
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(
-                        displayVerificationStatus,
-                        style = typography.headlineLarge
+                    if (showInternal || showUser || hashes.isDebug) {
+                        Text("Database Status:", style = typography.titleMedium)
+                        Spacer(Modifier.height(8.dp))
+                        if (showInternal) {
+                            SuggestionChip(
+                                onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
+                                label = {
+                                    Text("Internal: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}")
+                                },
+                                colors = SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color.copy(alpha = 0.12f),
+                                    labelColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
+                                    iconContentColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
+                                ),
+                            )
+                            Spacer(Modifier.height(4.dp))
+                        }
+                        if (showUser) {
+                            val userStatusText = if (userDbEntry != null) {
+                                if (userDbMatch) "MATCH" else "NOMATCH"
+                            } else {
+                                "NOT FOUND"
+                            }
+                            val userStatusColor = if (userDbEntry != null) {
+                                if (userDbMatch) SimpleInternalDatabaseStatus.SUCCESS.color else SimpleInternalDatabaseStatus.FAILURE.color
+                            } else {
+                                SimpleInternalDatabaseStatus.NOT_FOUND.color
+                            }
+                            SuggestionChip(
+                                onClick = { showMoreInfoAboutUserDatabaseStatusDialog = true },
+                                label = { Text("User: $userStatusText") },
+                                colors = SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = userStatusColor.copy(alpha = 0.12f),
+                                    labelColor = userStatusColor,
+                                    iconContentColor = userStatusColor,
+                                ),
+                            )
+                            Spacer(Modifier.height(4.dp))
+                        }
+                        if (hashes.isDebug) {
+                            SuggestionChip(
+                                onClick = { showMoreInfoAboutVerificationStatusDialog = true },
+                                icon = {
+                                    Icon(
+                                        Icons.Default.Warning,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
+                                label = { Text("DEBUG") },
+                                colors = SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = Color(0xFFFF9800).copy(alpha = 0.12f),
+                                    labelColor = Color(0xFFFF9800),
+                                    iconContentColor = Color(0xFFFF9800),
+                                ),
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    if (icon != null) {
+                        Image(
+                            rememberDrawablePainter(drawable = icon),
+                            null,
+                            Modifier.size(80.dp),
+                        )
+                    }
+                    Text(name, style = typography.titleLarge)
+                    Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (expectedHashes.isNotEmpty() && (verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.FAILURE || verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.WARNING)) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Expected:", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = expectedHashes.joinToString("\n"),
+                            fontFamily = FontFamily.Monospace,
+                            style = typography.bodySmall,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text("Found:", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = hashes.hashes.joinToString("\n"),
+                            fontFamily = FontFamily.Monospace,
+                            style = typography.bodySmall,
+                        )
+                    } else {
+                        Text(
+                            text = hashes.hashes.joinToString("\n"),
+                            fontFamily = FontFamily.Monospace,
+                            style = typography.bodySmall,
+                        )
+                    }
+                    if (showHasMultipleSigners) {
+                        Spacer(Modifier.height(4.dp))
+                        Text("hasMultipleSigners: ${hashes.hasMultipleSigners}")
+                    }
+                    if (hashes.isDebug) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "This app is signed with a debug certificate and may not be genuine.",
+                            color = Color(0xFFFF9800),
+                            style = typography.bodySmall,
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    val displayVerificationStatus = if (isSelfVerification) {
+                        "SKIPPED"
+                    } else if (sharedTextHashMatch != null) {
+                        if (sharedTextHashMatch) "MATCH" else "NOMATCH"
+                    } else {
+                        verificationStatus.simpleVerificationStatus.name
+                    }
+                    val displayVerificationColor = if (isSelfVerification) {
+                        Color.Gray
+                    } else if (sharedTextHashMatch != null) {
+                        if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
+                    } else {
+                        verificationStatus.simpleVerificationStatus.color
+                    }
+                    Text("Verification Status:")
+                    Spacer(Modifier.height(4.dp))
+                    SuggestionChip(
+                        onClick = { showMoreInfoAboutVerificationStatusDialog = true },
+                        label = { Text(displayVerificationStatus) },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = displayVerificationColor.copy(alpha = 0.12f),
+                            labelColor = displayVerificationColor,
+                            iconContentColor = displayVerificationColor,
+                        ),
+                        icon = {
+                            Icon(
+                                Icons.Default.Info,
+                                "More info about verification status",
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Icon(
-                        Icons.Default.Info,
-                        "More info about verification status",
-                        tint = displayVerificationColor,
-                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val verificationData = "$packageName\n${hashes.hashes.joinToString("\n")}"
+                                val sendIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, verificationData)
+                                    type = "text/plain"
+                                }
+                                startActivity(context, Intent.createChooser(sendIntent, null), ActivityOptions.makeBasic().toBundle())
+                            }
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text("Share Verification Info", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Send this app's verification data to another app",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    HorizontalDivider()
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val verificationData = "$packageName\n${hashes.hashes.joinToString("\n")}"
+                                val clip: ClipData = ClipData.newPlainText("text/plain", verificationData)
+                                clipboardManager.setClip(ClipEntry(clip))
+                            }
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text("Copy Verification Info", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Copy this app's verification data to the clipboard",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    HorizontalDivider()
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (clipboardManager.hasText()) {
+                                    onVerifyFromClipboard(clipboardManager.getText()!!.text)
+                                } else {
+                                    showClipboardEmptyMessage()
+                                }
+                            }
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.ContentPaste,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text("Verify from clipboard", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Paste app verification info from your clipboard",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    if (databaseStatusDisplayMode != DatabaseStatusDisplayMode.INTERNAL_ONLY) {
+                        HorizontalDivider()
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onAddToUserDatabase)
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Spacer(Modifier.width(16.dp))
+                            Column {
+                                Text("Add to user database", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "Save this app's hashes to your personal database",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
