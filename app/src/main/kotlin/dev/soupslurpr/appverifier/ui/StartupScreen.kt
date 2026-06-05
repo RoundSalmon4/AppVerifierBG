@@ -44,6 +44,7 @@ import dev.soupslurpr.appverifier.R
 fun StartupScreen(
     modifier: Modifier,
     onSettingsButtonClicked: () -> Unit,
+    onPrivacyPolicyButtonClicked: () -> Unit,
     onAppListButtonClicked: () -> Unit,
     onVerifyApkFileButtonClicked: () -> Unit,
     onPasteFromClipboard: () -> Unit,
@@ -113,6 +114,13 @@ fun StartupScreen(
                     title = stringResource(R.string.settings),
                     description = "Configure app preferences and manage databases",
                     onClick = onSettingsButtonClicked,
+                )
+                HorizontalDivider()
+                ActionItem(
+                    icon = Icons.Filled.Info,
+                    title = "Privacy policy",
+                    description = "View AppVerifier BG's privacy policy",
+                    onClick = onPrivacyPolicyButtonClicked,
                 )
             }
         }
