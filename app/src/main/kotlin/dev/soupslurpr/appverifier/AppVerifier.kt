@@ -47,7 +47,6 @@ import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.CURRENT_PRIVACY_POLICY_VERSION
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
-import dev.soupslurpr.appverifier.ui.AppItemData
 import dev.soupslurpr.appverifier.ui.AppListScreen
 import dev.soupslurpr.appverifier.ui.SortMode
 import dev.soupslurpr.appverifier.ui.CreditsScreen
@@ -95,12 +94,6 @@ fun AppVerifierApp(
         if (sharedFilteredEntries != null) {
             filteredEntries = sharedFilteredEntries
         }
-    }
-
-    var appListCache by remember { mutableStateOf<List<AppItemData>?>(null) }
-
-    LaunchedEffect(filteredEntries, userDatabaseEntries) {
-        appListCache = null
     }
 
     val navController = rememberNavController()
@@ -213,7 +206,6 @@ fun AppVerifierApp(
                     searchQuery,
                     { name: String, packageName: String, hashes: Hashes, icon: Drawable, internalDatabaseInfo:
                     InternalDatabaseInfo ->
-                        appListCache = null
                         verifyAppViewModel.setAppVerificationInfo(
                             name,
                             packageName,
@@ -253,8 +245,6 @@ fun AppVerifierApp(
                     preferencesUiState.value.showUnverifiedOnly.second.value,
                     preferencesUiState.value.unverifiedExcludeUserDb.second.value,
                     SortMode.valueOf(preferencesUiState.value.defaultSortMode.second.value),
-                    cachedAppItems = appListCache,
-                    onAppItemsCached = { appListCache = it },
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {

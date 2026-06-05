@@ -16,7 +16,6 @@ import dev.soupslurpr.appverifier.data.VerificationInfo
 import dev.soupslurpr.appverifier.data.VerificationStatus
 import dev.soupslurpr.appverifier.data.VerifyAppUiState
 import dev.soupslurpr.appverifier.internalVerificationInfoDatabase
-import dev.soupslurpr.appverifier.internalVerificationInfoDatabaseMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,31 +26,9 @@ import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
-data class AppListCachedEntry(
-    val packageName: String,
-    val name: String,
-    val hashes: Hashes,
-    val internalDbInfo: InternalDatabaseInfo,
-    val userDbMatch: Boolean,
-    val isClipboardVerified: Boolean,
-    val sharedHashMatch: Boolean?,
-)
-
 class VerifyAppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(VerifyAppUiState())
-
-    private var appListCache: List<AppListCachedEntry>? = null
-
-    fun getAppListCache(): List<AppListCachedEntry>? = appListCache
-
-    fun setAppListCache(entries: List<AppListCachedEntry>) {
-        appListCache = entries
-    }
-
-    fun invalidateAppListCache() {
-        appListCache = null
-    }
     val uiState: StateFlow<VerifyAppUiState> = _uiState.asStateFlow()
 
     var onVerificationResult: ((VerificationStatus) -> Unit)? = null
@@ -293,17 +270,23 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             return InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
         }
 
-        val matched = internalVerificationInfoDatabaseMap[verificationInfo.packageName] ?: return InternalDatabaseInfo(
-            InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE)
-        )
+        return internalVerificationInfoDatabase.run {
+            val packageNameMatchedInternalDatabaseVerificationInfo = try {
+                this.first {
+                    it.packageName == verificationInfo.packageName
+                }
+            } catch (e: NoSuchElementException) {
+                return@run InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
+            }
 
-        val hashMatch = matched.hashesList.find {
-            it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
-        }
-        return if (hashMatch != null) {
-            InternalDatabaseInfo(InternalDatabaseStatus.MATCH, hashMatch.sources)
-        } else {
-            InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
+            val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
+                it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
+            }
+            if (maybeMatchedHashes != null) {
+                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
+            } else {
+                InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
+            }
         }
     }
 
