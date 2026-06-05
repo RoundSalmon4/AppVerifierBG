@@ -1,4 +1,4 @@
-name: Build Debug APK
+name: Build APK
 on:
   workflow_dispatch:
     inputs:
@@ -9,6 +9,15 @@ on:
         type: choice
         options:
           - feature/all-enhancements
+          - ui/dev-slim
+      mode:
+        description: 'Build mode'
+        required: true
+        default: debug
+        type: choice
+        options:
+          - debug
+          - build
 
 permissions:
   contents: write
@@ -74,6 +83,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Set up debug keystore
+        if: github.event.inputs.mode == 'debug'
         env:
           DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
         run: |
@@ -81,19 +91,49 @@ jobs:
           printf '%s' "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Upload debug APK
+      - name: Set up release keystore
+        if: github.event.inputs.mode == 'build'
+        env:
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          APK_FILE=$(find app/build/outputs/apk/debug -name '*.apk' -print -quit 2>/dev/null || true)
+          printf '%s' "$RELEASE_KEYSTORE" | base64 -d > release.keystore
+          echo "RELEASE_KEYSTORE_PATH=$PWD/release.keystore" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASSWORD=$RELEASE_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+          keytool -list -keystore release.keystore -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1
+
+      - name: Determine build flavor
+        id: flavor
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          if [ "$MODE" = "build" ]; then
+            echo "task=assembleRelease" >> "$GITHUB_OUTPUT"
+            echo "dir=release" >> "$GITHUB_OUTPUT"
+            echo "suffix=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "task=assembleDebug" >> "$GITHUB_OUTPUT"
+            echo "dir=debug" >> "$GITHUB_OUTPUT"
+            echo "suffix=debug" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
+      - name: Build APK
+        run: ./gradlew ${{ steps.flavor.outputs.task }}
+
+      - name: Upload APK
+        run: |
+          APK_FILE=$(find "app/build/outputs/apk/${{ steps.flavor.outputs.dir }}" -name '*.apk' -print -quit 2>/dev/null || true)
           if [ -z "$APK_FILE" ]; then
-            echo "No APK found in app/build/outputs/apk/debug/"
-            ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "Directory does not exist"
+            echo "No APK found in app/build/outputs/apk/${{ steps.flavor.outputs.dir }}/"
+            ls -la "app/build/outputs/apk/${{ steps.flavor.outputs.dir }}/" 2>/dev/null || echo "Directory does not exist"
             exit 1
           fi
           echo "Found APK: $APK_FILE"
-          cp "$APK_FILE" /tmp/app-debug.apk
+          cp "$APK_FILE" "/tmp/app-${{ steps.flavor.outputs.suffix }}.apk"
         shell: bash
 
       - name: Sanitize branch name for artifact
@@ -106,5 +146,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug-${{ steps.sanitize.outputs.name }}
-          path: /tmp/app-debug.apk
+          name: app-${{ steps.flavor.outputs.suffix }}-${{ steps.sanitize.outputs.name }}
+          path: /tmp/app-${{ steps.flavor.outputs.suffix }}.apk
