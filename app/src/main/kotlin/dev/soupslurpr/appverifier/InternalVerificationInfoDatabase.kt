@@ -11390,10 +11390,8 @@ val internalVerificationInfoDatabase = setOf(
             )
         )
     )
-)
 
-
-
+val internalVerificationInfoDatabaseMap = internalVerificationInfoDatabase.associateBy { it.packageName }
 
 
 

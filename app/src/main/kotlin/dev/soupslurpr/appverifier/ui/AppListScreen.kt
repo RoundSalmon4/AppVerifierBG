@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
@@ -38,6 +39,7 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +60,8 @@ import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class SortMode(val label: String) {
     NAME_ASC("Name A-Z"),
@@ -70,6 +74,17 @@ enum class SortMode(val label: String) {
 }
 
 enum class FilterMode { ALL, FAILURES_ONLY }
+
+data class AppItemData(
+    val packageName: String,
+    val name: String,
+    val icon: Drawable,
+    val hashes: Hashes,
+    val internalDbInfo: InternalDatabaseInfo,
+    val userDbMatch: Boolean,
+    val isClipboardVerified: Boolean,
+    val sharedHashMatch: Boolean?,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,6 +112,8 @@ fun AppListScreen(
     showUnverifiedOnly: Boolean = false,
     unverifiedExcludeUserDb: Boolean = false,
     defaultSortMode: SortMode = SortMode.NAME_ASC,
+    cachedAppItems: List<AppItemData>? = null,
+    onAppItemsCached: (List<AppItemData>) -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -117,106 +134,97 @@ fun AppListScreen(
     var sortMode by rememberSaveable { mutableStateOf(defaultSortMode) }
     var filterMode by rememberSaveable { mutableStateOf(FilterMode.ALL) }
 
-    data class AppSortStatus(
-        val internalDbStatus: InternalDatabaseStatus,
-        val userDbMatch: Boolean,
-        val isDebug: Boolean,
-        val isClipboardVerified: Boolean,
-        val hasSharedText: Boolean,
-    )
+    var isLoading by remember { mutableStateOf(cachedAppItems == null) }
+    var appItems by remember { mutableStateOf(cachedAppItems ?: emptyList()) }
 
-    val packageHashes = remember(filteredPackages) {
-        filteredPackages.mapNotNull { pkg ->
-            if (pkg.packageName == context.packageName) return@mapNotNull null
-            val packageInfo = try {
-                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            } catch (_: Exception) { null } ?: return@mapNotNull null
-            val hashes = getHashesFromPackageInfo(packageInfo)
-            pkg.packageName to hashes
-        }.toMap()
+    LaunchedEffect(filteredPackages, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
+        if (cachedAppItems != null) return@LaunchedEffect
+        isLoading = true
+        appItems = withContext(Dispatchers.Default) {
+            filteredPackages.mapNotNull { pkg ->
+                if (pkg.packageName == context.packageName) return@mapNotNull null
+                val packageInfo = try {
+                    packageManager.getPackageInfo(
+                        pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES
+                    )
+                } catch (_: Exception) { null } ?: return@mapNotNull null
+
+                val name = packageInfo.applicationInfo?.let {
+                    packageManager.getApplicationLabel(it).toString()
+                } ?: pkg.packageName
+
+                val hashes = getHashesFromPackageInfo(packageInfo)
+                val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(
+                    VerificationInfo(pkg.packageName, hashes)
+                )
+
+                val userDbEntry = userDatabaseEntries.find { it.packageName == pkg.packageName }
+                val userDbMatch = userDbEntry != null &&
+                        userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
+
+                val sharedEntry = sharedFilteredEntries?.find { it.packageName == pkg.packageName }
+                val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
+                    sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
+                } else null
+
+                AppItemData(
+                    packageName = pkg.packageName,
+                    name = name,
+                    icon = packageManager.getApplicationIcon(
+                        packageInfo.applicationInfo ?: ApplicationInfo()
+                    ),
+                    hashes = hashes,
+                    internalDbInfo = internalDbInfo,
+                    userDbMatch = userDbMatch,
+                    isClipboardVerified = pkg.packageName in clipboardVerifiedPackages,
+                    sharedHashMatch = sharedHashMatch,
+                )
+            }
+        }
+        if (cachedAppItems == null) {
+            onAppItemsCached(appItems)
+        }
+        isLoading = false
     }
 
-    val packageStatuses = remember(packageHashes, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
-        packageHashes.mapValues { (packageName, hashes) ->
-            val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes))
-            val userDbEntry = userDatabaseEntries.find { it.packageName == packageName }
-            val userDbMatch = if (userDbEntry != null) {
-                userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-            } else false
-            val sharedEntry = sharedFilteredEntries?.find { it.packageName == packageName }
-            AppSortStatus(
-                internalDbStatus = internalDbInfo.internalDatabaseStatus,
-                userDbMatch = userDbMatch,
-                isDebug = hashes.isDebug,
-                isClipboardVerified = packageName in clipboardVerifiedPackages,
-                hasSharedText = sharedEntry != null && sharedEntry.hashes.isNotEmpty(),
-            )
+    val displayItems = remember(appItems, sortMode, filterMode) {
+        val filtered = if (filterMode == FilterMode.FAILURES_ONLY) {
+            appItems.filter { it.internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.NOMATCH }
+        } else {
+            appItems
+        }
+
+        when (sortMode) {
+            SortMode.NAME_ASC -> filtered.sortedBy { it.name.lowercase() }
+            SortMode.NAME_DESC -> filtered.sortedByDescending { it.name.lowercase() }
+            SortMode.INTERNAL_DB -> filtered.sortedBy {
+                when (it.internalDbInfo.internalDatabaseStatus) {
+                    InternalDatabaseStatus.MATCH -> 0
+                    InternalDatabaseStatus.NOMATCH -> 2
+                    InternalDatabaseStatus.NOT_FOUND -> 1
+                }
+            }
+            SortMode.USER_DB -> filtered.sortedBy { if (it.userDbMatch) 0 else 1 }
+            SortMode.DEBUG -> filtered.sortedByDescending { if (it.hashes.isDebug) 1 else 0 }
+            SortMode.CLIPBOARD -> filtered.sortedByDescending { if (it.isClipboardVerified) 1 else 0 }
+            SortMode.SHARED_TEXT -> filtered.sortedByDescending { if (it.sharedHashMatch != null) 1 else 0 }
         }
     }
 
-    val availableSortModes = remember(packageStatuses) {
+    val availableSortModes = remember(appItems) {
         val modes = mutableListOf(SortMode.NAME_ASC, SortMode.NAME_DESC)
-        if (packageStatuses.values.any { it.internalDbStatus != InternalDatabaseStatus.NOT_FOUND }) {
+        if (appItems.any { it.internalDbInfo.internalDatabaseStatus != InternalDatabaseStatus.NOT_FOUND }) {
             modes.add(SortMode.INTERNAL_DB)
         }
-        if (packageStatuses.values.any { it.userDbMatch }) {
-            modes.add(SortMode.USER_DB)
-        }
-        if (packageStatuses.values.any { it.isDebug }) {
-            modes.add(SortMode.DEBUG)
-        }
-        if (packageStatuses.values.any { it.isClipboardVerified }) {
-            modes.add(SortMode.CLIPBOARD)
-        }
-        if (packageStatuses.values.any { it.hasSharedText }) {
-            modes.add(SortMode.SHARED_TEXT)
-        }
+        if (appItems.any { it.userDbMatch }) modes.add(SortMode.USER_DB)
+        if (appItems.any { it.hashes.isDebug }) modes.add(SortMode.DEBUG)
+        if (appItems.any { it.isClipboardVerified }) modes.add(SortMode.CLIPBOARD)
+        if (appItems.any { it.sharedHashMatch != null }) modes.add(SortMode.SHARED_TEXT)
         if (sortMode !in modes) modes.add(sortMode)
         modes
     }
 
     var showSortMenu by remember { mutableStateOf(false) }
-
-    val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses) {
-        val filtered = if (filterMode == FilterMode.FAILURES_ONLY) {
-            filteredPackages.filter { pkg ->
-                packageStatuses[pkg.packageName]?.let { it.internalDbStatus == InternalDatabaseStatus.NOMATCH } == true
-            }
-        } else {
-            filteredPackages
-        }
-
-        when (sortMode) {
-            SortMode.NAME_ASC -> filtered.sortedBy { pkg ->
-                try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
-                catch (_: Exception) { pkg.packageName.lowercase() }
-            }
-            SortMode.NAME_DESC -> filtered.sortedByDescending { pkg ->
-                try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
-                catch (_: Exception) { pkg.packageName.lowercase() }
-            }
-            SortMode.INTERNAL_DB -> filtered.sortedBy { pkg ->
-                val s = packageStatuses[pkg.packageName]
-                when (s?.internalDbStatus) {
-                    InternalDatabaseStatus.MATCH -> 0
-                    InternalDatabaseStatus.NOMATCH -> 2
-                    else -> 1
-                }
-            }
-            SortMode.USER_DB -> filtered.sortedBy { pkg ->
-                if (packageStatuses[pkg.packageName]?.userDbMatch == true) 0 else 1
-            }
-            SortMode.DEBUG -> filtered.sortedByDescending { pkg ->
-                if (packageStatuses[pkg.packageName]?.isDebug == true) 1 else 0
-            }
-            SortMode.CLIPBOARD -> filtered.sortedByDescending { pkg ->
-                if (packageStatuses[pkg.packageName]?.isClipboardVerified == true) 1 else 0
-            }
-            SortMode.SHARED_TEXT -> filtered.sortedByDescending { pkg ->
-                if (packageStatuses[pkg.packageName]?.hasSharedText == true) 1 else 0
-            }
-        }
-    }
 
     val showUserDbIcon = databaseStatusDisplayMode == DatabaseStatusDisplayMode.BOTH ||
             databaseStatusDisplayMode == DatabaseStatusDisplayMode.USER_ONLY
@@ -226,18 +234,8 @@ fun AppListScreen(
 
     val existingPackageNames = userDatabaseEntries.map { it.packageName }.toSet()
     val verifiedEntries = if (sharedFilteredEntries != null) {
-        filteredPackages.mapNotNull { pkg ->
-            if (pkg.packageName in existingPackageNames) return@mapNotNull null
-            val packageInfo = try {
-                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            } catch (_: Exception) { null } ?: return@mapNotNull null
-            val hashes = getHashesFromPackageInfo(packageInfo)
-            val sharedEntry = sharedFilteredEntries.find { it.packageName == pkg.packageName }
-            if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                val match = sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                if (match) UserDatabaseEntry(pkg.packageName, hashes.hashes, hashes.hasMultipleSigners) else null
-            } else null
-        }
+        appItems.filter { it.packageName !in existingPackageNames && it.sharedHashMatch == true }
+            .map { UserDatabaseEntry(it.packageName, it.hashes.hashes, it.hashes.hasMultipleSigners) }
     } else {
         emptyList()
     }
@@ -266,7 +264,7 @@ fun AppListScreen(
                 colors = colors1
             ) {}
         }
-        ) { innerPadding ->
+    ) { innerPadding ->
         LazyColumn(
             Modifier.padding(
                 innerPadding.calculateStartPadding(LayoutDirection.Ltr),
@@ -283,7 +281,10 @@ fun AppListScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = filterMode == FilterMode.FAILURES_ONLY,
-                            onClick = { filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL else FilterMode.FAILURES_ONLY },
+                            onClick = {
+                                filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL
+                                else FilterMode.FAILURES_ONLY
+                            },
                             label = { Text("Failures only") },
                         )
                     }
@@ -305,119 +306,85 @@ fun AppListScreen(
                     }
                 }
             }
-            if (sharedFilteredEntries != null) {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                "Showing ${filteredPackages.size} installed of ${sharedFilteredEntries.size} total",
-                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                            )
-                            androidx.compose.material3.TextButton(onClick = { onDoneFiltered?.invoke() }) {
-                                Text("Done")
-                            }
-                        }
-                        if (verifiedEntries.isNotEmpty()) {
-                            androidx.compose.material3.TextButton(
-                                onClick = { onAddAllVerified?.invoke(verifiedEntries) }
-                            ) {
-                                Text("Add ${verifiedEntries.size} verified to database")
-                            }
-                        }
-                    }
-                }
-            }
-            if (filteredPackages.isEmpty() && sharedFilteredEntries != null) {
+            if (isLoading) {
                 item {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            "No installed apps match the shared package names.",
-                            modifier = Modifier.padding(32.dp),
-                            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
-                        )
+                        CircularProgressIndicator()
                     }
                 }
-            }
-            items(displayPackages, key = { it.packageName }) {
-                if (it.packageName == context.packageName) return@items
-
-                val packageInfo = remember(it.packageName) {
-                    packageManager.getPackageInfo(
-                        it.packageName,
-                        PackageManager.GET_SIGNING_CERTIFICATES
-                    )
-                }
-                val name = remember(it.packageName) {
-                    packageInfo.applicationInfo?.let { appInfo ->
-                        packageManager.getApplicationLabel(appInfo)
-                            .toString()
-                    } ?: it.packageName
-                }
-
-                if (searchQuery == "" || name.contains(searchQuery, true) ||
-                    it.packageName.contains(searchQuery, true))
-                {
-                    val hashes = remember(it.packageName) {
-                        getHashesFromPackageInfo(packageInfo)
+            } else {
+                if (sharedFilteredEntries != null) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    "Showing ${appItems.size} installed of ${sharedFilteredEntries.size} total",
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                )
+                                androidx.compose.material3.TextButton(onClick = { onDoneFiltered?.invoke() }) {
+                                    Text("Done")
+                                }
+                            }
+                            if (verifiedEntries.isNotEmpty()) {
+                                androidx.compose.material3.TextButton(
+                                    onClick = { onAddAllVerified?.invoke(verifiedEntries) }
+                                ) {
+                                    Text("Add ${verifiedEntries.size} verified to database")
+                                }
+                            }
+                        }
                     }
+                }
+                if (appItems.isEmpty() && sharedFilteredEntries != null) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                "No installed apps match the shared package names.",
+                                modifier = Modifier.padding(32.dp),
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                    }
+                }
+                items(displayItems, key = { it.packageName }) { appItem ->
+                    if (searchQuery.isBlank() ||
+                        appItem.name.contains(searchQuery, true) ||
+                        appItem.packageName.contains(searchQuery, true)
+                    ) {
+                        if (showUnverifiedOnly &&
+                            appItem.internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH
+                        ) return@items
 
-                    val internalDbInfo = remember(it.packageName) {
-                        getInternalDatabaseInfoFromVerificationInfo(
-                            VerificationInfo(packageInfo.packageName, hashes)
+                        if (showUnverifiedOnly && unverifiedExcludeUserDb && appItem.userDbMatch) return@items
+
+                        AppItem(
+                            name = appItem.name,
+                            packageName = appItem.packageName,
+                            hashes = appItem.hashes,
+                            icon = appItem.icon,
+                            onClickAppItem = onClickAppItem,
+                            internalDatabaseInfo = appItem.internalDbInfo,
+                            showInternalDbIcon = showInternalDbIcon,
+                            showUserDbIcon = showUserDbIcon,
+                            internalDbStatus = appItem.internalDbInfo.internalDatabaseStatus,
+                            userDbMatch = appItem.userDbMatch,
+                            sharedHashMatch = appItem.sharedHashMatch,
+                            showClipboardCheckmark = showClipboardCheckmark,
+                            isClipboardVerified = appItem.isClipboardVerified,
                         )
                     }
-
-                    if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
-
-                    val userDbEntry = userDatabaseEntries.find {
-                        it.packageName == packageInfo.packageName
-                    }
-                    val userDbMatch = if (userDbEntry != null) {
-                        userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                    } else {
-                        false
-                    }
-
-                    if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
-
-                    val sharedEntry = sharedFilteredEntries?.find {
-                        it.packageName == packageInfo.packageName
-                    }
-                    val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                        sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                    } else {
-                        null
-                    }
-
-                    val icon = remember(it.packageName) {
-                        packageManager.getApplicationIcon(
-                            packageInfo.applicationInfo ?: ApplicationInfo()
-                        )
-                    }
-                    AppItem(
-                        name = name,
-                        packageName = packageInfo.packageName,
-                        hashes = hashes,
-                        icon = icon,
-                        onClickAppItem = onClickAppItem,
-                        internalDatabaseInfo = internalDbInfo,
-                        showInternalDbIcon = showInternalDbIcon,
-                        showUserDbIcon = showUserDbIcon,
-                        internalDbStatus = internalDbInfo.internalDatabaseStatus,
-                        userDbMatch = userDbMatch,
-                        sharedHashMatch = sharedHashMatch,
-                        showClipboardCheckmark = showClipboardCheckmark,
-                        isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
-                    )
                 }
             }
             item {
