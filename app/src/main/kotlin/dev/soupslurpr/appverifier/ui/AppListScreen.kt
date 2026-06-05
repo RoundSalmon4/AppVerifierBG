@@ -40,9 +40,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -177,7 +180,7 @@ fun AppListScreen(
 
     var showSortMenu by remember { mutableStateOf(false) }
 
-    val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses) {
+    val displayPackages = remember(filteredPackages, sortMode, filterMode, packageStatuses, searchQuery) {
         val filtered = if (filterMode == FilterMode.FAILURES_ONLY) {
             filteredPackages.filter { pkg ->
                 packageStatuses[pkg.packageName]?.let { it.internalDbStatus == InternalDatabaseStatus.NOMATCH } == true
@@ -186,7 +189,7 @@ fun AppListScreen(
             filteredPackages
         }
 
-        when (sortMode) {
+        val sorted = when (sortMode) {
             SortMode.NAME_ASC -> filtered.sortedBy { pkg ->
                 try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
                 catch (_: Exception) { pkg.packageName.lowercase() }
@@ -215,6 +218,15 @@ fun AppListScreen(
             SortMode.SHARED_TEXT -> filtered.sortedByDescending { pkg ->
                 if (packageStatuses[pkg.packageName]?.hasSharedText == true) 1 else 0
             }
+        }
+
+        if (searchQuery.isNotBlank()) {
+            sorted.filter { pkg ->
+                val name = try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString() } catch (_: Exception) { pkg.packageName }
+                name.contains(searchQuery, true) || pkg.packageName.contains(searchQuery, true)
+            }
+        } else {
+            sorted
         }
     }
 
@@ -363,8 +375,6 @@ fun AppListScreen(
                     } ?: it.packageName
                 }
 
-                if (searchQuery == "" || name.contains(searchQuery, true) ||
-                    it.packageName.contains(searchQuery, true))
                 {
                     val hashes = remember(it.packageName) {
                         getHashesFromPackageInfo(packageInfo)
@@ -398,10 +408,18 @@ fun AppListScreen(
                         null
                     }
 
-                    val icon = remember(it.packageName) {
-                        packageManager.getApplicationIcon(
-                            packageInfo.applicationInfo ?: ApplicationInfo()
-                        )
+                    val icon by produceState<Drawable?>(initialValue = AppIconCache.get(it.packageName), key1 = it.packageName) {
+                        if (value == null) {
+                            value = withContext(Dispatchers.IO) {
+                                try {
+                                    val loaded = packageManager.getApplicationIcon(
+                                        packageInfo.applicationInfo ?: ApplicationInfo()
+                                    )
+                                    AppIconCache.put(it.packageName, loaded)
+                                    loaded
+                                } catch (_: Exception) { null }
+                            }
+                        }
                     }
                     AppItem(
                         name = name,
@@ -432,7 +450,7 @@ fun AppItem(
     name: String,
     packageName: String,
     hashes: Hashes,
-    icon: Drawable,
+    icon: Drawable?,
     onClickAppItem: (
         name: String,
         packageName: String,
@@ -451,7 +469,7 @@ fun AppItem(
 ) {
     ListItem(
         modifier = Modifier.clickable {
-            onClickAppItem(name, packageName, hashes, icon, internalDatabaseInfo)
+            icon?.let { onClickAppItem(name, packageName, hashes, it, internalDatabaseInfo) }
         },
         headlineContent = {
             Text(name)
@@ -460,11 +478,13 @@ fun AppItem(
             Text(packageName)
         },
         leadingContent = {
-            Image(
-                rememberDrawablePainter(drawable = icon),
-                null,
-                Modifier.size(50.dp),
-            )
+            if (icon != null) {
+                Image(
+                    rememberDrawablePainter(drawable = icon),
+                    null,
+                    Modifier.size(50.dp),
+                )
+            }
         },
         trailingContent = {
             if (hashes.isDebug) {
