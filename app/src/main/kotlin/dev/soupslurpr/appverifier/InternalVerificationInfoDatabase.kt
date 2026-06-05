@@ -5766,6 +5766,22 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.sosauce.cutecalc",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.FDROID,
+                    Source.FDROID_IZZYONDROID
+                ),
+                listOf(
+                    "FD:2D:95:CD:B3:48:B2:F1:AE:BE:DB:AB:87:9C:ED:73:73:85:EE:13:C3:05:A1:39:D6:58:0D:4C:F2:C0:D6:5A"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.spotify.music",
         listOf(
             Hashes(
@@ -7189,6 +7205,20 @@ val internalVerificationInfoDatabase = setOf(
                 ),
                 listOf(
                     "87:A6:C1:36:F5:49:9D:B2:55:C9:3F:4D:38:4C:B1:A5:D3:14:F6:90:8F:2B:F1:97:E0:EC:07:ED:58:BB:58:72"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "de.onedigital.buythedip.customer",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "60:9A:3C:62:95:F7:EF:58:F5:37:99:32:AA:D6:0E:2C:7E:DF:47:E8:22:58:9B:CD:F4:79:B3:39:2A:C6:EC:66"
                 ),
                 false
             )
@@ -11361,6 +11391,7 @@ val internalVerificationInfoDatabase = setOf(
         )
     )
 )
+
 
 
 
