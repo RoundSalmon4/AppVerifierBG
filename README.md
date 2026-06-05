@@ -1,6 +1,6 @@
 # AppVerifier BG
 
-Verify installed apps against shared signature hashes, the internal database, or a user-created database.
+Verify installed apps against shared signature hashes, the internal database, or a user-created database. This fork extends the original AppVerifier — still does everything the original does, plus the features below.
 
 <div align="center">
 
@@ -12,8 +12,6 @@ Verify installed apps against shared signature hashes, the internal database, or
     height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7b%22id%22%3a%22com.roundsalmon4.appverifier%22%2c%22url%22%3a%22https%3a%2f%2fgithub.com%2fRoundSalmon4%2fAppVerifierBG%22%2c%22author%22%3a%22RoundSalmon4%22%2c%22name%22%3a%22AppVerifier+BG%22%2c%22preferredApkIndex%22%3a0%2c%22additionalSettings%22%3a%22%7b%5c%22includePrereleases%5c%22%3atrue%2c%5c%22fallbackToOlderReleases%5c%22%3atrue%2c%5c%22filterReleaseTitlesByRegEx%5c%22%3a%5c%22%5c%22%2c%5c%22filterReleaseNotesByRegEx%5c%22%3a%5c%22%5c%22%2c%5c%22verifyLatestTag%5c%22%3afalse%2c%5c%22sortMethodChoice%5c%22%3a%5c%22date%5c%22%2c%5c%22useLatestAssetDateAsReleaseDate%5c%22%3afalse%2c%5c%22releaseTitleAsVersion%5c%22%3atrue%2c%5c%22trackOnly%5c%22%3afalse%2c%5c%22versionExtractionRegEx%5c%22%3a%5c%22%5c%22%2c%5c%22matchGroupToUse%5c%22%3a%5c%22%5c%22%2c%5c%22versionDetection%5c%22%3atrue%2c%5c%22releaseDateAsVersion%5c%22%3afalse%2c%5c%22useVersionCodeAsOSVersion%5c%22%3afalse%2c%5c%22apkFilterRegEx%5c%22%3a%5c%22%5c%22%2c%5c%22invertAPKFilter%5c%22%3afalse%2c%5c%22autoApkFilterByArch%5c%22%3atrue%2c%5c%22appName%5c%22%3a%5c%22%5c%22%2c%5c%22appAuthor%5c%22%3a%5c%22%5c%22%2c%5c%22shizukuPretendToBeGooglePlay%5c%22%3afalse%2c%5c%22allowInsecure%5c%22%3afalse%2c%5c%22exemptFromBackgroundUpdates%5c%22%3afalse%2c%5c%22skipUpdateNotifications%5c%22%3afalse%2c%5c%22about%5c%22%3a%5c%22%5c%22%2c%5c%22refreshBeforeDownload%5c%22%3afalse%2c%5c%22includeZips%5c%22%3afalse%2c%5c%22zippedApkFilterRegEx%5c%22%3a%5c%22%5c%22%7d%22%2c%22overrideSource%22%3anull%7d)
 
 </div>
-
-This fork extends the original AppVerifier — still does everything the original does, plus the features below.
 
 ## Verification
 
