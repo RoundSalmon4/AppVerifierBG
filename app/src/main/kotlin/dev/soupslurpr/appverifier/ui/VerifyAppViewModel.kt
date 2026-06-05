@@ -276,7 +276,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         val maybeMatchedHashes = entry.hashesList.find {
             it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
         }
-        if (maybeMatchedHashes != null) {
+        return if (maybeMatchedHashes != null) {
             InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
         } else {
             InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))

@@ -375,68 +375,66 @@ fun AppListScreen(
                     } ?: it.packageName
                 }
 
-                {
-                    val hashes = remember(it.packageName) {
-                        getHashesFromPackageInfo(packageInfo)
-                    }
+                val hashes = remember(it.packageName) {
+                    getHashesFromPackageInfo(packageInfo)
+                }
 
-                    val internalDbInfo = remember(it.packageName) {
-                        getInternalDatabaseInfoFromVerificationInfo(
-                            VerificationInfo(packageInfo.packageName, hashes)
-                        )
-                    }
-
-                    if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
-
-                    val userDbEntry = userDatabaseEntries.find {
-                        it.packageName == packageInfo.packageName
-                    }
-                    val userDbMatch = if (userDbEntry != null) {
-                        userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                    } else {
-                        false
-                    }
-
-                    if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
-
-                    val sharedEntry = sharedFilteredEntries?.find {
-                        it.packageName == packageInfo.packageName
-                    }
-                    val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                        sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                    } else {
-                        null
-                    }
-
-                    val icon by produceState<Drawable?>(initialValue = AppIconCache.get(it.packageName), key1 = it.packageName) {
-                        if (value == null) {
-                            value = withContext(Dispatchers.IO) {
-                                try {
-                                    val loaded = packageManager.getApplicationIcon(
-                                        packageInfo.applicationInfo ?: ApplicationInfo()
-                                    )
-                                    AppIconCache.put(it.packageName, loaded)
-                                    loaded
-                                } catch (_: Exception) { null }
-                            }
-                        }
-                    }
-                    AppItem(
-                        name = name,
-                        packageName = packageInfo.packageName,
-                        hashes = hashes,
-                        icon = icon,
-                        onClickAppItem = onClickAppItem,
-                        internalDatabaseInfo = internalDbInfo,
-                        showInternalDbIcon = showInternalDbIcon,
-                        showUserDbIcon = showUserDbIcon,
-                        internalDbStatus = internalDbInfo.internalDatabaseStatus,
-                        userDbMatch = userDbMatch,
-                        sharedHashMatch = sharedHashMatch,
-                        showClipboardCheckmark = showClipboardCheckmark,
-                        isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                val internalDbInfo = remember(it.packageName) {
+                    getInternalDatabaseInfoFromVerificationInfo(
+                        VerificationInfo(packageInfo.packageName, hashes)
                     )
                 }
+
+                if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
+
+                val userDbEntry = userDatabaseEntries.find {
+                    it.packageName == packageInfo.packageName
+                }
+                val userDbMatch = if (userDbEntry != null) {
+                    userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
+                } else {
+                    false
+                }
+
+                if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
+
+                val sharedEntry = sharedFilteredEntries?.find {
+                    it.packageName == packageInfo.packageName
+                }
+                val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
+                    sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
+                } else {
+                    null
+                }
+
+                val icon by produceState<Drawable?>(initialValue = AppIconCache.get(it.packageName), key1 = it.packageName) {
+                    if (value == null) {
+                        value = withContext(Dispatchers.IO) {
+                            try {
+                                val loaded = packageManager.getApplicationIcon(
+                                    packageInfo.applicationInfo ?: ApplicationInfo()
+                                )
+                                AppIconCache.put(it.packageName, loaded)
+                                loaded
+                            } catch (_: Exception) { null }
+                        }
+                    }
+                }
+                AppItem(
+                    name = name,
+                    packageName = packageInfo.packageName,
+                    hashes = hashes,
+                    icon = icon,
+                    onClickAppItem = onClickAppItem,
+                    internalDatabaseInfo = internalDbInfo,
+                    showInternalDbIcon = showInternalDbIcon,
+                    showUserDbIcon = showUserDbIcon,
+                    internalDbStatus = internalDbInfo.internalDatabaseStatus,
+                    userDbMatch = userDbMatch,
+                    sharedHashMatch = sharedHashMatch,
+                    showClipboardCheckmark = showClipboardCheckmark,
+                    isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                )
             }
             item {
                 Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
