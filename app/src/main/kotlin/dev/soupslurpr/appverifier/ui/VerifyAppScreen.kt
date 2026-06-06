@@ -261,12 +261,14 @@ fun VerifyAppScreen(
                     Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (expectedHashes.isNotEmpty() && (verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.FAILURE || verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.WARNING)) {
                         Spacer(Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth().clickable { showHashComparison = !showHashComparison },
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(if (showHashComparison) "Hide hash comparison" else "Show hash comparison", fontWeight = FontWeight.Bold)
-                        }
+                        SuggestionChip(
+                            onClick = { showHashComparison = !showHashComparison },
+                            label = { Text(if (showHashComparison) "Hide hash comparison" else "Show hash comparison") },
+                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                containerColor = WarningOrange.copy(alpha = 0.12f),
+                                labelColor = WarningOrange,
+                            ),
+                        )
                         if (showHashComparison) {
                             Text("Expected:", fontWeight = FontWeight.Bold)
                             Text(
