@@ -190,7 +190,7 @@ fun VerifyAppScreen(
                     modifier = Modifier.fillMaxWidth().padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    if (showInternal || showUser || hashes.isDebug) {
+                    if (showInternal || showUser || hashes.isDebug || (showHasMultipleSigners && hashes.hasMultipleSigners)) {
                         Text("Database Status:", style = typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
                         if (showInternal) {
@@ -247,6 +247,25 @@ fun VerifyAppScreen(
                                 ),
                             )
                         }
+                        if (showHasMultipleSigners && hashes.hasMultipleSigners) {
+                            Spacer(Modifier.height(4.dp))
+                            SuggestionChip(
+                                onClick = { },
+                                icon = {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
+                                label = { Text("MULTI-SIGNER") },
+                                colors = SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    labelColor = MaterialTheme.colorScheme.primary,
+                                    iconContentColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            )
+                        }
                         Spacer(Modifier.height(16.dp))
                     }
 
@@ -291,10 +310,6 @@ fun VerifyAppScreen(
                             fontFamily = FontFamily.Monospace,
                             style = typography.bodySmall,
                         )
-                    }
-                    if (showHasMultipleSigners) {
-                        Spacer(Modifier.height(4.dp))
-                        Text("hasMultipleSigners: ${hashes.hasMultipleSigners}")
                     }
                     if (hashes.isDebug) {
                         Spacer(Modifier.height(4.dp))
