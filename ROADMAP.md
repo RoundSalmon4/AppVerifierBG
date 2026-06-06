@@ -1,5 +1,13 @@
 # Roadmap
 
+## □ Visual overhaul
+
+Refresh the UI to have a distinct look from upstream — custom color
+palette instead of defaults, updated component styling, and a cleaner
+layout across screens.
+
+**Status: In progress.**
+
 ## □ .apks split APK support
 
 The file picker and shared APK handling assume a single `.apk` file, but
