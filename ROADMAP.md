@@ -23,9 +23,9 @@ Ref: [#227](https://github.com/soupslurpr/AppVerifier/issues/227)
 
 Metadata submitted to the F-Droid repository at
 [fdroid/fdroiddata!39736](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/39736).
-All CI checks pass; awaiting maintainer review.
+MR merged, awaiting the F-Droid build pipeline.
 
-**Status: Submitted.**
+**Status: Merged.**
 
 ## ✅ Reorder the app list
 
