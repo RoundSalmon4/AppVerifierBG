@@ -410,13 +410,14 @@ fun AppListScreen(
                     null
                 }
 
+                val pkg = it
                 val icon by produceState<Drawable?>(
-                    initialValue = AppIconCache.get(it.packageName) ?: runCatching {
-                        packageManager.getApplicationIcon(packageInfo.applicationInfo ?: ApplicationInfo()).also {
-                            AppIconCache.put(it.packageName, it)
+                    initialValue = AppIconCache.get(pkg.packageName) ?: runCatching {
+                        packageManager.getApplicationIcon(packageInfo.applicationInfo ?: ApplicationInfo()).also { icon ->
+                            AppIconCache.put(pkg.packageName, icon)
                         }
                     }.getOrNull(),
-                    key1 = it.packageName,
+                    key1 = pkg.packageName,
                 ) {
                     if (value == null) {
                         value = withContext(Dispatchers.IO) {
@@ -424,7 +425,7 @@ fun AppListScreen(
                                 val loaded = packageManager.getApplicationIcon(
                                     packageInfo.applicationInfo ?: ApplicationInfo()
                                 )
-                                AppIconCache.put(it.packageName, loaded)
+                                AppIconCache.put(pkg.packageName, loaded)
                                 loaded
                             }.getOrNull()
                         }
