@@ -15,11 +15,11 @@ Verify installed apps against shared signature hashes, the internal database, or
 
 ## Verification
 
-Pasted hashes are checked for valid SHA-256 format and show a clear error if something's wrong. When verification fails, hashes are labeled "Expected" (what you pasted) and "Found" (on-device fingerprint) so you can tell which is which. Apps signed with debug certificates are flagged as insecure.
+Pasted hashes are checked for valid SHA-256 format and show a clear error if something's wrong. When verification fails, hashes are labeled "Expected" (what you pasted) and "Found" (on-device fingerprint) so you can tell which is which. Apps signed with debug certificates are flagged as insecure. Verification results use chip-based status indicators. The expected vs. found hash comparison has a collapsible toggle.
 
 ## App List
 
-Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches all at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text — pick whichever you need from the dropdown and it only shows modes with matching data. A filter chip hides everything except failures. The default sort order can be set in settings. A search bar lets you filter by name or package name.
+Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches all at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text — pick whichever you need from the dropdown and it only shows modes with matching data. A filter chip hides everything except failures. The default sort order can be set in settings. A search bar lets you filter by name or package name. Long-press an app with a user database entry or clipboard checkmark to remove it individually.
 
 ## Shared Text
 
@@ -27,11 +27,11 @@ Share verification info for several apps at once. Multiple entries separated by 
 
 ## Clipboard Verification
 
-Verify from clipboard with a single button on the startup screen. Successful clipboard verifications add a blue checkmark in the app list. The checkmark can be toggled on or off in settings and cleared separately.
+Verify from clipboard with a single button on the startup screen. Successful clipboard verifications add a blue checkmark in the app list. The checkmark can be toggled on or off in settings and cleared separately. Individual checkmarks can be removed by long-pressing the app in the list.
 
 ## User Database
 
-Save an app's verification info so you can check it later without needing the shared text. Add entries one at a time from the verification screen or bulk-add from a shared text filtered list. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed.
+Save an app's verification info so you can check it later without needing the shared text. Add entries one at a time from the verification screen or bulk-add from a shared text filtered list. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed. Entries can be removed individually by long-pressing the app in the list.
 
 **Plain text** — entries separated by a blank line:
 ```

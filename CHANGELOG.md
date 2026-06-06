@@ -2,6 +2,15 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-07
+
+- Blue/gold theme replaces dynamic color.
+- Startup screen redesigned with card-based action items.
+- Verification screen: chip-based status indicators, collapsible hash comparison toggle.
+- Privacy policy no longer forces acceptance on first launch. Moved from a gated startup screen to an action item on the main screen.
+- App list: async icon loading with LRU cache, O(1) internal database lookups.
+- Long-press an app to remove its user database entry or clipboard checkmark individually.
+
 ## 2026-06-05
 
 - Credits now include upstream AppVerifier, Lifecycle ViewModel Ktx, and Kotlin Coroutines Android.
