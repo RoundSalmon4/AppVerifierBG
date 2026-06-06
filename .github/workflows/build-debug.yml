@@ -18,6 +18,8 @@ on:
         type: choice
         options:
           - feature/all-enhancements
+          - ui/dev
+          - ui/dev-slim
 
 permissions:
   contents: write
