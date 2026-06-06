@@ -1,7 +1,16 @@
-name: Build Debug APK
+name: Build APK (debug / unsigned / signed)
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: 'Build mode'
+        required: true
+        default: debug
+        type: choice
+        options:
+          - debug
+          - unsigned
+          - signed
       branch:
         description: 'Branch to build'
         required: true
@@ -23,6 +32,15 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: |
+          MAJOR=$(grep 'appVersionMajor' gradle/version.gradle.kts | grep -oP '\d+')
+          MINOR=$(grep 'appVersionMinor' gradle/version.gradle.kts | grep -oP '\d+')
+          PATCH=$(grep 'appVersionPatch' gradle/version.gradle.kts | grep -oP '\d+')
+          VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -81,10 +99,37 @@ jobs:
           printf '%s' "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
 
+      - name: Set up release keystore
+        if: github.event.inputs.mode == 'signed'
+        env:
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          printf '%s' "$RELEASE_KEYSTORE" | base64 -d > "$HOME/release.jks"
+          echo "RELEASE_KEYSTORE_PATH=$HOME/release.jks" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASSWORD=$RELEASE_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+          keytool -list -keystore "$HOME/release.jks" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1
+
       - name: Build debug APK
+        if: github.event.inputs.mode == 'debug'
         run: ./gradlew assembleDebug
 
-      - name: Upload debug APK
+      - name: Build unsigned release APK
+        if: github.event.inputs.mode == 'unsigned'
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+          ./gradlew assembleRelease -PversionOverride=${{ steps.version.outputs.version }}
+
+      - name: Build signed release APK
+        if: github.event.inputs.mode == 'signed'
+        run: ./gradlew assembleRelease
+
+      - name: Prepare debug APK
+        if: github.event.inputs.mode == 'debug'
         run: |
           APK_FILE=$(find app/build/outputs/apk/debug -name '*.apk' -print -quit 2>/dev/null || true)
           if [ -z "$APK_FILE" ]; then
@@ -93,8 +138,18 @@ jobs:
             exit 1
           fi
           echo "Found APK: $APK_FILE"
-          cp "$APK_FILE" /tmp/app-debug.apk
+          cp "$APK_FILE" /tmp/app.apk
         shell: bash
+
+      - name: Prepare unsigned APK
+        if: github.event.inputs.mode == 'unsigned'
+        run: |
+          mv app/build/outputs/apk/release/*.apk /tmp/app.apk
+
+      - name: Prepare signed release APK
+        if: github.event.inputs.mode == 'signed'
+        run: |
+          mv app/build/outputs/apk/release/*.apk /tmp/app.apk
 
       - name: Sanitize branch name for artifact
         id: sanitize
@@ -104,7 +159,19 @@ jobs:
           echo "name=$SANITIZED" >> "$GITHUB_OUTPUT"
         shell: bash
 
+      - name: Set artifact name
+        id: artifact
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "unsigned" ]; then
+            echo "name=AppVerifierBG-${{ steps.version.outputs.version }}-unsigned" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.inputs.mode }}" = "signed" ]; then
+            echo "name=AppVerifierBG-${{ steps.version.outputs.version }}-signed-${{ steps.sanitize.outputs.name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=app-debug-${{ steps.sanitize.outputs.name }}" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug-${{ steps.sanitize.outputs.name }}
-          path: /tmp/app-debug.apk
+          name: ${{ steps.artifact.outputs.name }}
+          path: /tmp/app.apk
