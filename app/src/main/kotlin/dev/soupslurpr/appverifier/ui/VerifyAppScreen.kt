@@ -265,8 +265,8 @@ fun VerifyAppScreen(
                             onClick = { showHashComparison = !showHashComparison },
                             label = { Text(if (showHashComparison) "Hide hash comparison" else "Show hash comparison") },
                             colors = SuggestionChipDefaults.suggestionChipColors(
-                                containerColor = WarningOrange.copy(alpha = 0.12f),
-                                labelColor = WarningOrange,
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                labelColor = MaterialTheme.colorScheme.primary,
                             ),
                         )
                         if (showHashComparison) {
