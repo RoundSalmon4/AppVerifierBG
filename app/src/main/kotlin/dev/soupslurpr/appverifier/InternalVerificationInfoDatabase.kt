@@ -48,6 +48,8 @@ enum class Source(val displayName: String) {
     F_DROID_FDROID_EMERSION_FR("F-Droid (fdroid.emersion.fr)"),
     F_DROID_FDROID_STORCHP_DE("F-Droid (fdroid.storchp.de)"),
     F_DROID_GROBOX_DE("F-Droid (grobox.de)"),
+    F_DROID_PRIVACYGUIDES_GITHUB_IO("F-Droid (privacyguides.github.io)"),
+    VERIFIED_DOMAIN("Verified Domain"),
 }
 
 data class InternalDatabaseVerificationInfo(
@@ -576,6 +578,26 @@ val internalVerificationInfoDatabase = setOf(
                 ),
                 listOf(
                     "05:7A:C4:51:64:A2:E6:E3:1F:6D:DE:55:5A:5F:2C:CC:B4:D8:83:4C:B1:85:25:49:68:1B:00:E3:46:68:CA:F3"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK
+                ),
+                listOf(
+                    "5E:DB:5C:43:95:B2:F2:D9:BA:68:2F:6A:1D:27:51:70:CC:E5:36:5A:6F:A2:7D:22:20:EA:8D:52:A6:D9:5F:07"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.FDROID
+                ),
+                listOf(
+                    "05:7A:C4:51:64:A2:E6:E3:1F:6D:DE:55:5A:5F:2C:CC:B4:D8:83:4C:B1:85:25:49:68:1B:00:E3:46:68:CA:F3",
+                    "5E:DB:5C:43:95:B2:F2:D9:BA:68:2F:6A:1D:27:51:70:CC:E5:36:5A:6F:A2:7D:22:20:EA:8D:52:A6:D9:5F:07"
                 ),
                 false
             )
@@ -5200,7 +5222,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.DIRECT_APK_LINK
+                    Source.DIRECT_APK_LINK,
+                    Source.VERIFIED_DOMAIN
                 ),
                 listOf(
                     "1E:76:F1:A1:5C:BE:20:1F:0F:E2:6A:F2:7A:12:D9:1D:0D:34:81:FE:7D:CC:7D:89:E9:D2:05:69:30:F6:D5:A9"
@@ -10331,6 +10354,22 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "org.privacyguides.verifiedapps",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.F_DROID_PRIVACYGUIDES_GITHUB_IO,
+                    Source.VERIFIED_DOMAIN
+                ),
+                listOf(
+                    "40:5C:6B:D2:CA:7C:3A:AE:8F:46:3C:6F:8B:55:BC:F0:DD:AC:43:1C:5E:D8:EA:FF:65:D1:06:C9:81:7A:20:7F"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "org.proninyaroslav.libretorrent",
         listOf(
             Hashes(
@@ -11391,6 +11430,7 @@ val internalVerificationInfoDatabase = setOf(
         )
     )
 )
+
 
 
 
