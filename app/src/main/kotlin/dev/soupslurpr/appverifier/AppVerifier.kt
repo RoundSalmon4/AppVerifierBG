@@ -246,6 +246,11 @@ fun AppVerifierApp(
                             preferencesViewModel.removeUserDatabaseEntry(packageName)
                         }
                     },
+                    onRemoveClipboardVerification = { packageName ->
+                        snackbarCoroutineScope.launch {
+                            preferencesViewModel.removeClipboardVerifiedPackage(packageName)
+                        }
+                    },
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {

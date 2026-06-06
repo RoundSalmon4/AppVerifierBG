@@ -106,6 +106,7 @@ fun AppListScreen(
     unverifiedExcludeUserDb: Boolean = false,
     defaultSortMode: SortMode = SortMode.NAME_ASC,
     onRemoveFromUserDatabase: ((String) -> Unit)? = null,
+    onRemoveClipboardVerification: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
 
@@ -449,6 +450,7 @@ fun AppListScreen(
                     showClipboardCheckmark = showClipboardCheckmark,
                     isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
                     onRemoveFromUserDatabase = onRemoveFromUserDatabase,
+                    onRemoveClipboardVerification = onRemoveClipboardVerification,
                 )
             }
             item {
@@ -481,6 +483,7 @@ fun AppItem(
     showClipboardCheckmark: Boolean = false,
     isClipboardVerified: Boolean = false,
     onRemoveFromUserDatabase: ((String) -> Unit)? = null,
+    onRemoveClipboardVerification: ((String) -> Unit)? = null,
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
 
@@ -491,7 +494,7 @@ fun AppItem(
                     icon?.let { onClickAppItem(name, packageName, hashes, it, internalDatabaseInfo) }
                 },
                 onLongClick = {
-                    if (userDbMatch) {
+                    if (userDbMatch || isClipboardVerified) {
                         showContextMenu = true
                     }
                 },
@@ -581,13 +584,24 @@ fun AppItem(
             expanded = showContextMenu,
             onDismissRequest = { showContextMenu = false },
         ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.remove_from_user_database)) },
-                onClick = {
-                    showContextMenu = false
-                    onRemoveFromUserDatabase?.invoke(packageName)
-                },
-            )
+            if (userDbMatch) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.remove_from_user_database)) },
+                    onClick = {
+                        showContextMenu = false
+                        onRemoveFromUserDatabase?.invoke(packageName)
+                    },
+                )
+            }
+            if (isClipboardVerified) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.remove_clipboard_verification)) },
+                    onClick = {
+                        showContextMenu = false
+                        onRemoveClipboardVerification?.invoke(packageName)
+                    },
+                )
+            }
         }
     }
 }

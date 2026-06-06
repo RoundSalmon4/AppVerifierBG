@@ -190,6 +190,13 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
         }.collect()
     }
 
+    suspend fun removeClipboardVerifiedPackage(packageName: String) {
+        _clipboardVerifiedPackages.value = _clipboardVerifiedPackages.value - packageName
+        dataStore.edit { preferences ->
+            preferences[CLIPBOARD_VERIFIED_PACKAGES] = _clipboardVerifiedPackages.value
+        }
+    }
+
     suspend fun clearClipboardVerifiedPackages() {
         _clipboardVerifiedPackages.value = emptySet()
         dataStore.edit { preferences ->
