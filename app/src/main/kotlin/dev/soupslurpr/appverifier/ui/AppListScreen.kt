@@ -410,16 +410,23 @@ fun AppListScreen(
                     null
                 }
 
-                val icon by produceState<Drawable?>(initialValue = AppIconCache.get(it.packageName), key1 = it.packageName) {
+                val icon by produceState<Drawable?>(
+                    initialValue = AppIconCache.get(it.packageName) ?: runCatching {
+                        packageManager.getApplicationIcon(packageInfo.applicationInfo ?: ApplicationInfo()).also {
+                            AppIconCache.put(it.packageName, it)
+                        }
+                    }.getOrNull(),
+                    key1 = it.packageName,
+                ) {
                     if (value == null) {
                         value = withContext(Dispatchers.IO) {
-                            try {
+                            runCatching {
                                 val loaded = packageManager.getApplicationIcon(
                                     packageInfo.applicationInfo ?: ApplicationInfo()
                                 )
                                 AppIconCache.put(it.packageName, loaded)
                                 loaded
-                            } catch (_: Exception) { null }
+                            }.getOrNull()
                         }
                     }
                 }
