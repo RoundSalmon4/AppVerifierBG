@@ -72,4 +72,12 @@
     <string name="download_report">Download report</string>
     <string name="cancel">Cancel</string>
     <string name="user_database_cleared">All user database entries removed.</string>
+    <string name="startup_paste_title">Paste from clipboard</string>
+    <string name="startup_paste_description">Verify an app from clipboard text</string>
+    <string name="startup_verify_apk_title">Verify APK File</string>
+    <string name="startup_verify_apk_description">Select and verify an APK file</string>
+    <string name="startup_privacy_policy_title">Privacy policy</string>
+    <string name="startup_privacy_policy_description">View AppVerifier BG\'s privacy policy</string>
+    <string name="startup_app_list_description">Browse installed apps and verify their signatures</string>
+    <string name="startup_settings_description">Configure app preferences and manage databases</string>
 </resources>

@@ -65,7 +65,6 @@ private enum class ExportFormat { JSON, YAML, TEXT }
 @Composable
 fun SettingsScreen(
     onLicenseIconButtonClicked: () -> Unit,
-    onPrivacyPolicyIconButtonClicked: () -> Unit,
     onCreditsIconButtonClicked: () -> Unit,
     preferencesViewModel: PreferencesViewModel,
 ) {
@@ -192,6 +191,17 @@ fun SettingsScreen(
                         }
                         )
             }
+            SettingsItem(
+                name = stringResource(id = R.string.show_hasmultiplesigners_setting_name),
+                description = stringResource(R.string.show_hasmultiplesigners_setting_description),
+                hasSwitch = true,
+                checked = preferencesUiState.showHasMultipleSigners.second.value,
+                onCheckedChange = {
+                    coroutineScope.launch {
+                        preferencesViewModel.setPreference(preferencesUiState.showHasMultipleSigners.first, it)
+                    }
+                }
+            )
             Text(
                 text = stringResource(R.string.default_sort_mode_name),
                 style = typography.bodyMedium,
@@ -242,60 +252,6 @@ fun SettingsScreen(
                     }
                 }
             }
-        }
-
-        Column {
-            SettingsCategoryText(category = stringResource(id = R.string.contributing))
-            SettingsItem(
-                name = stringResource(id = R.string.show_hasmultiplesigners_setting_name),
-                description = stringResource(R.string.show_hasmultiplesigners_setting_description),
-                hasSwitch = true,
-                checked = preferencesUiState.showHasMultipleSigners.second.value,
-                onCheckedChange = {
-                    coroutineScope.launch {
-                        preferencesViewModel.setPreference(preferencesUiState.showHasMultipleSigners.first, it)
-                    }
-                }
-            )
-            SettingsItem(
-                name = stringResource(R.string.share_all_verification_info),
-                description = stringResource(R.string.share_all_verification_info_description),
-                hasIcon = true,
-                onClickIconSetting = {
-                    val packageManager = context.packageManager
-                    val userInstalledPackages = packageManager.getInstalledPackages(0)
-                        .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
-                    val text = userInstalledPackages.joinToString("\n\n") { pkg ->
-                        val packageInfo = packageManager.getPackageInfo(
-                            pkg.packageName,
-                            PackageManager.GET_SIGNING_CERTIFICATES
-                        )
-                        val signingInfo = packageInfo.signingInfo!!
-                        val signatures = if (signingInfo.hasMultipleSigners()) {
-                            signingInfo.apkContentsSigners
-                        } else {
-                            signingInfo.signingCertificateHistory
-                        }
-                        val hashStrings = signatures.map { signature ->
-                            java.security.MessageDigest
-                                .getInstance("SHA-256")
-                                .digest(signature.toByteArray())
-                                .joinToString(":") { "%02x".format(it) }
-                                .uppercase()
-                        }
-                        "${pkg.packageName}\n${hashStrings.joinToString("\n")}"
-                    }
-                    val sendIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, text)
-                        type = "text/plain"
-                    }
-                    startActivity(context, Intent.createChooser(sendIntent, null), ActivityOptions.makeBasic().toBundle())
-                },
-                icon = {
-                    Icon(Icons.Filled.Share, null)
-                }
-            )
         }
 
         Column {
@@ -495,6 +451,45 @@ fun SettingsScreen(
                     }
                 )
             }
+            SettingsItem(
+                name = stringResource(R.string.share_all_verification_info),
+                description = stringResource(R.string.share_all_verification_info_description),
+                hasIcon = true,
+                onClickIconSetting = {
+                    val packageManager = context.packageManager
+                    val userInstalledPackages = packageManager.getInstalledPackages(0)
+                        .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
+                    val text = userInstalledPackages.joinToString("\n\n") { pkg ->
+                        val packageInfo = packageManager.getPackageInfo(
+                            pkg.packageName,
+                            PackageManager.GET_SIGNING_CERTIFICATES
+                        )
+                        val signingInfo = packageInfo.signingInfo!!
+                        val signatures = if (signingInfo.hasMultipleSigners()) {
+                            signingInfo.apkContentsSigners
+                        } else {
+                            signingInfo.signingCertificateHistory
+                        }
+                        val hashStrings = signatures.map { signature ->
+                            java.security.MessageDigest
+                                .getInstance("SHA-256")
+                                .digest(signature.toByteArray())
+                                .joinToString(":") { "%02x".format(it) }
+                                .uppercase()
+                        }
+                        "${pkg.packageName}\n${hashStrings.joinToString("\n")}"
+                    }
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, text)
+                        type = "text/plain"
+                    }
+                    startActivity(context, Intent.createChooser(sendIntent, null), ActivityOptions.makeBasic().toBundle())
+                },
+                icon = {
+                    Icon(Icons.Filled.Share, null)
+                }
+            )
         }
 
         Column {
@@ -522,18 +517,6 @@ fun SettingsScreen(
                     Icon(
                         imageVector = Icons.Filled.Info,
                         contentDescription = null
-                    )
-                }
-            )
-            SettingsItem(
-                name = stringResource(id = R.string.privacy_policy_setting_name),
-                description = stringResource(id = R.string.privacy_policy_setting_description),
-                hasIcon = true,
-                onClickIconSetting = { onPrivacyPolicyIconButtonClicked() },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = null,
                     )
                 }
             )

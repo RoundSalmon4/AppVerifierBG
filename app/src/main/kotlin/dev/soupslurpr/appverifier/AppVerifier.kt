@@ -298,9 +298,6 @@ fun AppVerifierApp(
                     onLicenseIconButtonClicked = {
                         navController.navigate(AppVerifierScreens.License.name)
                     },
-                    onPrivacyPolicyIconButtonClicked = {
-                        navController.navigate(AppVerifierScreens.PrivacyPolicy.name)
-                    },
                     onCreditsIconButtonClicked = {
                         navController.navigate(AppVerifierScreens.Credits.name)
                     },

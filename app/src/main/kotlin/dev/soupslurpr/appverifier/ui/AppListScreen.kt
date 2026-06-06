@@ -48,7 +48,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
@@ -61,6 +61,9 @@ import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationInfo
+import dev.soupslurpr.appverifier.ui.theme.ClipboardBlue
+import dev.soupslurpr.appverifier.ui.theme.UserDbPurple
+import dev.soupslurpr.appverifier.ui.theme.WarningOrange
 
 enum class SortMode(val label: String) {
     NAME_ASC("Name A-Z"),
@@ -520,7 +523,7 @@ fun AppItem(
                         Icons.Filled.Verified,
                         "Verified successfully with clipboard verification",
                         Modifier,
-                        Color.Blue,
+                        ClipboardBlue,
                     )
                 }
                 if (showUserDbIcon && userDbMatch) {
@@ -528,7 +531,7 @@ fun AppItem(
                         Icons.Filled.Verified,
                         "Verified with user database",
                         Modifier,
-                        Color(0xFF9C27B0),
+                        UserDbPurple,
                     )
                 }
                 when (sharedHashMatch) {
@@ -536,13 +539,13 @@ fun AppItem(
                         Icons.Filled.Verified,
                         "Shared text hashes match installed app",
                         Modifier,
-                        Color(0xFFFF9800),
+                        WarningOrange,
                     )
                     false -> Icon(
                         Icons.Filled.Error,
                         "Shared text hashes do NOT match installed app",
                         Modifier,
-                        Color(0xFFFF9800),
+                        WarningOrange,
                     )
                     null -> {}
                 }

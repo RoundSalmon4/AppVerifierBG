@@ -92,35 +92,35 @@ fun StartupScreen(
                 ActionItem(
                     icon = Icons.AutoMirrored.Filled.List,
                     title = stringResource(R.string.app_list),
-                    description = "Browse installed apps and verify their signatures",
+                    description = stringResource(R.string.startup_app_list_description),
                     onClick = onAppListButtonClicked,
                 )
                 HorizontalDivider()
                 ActionItem(
                     icon = Icons.Filled.ContentPaste,
-                    title = "Paste from clipboard",
-                    description = "Verify an app from clipboard text",
+                    title = stringResource(R.string.startup_paste_title),
+                    description = stringResource(R.string.startup_paste_description),
                     onClick = onPasteFromClipboard,
                 )
                 HorizontalDivider()
                 ActionItem(
                     icon = Icons.Filled.FileOpen,
-                    title = "Verify APK File",
-                    description = "Select and verify an APK file",
+                    title = stringResource(R.string.startup_verify_apk_title),
+                    description = stringResource(R.string.startup_verify_apk_description),
                     onClick = onVerifyApkFileButtonClicked,
                 )
                 HorizontalDivider()
                 ActionItem(
                     icon = Icons.Filled.Settings,
                     title = stringResource(R.string.settings),
-                    description = "Configure app preferences and manage databases",
+                    description = stringResource(R.string.startup_settings_description),
                     onClick = onSettingsButtonClicked,
                 )
                 HorizontalDivider()
                 ActionItem(
                     icon = Icons.Filled.Info,
-                    title = "Privacy policy",
-                    description = "View AppVerifier BG's privacy policy",
+                    title = stringResource(R.string.startup_privacy_policy_title),
+                    description = stringResource(R.string.startup_privacy_policy_description),
                     onClick = onPrivacyPolicyButtonClicked,
                 )
             }

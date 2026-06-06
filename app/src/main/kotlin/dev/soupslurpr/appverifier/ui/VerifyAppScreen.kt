@@ -68,6 +68,8 @@ import dev.soupslurpr.appverifier.data.SimpleInternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationStatus
+import dev.soupslurpr.appverifier.ui.theme.UserDbPurple
+import dev.soupslurpr.appverifier.ui.theme.WarningOrange
 
 @Composable
 fun VerifyAppScreen(
@@ -103,6 +105,8 @@ fun VerifyAppScreen(
     var showMoreInfoAboutInternalDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
 
     var showMoreInfoAboutUserDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
+
+    var showHashComparison by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (hashes.hashes.isEmpty()) {
@@ -237,9 +241,9 @@ fun VerifyAppScreen(
                                 },
                                 label = { Text("DEBUG") },
                                 colors = SuggestionChipDefaults.suggestionChipColors(
-                                    containerColor = Color(0xFFFF9800).copy(alpha = 0.12f),
-                                    labelColor = Color(0xFFFF9800),
-                                    iconContentColor = Color(0xFFFF9800),
+                                    containerColor = WarningOrange.copy(alpha = 0.12f),
+                                    labelColor = WarningOrange,
+                                    iconContentColor = WarningOrange,
                                 ),
                             )
                         }
@@ -257,19 +261,27 @@ fun VerifyAppScreen(
                     Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (expectedHashes.isNotEmpty() && (verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.FAILURE || verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.WARNING)) {
                         Spacer(Modifier.height(8.dp))
-                        Text("Expected:", fontWeight = FontWeight.Bold)
-                        Text(
-                            text = expectedHashes.joinToString("\n"),
-                            fontFamily = FontFamily.Monospace,
-                            style = typography.bodySmall,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text("Found:", fontWeight = FontWeight.Bold)
-                        Text(
-                            text = hashes.hashes.joinToString("\n"),
-                            fontFamily = FontFamily.Monospace,
-                            style = typography.bodySmall,
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable { showHashComparison = !showHashComparison },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(if (showHashComparison) "Hide hash comparison" else "Show hash comparison", fontWeight = FontWeight.Bold)
+                        }
+                        if (showHashComparison) {
+                            Text("Expected:", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = expectedHashes.joinToString("\n"),
+                                fontFamily = FontFamily.Monospace,
+                                style = typography.bodySmall,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text("Found:", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = hashes.hashes.joinToString("\n"),
+                                fontFamily = FontFamily.Monospace,
+                                style = typography.bodySmall,
+                            )
+                        }
                     } else {
                         Text(
                             text = hashes.hashes.joinToString("\n"),
@@ -285,7 +297,7 @@ fun VerifyAppScreen(
                         Spacer(Modifier.height(4.dp))
                         Text(
                             "This app is signed with a debug certificate and may not be genuine.",
-                            color = Color(0xFFFF9800),
+                            color = WarningOrange,
                             style = typography.bodySmall,
                         )
                     }
@@ -302,7 +314,7 @@ fun VerifyAppScreen(
                     val displayVerificationColor = if (isSelfVerification) {
                         Color.Gray
                     } else if (sharedTextHashMatch != null) {
-                        if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
+                        if (sharedTextHashMatch) WarningOrange else SimpleVerificationStatus.FAILURE.color
                     } else {
                         verificationStatus.simpleVerificationStatus.color
                     }
@@ -522,7 +534,7 @@ fun VerifyAppScreen(
             "NOT FOUND"
         }
         val userDialogColor = if (userDbEntry != null) {
-            if (userDbMatch) Color(0xFF9C27B0) else SimpleVerificationStatus.FAILURE.color
+            if (userDbMatch) UserDbPurple else SimpleVerificationStatus.FAILURE.color
         } else {
             Color.Gray
         }
@@ -586,7 +598,7 @@ fun VerifyAppScreen(
         val dialogColor = if (isSelfVerification) {
             Color.Gray
         } else if (sharedTextHashMatch != null) {
-            if (sharedTextHashMatch) Color(0xFFFF9800) else SimpleVerificationStatus.FAILURE.color
+            if (sharedTextHashMatch) WarningOrange else SimpleVerificationStatus.FAILURE.color
         } else {
             verificationStatus.simpleVerificationStatus.color
         }
