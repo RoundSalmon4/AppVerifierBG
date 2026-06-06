@@ -15,7 +15,7 @@ import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.VerificationInfo
 import dev.soupslurpr.appverifier.data.VerificationStatus
 import dev.soupslurpr.appverifier.data.VerifyAppUiState
-import dev.soupslurpr.appverifier.internalVerificationInfoDatabase
+import dev.soupslurpr.appverifier.internalVerificationInfoDatabaseMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -270,23 +270,16 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             return InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
         }
 
-        return internalVerificationInfoDatabase.run {
-            val packageNameMatchedInternalDatabaseVerificationInfo = try {
-                this.first {
-                    it.packageName == verificationInfo.packageName
-                }
-            } catch (e: NoSuchElementException) {
-                return@run InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
-            }
+        val entry = internalVerificationInfoDatabaseMap[verificationInfo.packageName]
+            ?: return InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
 
-            val maybeMatchedHashes = packageNameMatchedInternalDatabaseVerificationInfo.hashesList.find {
-                it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
-            }
-            if (maybeMatchedHashes != null) {
-                InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
-            } else {
-                InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
-            }
+        val maybeMatchedHashes = entry.hashesList.find {
+            it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
+        }
+        return if (maybeMatchedHashes != null) {
+            InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources)
+        } else {
+            InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE))
         }
     }
 
