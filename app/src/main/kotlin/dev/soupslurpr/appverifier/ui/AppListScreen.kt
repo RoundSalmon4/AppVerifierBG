@@ -336,14 +336,14 @@ fun AppListScreen(
                         ) {
                             Text(
                                 "Showing ${filteredPackages.size} installed of ${sharedFilteredEntries.size} total",
-                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium,
                             )
-                            androidx.compose.material3.TextButton(onClick = { onDoneFiltered?.invoke() }) {
+                            TextButton(onClick = { onDoneFiltered?.invoke() }) {
                                 Text("Done")
                             }
                         }
                         if (verifiedEntries.isNotEmpty()) {
-                            androidx.compose.material3.TextButton(
+                            TextButton(
                                 onClick = { onAddAllVerified?.invoke(verifiedEntries) }
                             ) {
                                 Text("Add ${verifiedEntries.size} verified to database")
@@ -361,7 +361,7 @@ fun AppListScreen(
                         Text(
                             "No installed apps match the shared package names.",
                             modifier = Modifier.padding(32.dp),
-                            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                     }
                 }

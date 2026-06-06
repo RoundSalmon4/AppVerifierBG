@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
                 }
             } else if (isActionView) {
                 if (intent.data != null) {
-                    intent.data?.let {
+                    intent.data.let {
                         verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
                             contentResolver,
                             it,
