@@ -126,6 +126,13 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
         _userDatabaseEntries.value = current
     }
 
+    suspend fun removeUserDatabaseEntry(packageName: String) {
+        _userDatabaseEntries.value = _userDatabaseEntries.value.filter { it.packageName != packageName }
+        dataStore.edit { preferences ->
+            preferences[USER_DATABASE_JSON] = _userDatabaseEntries.value.toJson()
+        }
+    }
+
     suspend fun clearUserDatabase() {
         dataStore.edit { preferences ->
             preferences.remove(USER_DATABASE_JSON)

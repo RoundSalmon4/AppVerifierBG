@@ -241,6 +241,11 @@ fun AppVerifierApp(
                     preferencesUiState.value.showUnverifiedOnly.second.value,
                     preferencesUiState.value.unverifiedExcludeUserDb.second.value,
                     SortMode.valueOf(preferencesUiState.value.defaultSortMode.second.value),
+                    onRemoveFromUserDatabase = { packageName ->
+                        snackbarCoroutineScope.launch {
+                            preferencesViewModel.removeUserDatabaseEntry(packageName)
+                        }
+                    },
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {

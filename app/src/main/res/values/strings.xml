@@ -75,4 +75,5 @@
     <string name="startup_privacy_policy_description">View AppVerifier BG\'s privacy policy</string>
     <string name="startup_app_list_description">Browse installed apps and verify their signatures</string>
     <string name="startup_settings_description">Configure app preferences and manage databases</string>
+    <string name="remove_from_user_database">Remove from user database</string>
 </resources>

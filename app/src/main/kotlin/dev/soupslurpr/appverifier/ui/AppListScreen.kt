@@ -5,7 +5,8 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
@@ -54,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -103,6 +105,7 @@ fun AppListScreen(
     showUnverifiedOnly: Boolean = false,
     unverifiedExcludeUserDb: Boolean = false,
     defaultSortMode: SortMode = SortMode.NAME_ASC,
+    onRemoveFromUserDatabase: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
 
@@ -445,6 +448,7 @@ fun AppListScreen(
                     sharedHashMatch = sharedHashMatch,
                     showClipboardCheckmark = showClipboardCheckmark,
                     isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                    onRemoveFromUserDatabase = onRemoveFromUserDatabase,
                 )
             }
             item {
@@ -454,6 +458,7 @@ fun AppListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppItem(
     name: String,
@@ -475,90 +480,114 @@ fun AppItem(
     sharedHashMatch: Boolean? = null,
     showClipboardCheckmark: Boolean = false,
     isClipboardVerified: Boolean = false,
+    onRemoveFromUserDatabase: ((String) -> Unit)? = null,
 ) {
-    ListItem(
-        modifier = Modifier.clickable {
-            icon?.let { onClickAppItem(name, packageName, hashes, it, internalDatabaseInfo) }
-        },
-        headlineContent = {
-            Text(name)
-        },
-        overlineContent = {
-            Text(packageName)
-        },
-        leadingContent = {
-            if (icon != null) {
-                Image(
-                    rememberDrawablePainter(drawable = icon),
-                    null,
-                    Modifier.size(50.dp),
-                )
-            }
-        },
-        trailingContent = {
-            if (hashes.isDebug) {
-                Icon(
-                    Icons.Filled.Error,
-                    "This app is signed with a debug certificate",
-                    Modifier,
-                    SimpleVerificationStatus.FAILURE.color,
-                )
-            } else {
-            Row {
-                if (showInternalDbIcon) {
-                    when (internalDbStatus) {
-                        InternalDatabaseStatus.MATCH -> Icon(
-                            Icons.Filled.Verified,
-                            "Verified successfully with internal database",
-                            Modifier,
-                            SimpleVerificationStatus.SUCCESS.color,
-                        )
-                        InternalDatabaseStatus.NOMATCH -> {
-                            Icon(
-                                Icons.Filled.Error,
-                                "Verification with internal database NOT successful!",
+    var showContextMenu by remember { mutableStateOf(false) }
+
+    Box {
+        ListItem(
+            modifier = Modifier.combinedClickable(
+                onClick = {
+                    icon?.let { onClickAppItem(name, packageName, hashes, it, internalDatabaseInfo) }
+                },
+                onLongClick = {
+                    if (userDbMatch) {
+                        showContextMenu = true
+                    }
+                },
+            ),
+            headlineContent = {
+                Text(name)
+            },
+            overlineContent = {
+                Text(packageName)
+            },
+            leadingContent = {
+                if (icon != null) {
+                    Image(
+                        rememberDrawablePainter(drawable = icon),
+                        null,
+                        Modifier.size(50.dp),
+                    )
+                }
+            },
+            trailingContent = {
+                if (hashes.isDebug) {
+                    Icon(
+                        Icons.Filled.Error,
+                        "This app is signed with a debug certificate",
+                        Modifier,
+                        SimpleVerificationStatus.FAILURE.color,
+                    )
+                } else {
+                Row {
+                    if (showInternalDbIcon) {
+                        when (internalDbStatus) {
+                            InternalDatabaseStatus.MATCH -> Icon(
+                                Icons.Filled.Verified,
+                                "Verified successfully with internal database",
                                 Modifier,
-                                SimpleVerificationStatus.FAILURE.color,
+                                SimpleVerificationStatus.SUCCESS.color,
                             )
+                            InternalDatabaseStatus.NOMATCH -> {
+                                Icon(
+                                    Icons.Filled.Error,
+                                    "Verification with internal database NOT successful!",
+                                    Modifier,
+                                    SimpleVerificationStatus.FAILURE.color,
+                                )
+                            }
+                            InternalDatabaseStatus.NOT_FOUND -> {}
                         }
-                        InternalDatabaseStatus.NOT_FOUND -> {}
+                    }
+                    if (showClipboardCheckmark && isClipboardVerified &&
+                        internalDbStatus != InternalDatabaseStatus.MATCH
+                    ) {
+                        Icon(
+                            Icons.Filled.Verified,
+                            "Verified successfully with clipboard verification",
+                            Modifier,
+                            ClipboardBlue,
+                        )
+                    }
+                    if (showUserDbIcon && userDbMatch) {
+                        Icon(
+                            Icons.Filled.Verified,
+                            "Verified with user database",
+                            Modifier,
+                            UserDbPurple,
+                        )
+                    }
+                    when (sharedHashMatch) {
+                        true -> Icon(
+                            Icons.Filled.Verified,
+                            "Shared text hashes match installed app",
+                            Modifier,
+                            WarningOrange,
+                        )
+                        false -> Icon(
+                            Icons.Filled.Error,
+                            "Shared text hashes do NOT match installed app",
+                            Modifier,
+                            WarningOrange,
+                        )
+                        null -> {}
                     }
                 }
-                if (showClipboardCheckmark && isClipboardVerified &&
-                    internalDbStatus != InternalDatabaseStatus.MATCH
-                ) {
-                    Icon(
-                        Icons.Filled.Verified,
-                        "Verified successfully with clipboard verification",
-                        Modifier,
-                        ClipboardBlue,
-                    )
-                }
-                if (showUserDbIcon && userDbMatch) {
-                    Icon(
-                        Icons.Filled.Verified,
-                        "Verified with user database",
-                        Modifier,
-                        UserDbPurple,
-                    )
-                }
-                when (sharedHashMatch) {
-                    true -> Icon(
-                        Icons.Filled.Verified,
-                        "Shared text hashes match installed app",
-                        Modifier,
-                        WarningOrange,
-                    )
-                    false -> Icon(
-                        Icons.Filled.Error,
-                        "Shared text hashes do NOT match installed app",
-                        Modifier,
-                        WarningOrange,
-                    )
-                    null -> {}
                 }
             }
-            }
+        )
+        DropdownMenu(
+            expanded = showContextMenu,
+            onDismissRequest = { showContextMenu = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.remove_from_user_database)) },
+                onClick = {
+                    showContextMenu = false
+                    onRemoveFromUserDatabase?.invoke(packageName)
+                },
+            )
         }
-    )
+    }
 }
