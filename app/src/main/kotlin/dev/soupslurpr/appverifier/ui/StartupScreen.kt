@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
