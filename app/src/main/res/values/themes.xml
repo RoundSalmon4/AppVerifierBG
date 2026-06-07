@@ -3,6 +3,6 @@
 
     <style name="Theme.AppVerifier" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowSplashScreenBackground">#1A237E</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
     </style>
 </resources>
