@@ -289,6 +289,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         uri: Uri,
         packageManager: PackageManager,
     ) {
+        var baseApkFile: File? = null
+
         try {
             val inputStream = contentResolver.openInputStream(uri)
             if (inputStream == null) {
@@ -305,8 +307,6 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                         fileIn.copyTo(fileOut)
                     }
                 }
-
-                var baseApkFile: File? = null
 
                 try {
                     ZipFile(tempFile).use { zip ->
