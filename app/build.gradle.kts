@@ -95,7 +95,6 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.datastore.preferences)
     implementation(libs.accompanist.drawablepainter)
-    implementation(libs.core.splashscreen)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)

@@ -664,13 +664,6 @@ fun CreditsScreen() {
                 dependencyLicense = APACHE2LICENSE,
             )
         }
-        item {
-            CreditsItem(
-                dependencyName = "AndroidX Core Splashscreen",
-                dependencyPackageName = "androidx.core:core-splashscreen",
-                dependencyLicense = APACHE2LICENSE,
-            )
-        }
 
         item {
             Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
