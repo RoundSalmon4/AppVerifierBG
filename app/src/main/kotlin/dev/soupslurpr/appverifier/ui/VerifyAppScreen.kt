@@ -132,7 +132,7 @@ fun VerifyAppScreen(
                 ),
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Text("APK FAILED TO PARSE", fontWeight = FontWeight.Bold)
+                    Text("APK FAILED TO PARSE", style = typography.titleMedium)
                     Text("Make sure you provided a valid apk file.")
                 }
             }
@@ -145,7 +145,7 @@ fun VerifyAppScreen(
                 ),
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Text("APP NOT INSTALLED OR INVALID FORMAT", fontWeight = FontWeight.Bold)
+                    Text("APP NOT INSTALLED OR INVALID FORMAT", style = typography.titleMedium)
                     Text(
                         "The package name doesn't seem to correspond to any installed user app." +
                                 "\nPlease note system apps are not included in the search."
@@ -167,7 +167,7 @@ fun VerifyAppScreen(
                 ),
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Text("INVALID HASH FORMAT", fontWeight = FontWeight.Bold)
+                    Text("INVALID HASH FORMAT", style = typography.titleMedium)
                     Text(
                         "The provided verification info does not contain a valid SHA-256 hash. " +
                                 "A valid hash is 64 hexadecimal characters or 95 characters in " +
@@ -290,14 +290,14 @@ fun VerifyAppScreen(
                             ),
                         )
                         if (showHashComparison) {
-                            Text("Expected:", fontWeight = FontWeight.Bold)
+                            Text("Expected:", style = typography.titleMedium)
                             Text(
                                 text = expectedHashes.joinToString("\n"),
                                 fontFamily = FontFamily.Monospace,
                                 style = typography.bodySmall,
                             )
                             Spacer(Modifier.height(4.dp))
-                            Text("Found:", fontWeight = FontWeight.Bold)
+                            Text("Found:", style = typography.titleMedium)
                             Text(
                                 text = hashes.hashes.joinToString("\n"),
                                 fontFamily = FontFamily.Monospace,
@@ -336,7 +336,7 @@ fun VerifyAppScreen(
                     } else {
                         verificationStatus.simpleVerificationStatus.color
                     }
-                    Text("Verification Status:")
+                    Text("Verification Status:", style = typography.titleMedium)
                     Spacer(Modifier.height(4.dp))
                     SuggestionChip(
                         onClick = { showMoreInfoAboutVerificationStatusDialog = true },
@@ -525,7 +525,8 @@ fun VerifyAppScreen(
                             Text("\nThe matched database entry for this app is from the following sources:\n")
                             Text(
                                 text = internalDatabaseInfo.sources.joinToString("\n") { it.displayName },
-                                style = typography.headlineSmall,
+                                style = typography.bodyMedium,
+                                color = WarningOrange,
                             )
                             Text(
                                 "\nThis information can be useful if you distrust a specific source and want to make" +

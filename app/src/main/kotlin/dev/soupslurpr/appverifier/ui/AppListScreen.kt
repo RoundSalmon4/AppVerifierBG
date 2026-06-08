@@ -360,7 +360,7 @@ fun AppListScreen(
                         Text(
                             "No installed apps match the shared package names.",
                             modifier = Modifier.padding(32.dp),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
