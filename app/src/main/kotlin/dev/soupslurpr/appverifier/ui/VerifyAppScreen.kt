@@ -517,6 +517,11 @@ fun VerifyAppScreen(
 
     if (showMoreInfoAboutHashStatusDialog) {
         val hashSources = internalDatabaseInfo.sources.filter { it != Source.VERIFIED_DOMAIN }
+        val hashInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
+            InternalDatabaseStatus.MATCH -> "This app's signing certificate hash matches an entry in the internal database. You don't need to verify normally."
+            InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database, but its hash did NOT match. This app may be non-genuine."
+            InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database. This isn't anything to worry about, but please verify the app normally."
+        }
         AlertDialog(
             onDismissRequest = { showMoreInfoAboutHashStatusDialog = false },
             confirmButton = {
@@ -532,7 +537,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' '),
+                        "HASH ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
                         style = typography.headlineSmall,
                         color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
@@ -541,7 +546,7 @@ fun VerifyAppScreen(
             text = {
                 LazyColumn {
                     item {
-                        Text(internalDatabaseInfo.internalDatabaseStatus.info)
+                        Text(hashInfoText)
                     }
                     item {
                         if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && hashSources.isNotEmpty()) {
@@ -570,6 +575,12 @@ fun VerifyAppScreen(
     }
 
     if (showMoreInfoAboutDomainStatusDialog) {
+        val domainSources = internalDatabaseInfo.sources.filter { it == Source.VERIFIED_DOMAIN }
+        val domainInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
+            InternalDatabaseStatus.MATCH -> "This app's hash is verified by a domain-verified source in the internal database."
+            InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database through a domain-verified source, but its hash did NOT match."
+            InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database."
+        }
         AlertDialog(
             onDismissRequest = { showMoreInfoAboutDomainStatusDialog = false },
             confirmButton = {
@@ -594,19 +605,14 @@ fun VerifyAppScreen(
             text = {
                 LazyColumn {
                     item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) {
-                            Text("This app's developer has verified ownership of their domain in the internal database.")
+                        Text(domainInfoText)
+                    }
+                    item {
+                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domainSources.isNotEmpty()) {
+                            Text("\nThe matched domain source:\n")
                             Text(
-                                "\nVerified domain source:\n",
-                            )
-                            Text(
-                                text = Source.VERIFIED_DOMAIN.displayName,
+                                text = domainSources.joinToString("\n") { it.displayName },
                                 style = typography.headlineSmall,
-                            )
-                        } else {
-                            Text(
-                                "This app was found in the internal database but its hash did NOT match. " +
-                                        "This app may be non-genuine."
                             )
                         }
                     }
