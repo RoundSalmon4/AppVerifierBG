@@ -580,9 +580,9 @@ fun VerifyAppScreen(
             null
         }
         val domainInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
-            InternalDatabaseStatus.MATCH -> "This app's hash is verified by a domain-verified source in the internal database."
-            InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database through a domain-verified source, but its hash did NOT match."
-            InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database."
+            InternalDatabaseStatus.MATCH -> "This app's signing certificate hash matches against a domain-verified source in the internal database. You don't need to verify normally."
+            InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database through a domain-verified source, but its hash did NOT match. This app may be non-genuine."
+            InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database. This isn't anything to worry about, but please verify the app normally."
         }
         AlertDialog(
             onDismissRequest = { showMoreInfoAboutDomainStatusDialog = false },
@@ -609,20 +609,12 @@ fun VerifyAppScreen(
                 LazyColumn {
                     item {
                         Text(domainInfoText)
-                        if (domain != null) {
-                            Text(
-                                text = "\n$domain",
-                                style = typography.headlineSmall,
-                            )
-                            Text("\nThe developer has verified ownership of this domain.")
-                        }
                     }
                     item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && internalDatabaseInfo.domainSources.isNotEmpty()) {
-                            Text("\nSource:")
+                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domain != null) {
                             Text(
-                                text = internalDatabaseInfo.domainSources.joinToString("\n") { it.displayName },
-                                style = typography.headlineSmall,
+                                text = "\nDerived domain: $domain",
+                                color = Color.Gray,
                             )
                         }
                     }
