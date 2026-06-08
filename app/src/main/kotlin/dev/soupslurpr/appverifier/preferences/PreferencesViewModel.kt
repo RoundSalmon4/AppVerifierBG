@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
-import dev.soupslurpr.appverifier.data.ImportResult
 import dev.soupslurpr.appverifier.data.ImportSummary
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.toJson

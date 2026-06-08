@@ -45,7 +45,6 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.value.hashes.value = hashes
         _uiState.value.internalDatabaseInfo.value = internalDatabaseInfo
         _uiState.value.verificationStatus.value = VerificationStatus.UNKNOWN
-        _uiState.value.searchQuery.value = ""
         _uiState.value.appNotFoundOrInvalidFormat.value = false
         _uiState.value.apkFailedToParse.value = false
         _uiState.value.invalidHashFormat.value = false

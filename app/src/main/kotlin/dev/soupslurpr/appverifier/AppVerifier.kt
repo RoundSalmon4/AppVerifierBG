@@ -212,8 +212,6 @@ fun AppVerifierApp(
                         navController.navigate(AppVerifierScreens.VerifyApp.name)
                     },
                     { searchQuery = it },
-                    { },
-                    { },
                     { verifyAppViewModel.getHashesFromPackageInfo(it) },
                     { verifyAppViewModel.getInternalDatabaseInfoFromVerificationInfo(it) },
                     DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode.second.value),

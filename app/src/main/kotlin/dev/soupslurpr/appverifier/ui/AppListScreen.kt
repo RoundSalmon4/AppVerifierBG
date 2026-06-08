@@ -92,8 +92,6 @@ fun AppListScreen(
         internalDatabaseInfo: InternalDatabaseInfo,
     ) -> Unit,
     onQueryChange: (query: String) -> Unit,
-    onSearch: (query: String) -> Unit,
-    onSearchActiveChange: (active: Boolean) -> Unit,
     getHashesFromPackageInfo: (packageInfo: PackageInfo) -> Hashes,
     getInternalDatabaseInfoFromVerificationInfo: (verification: VerificationInfo) -> InternalDatabaseInfo,
     databaseStatusDisplayMode: DatabaseStatusDisplayMode = DatabaseStatusDisplayMode.BOTH,
@@ -270,16 +268,16 @@ fun AppListScreen(
                     SearchBarDefaults.InputField(
                         query = searchQuery,
                         onQueryChange = onQueryChange,
-                        onSearch = onSearch,
+                        onSearch = {},
                         expanded = false,
-                        onExpandedChange = onSearchActiveChange,
+                        onExpandedChange = {},
                         placeholder = { Text(stringResource(android.R.string.search_go)) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         colors = colors1.inputFieldColors,
                     )
                 },
                 expanded = false,
-                onExpandedChange = onSearchActiveChange,
+                onExpandedChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 8.dp),
