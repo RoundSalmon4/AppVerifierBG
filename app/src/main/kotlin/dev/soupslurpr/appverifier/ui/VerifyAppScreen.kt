@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -103,7 +104,9 @@ fun VerifyAppScreen(
 
     var showMoreInfoAboutVerificationStatusDialog by rememberSaveable { mutableStateOf(false) }
 
-    var showMoreInfoAboutInternalDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
+    var showMoreInfoAboutHashStatusDialog by rememberSaveable { mutableStateOf(false) }
+
+    var showMoreInfoAboutDomainStatusDialog by rememberSaveable { mutableStateOf(false) }
 
     var showMoreInfoAboutUserDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -200,7 +203,7 @@ fun VerifyAppScreen(
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 SuggestionChip(
-                                    onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
+                                    onClick = { showMoreInfoAboutHashStatusDialog = true },
                                     label = {
                                         Text("Hash: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}")
                                     },
@@ -214,7 +217,7 @@ fun VerifyAppScreen(
                                     Spacer(Modifier.width(8.dp))
                                     val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')
                                     SuggestionChip(
-                                        onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
+                                        onClick = { showMoreInfoAboutDomainStatusDialog = true },
                                         label = { Text("Domain: $domainStatusText") },
                                         colors = SuggestionChipDefaults.suggestionChipColors(
                                             containerColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color.copy(alpha = 0.12f),
@@ -512,12 +515,13 @@ fun VerifyAppScreen(
         Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
     }
 
-    if (showMoreInfoAboutInternalDatabaseStatusDialog) {
+    if (showMoreInfoAboutHashStatusDialog) {
+        val hashSources = internalDatabaseInfo.sources.filter { it != Source.VERIFIED_DOMAIN }
         AlertDialog(
-            onDismissRequest = { showMoreInfoAboutInternalDatabaseStatusDialog = false },
+            onDismissRequest = { showMoreInfoAboutHashStatusDialog = false },
             confirmButton = {
                 TextButton(
-                    { showMoreInfoAboutInternalDatabaseStatusDialog = false }
+                    { showMoreInfoAboutHashStatusDialog = false }
                 ) {
                     Text(stringResource(id = android.R.string.ok))
                 }
@@ -540,10 +544,10 @@ fun VerifyAppScreen(
                         Text(internalDatabaseInfo.internalDatabaseStatus.info)
                     }
                     item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) {
-                            Text("\nThe matched database entry for this app is from the following sources:\n")
+                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && hashSources.isNotEmpty()) {
+                            Text("\nThe matched hash entry for this app is from the following sources:\n")
                             Text(
-                                text = internalDatabaseInfo.sources.joinToString("\n") { it.displayName },
+                                text = hashSources.joinToString("\n") { it.displayName },
                                 style = typography.bodyMedium,
                                 color = Gold80,
                             )
@@ -558,6 +562,52 @@ fun VerifyAppScreen(
                                     color = Color.Gray,
                                 )
                             }
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    if (showMoreInfoAboutDomainStatusDialog) {
+        AlertDialog(
+            onDismissRequest = { showMoreInfoAboutDomainStatusDialog = false },
+            confirmButton = {
+                TextButton(
+                    { showMoreInfoAboutDomainStatusDialog = false }
+                ) {
+                    Text(stringResource(id = android.R.string.ok))
+                }
+            },
+            title = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        "DOMAIN ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
+                        style = typography.headlineSmall,
+                        color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
+                    )
+                }
+            },
+            text = {
+                LazyColumn {
+                    item {
+                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) {
+                            Text("This app's developer has verified ownership of their domain in the internal database.")
+                            Text(
+                                "\nVerified domain source:\n",
+                            )
+                            Text(
+                                text = Source.VERIFIED_DOMAIN.displayName,
+                                style = typography.headlineSmall,
+                            )
+                        } else {
+                            Text(
+                                "This app was found in the internal database but its hash did NOT match. " +
+                                        "This app may be non-genuine."
+                            )
                         }
                     }
                 }
