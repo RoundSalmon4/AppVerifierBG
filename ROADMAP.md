@@ -9,7 +9,7 @@ APK, and verify signatures.
 
 Ref: [#227](https://github.com/soupslurpr/AppVerifier/issues/227)
 
-**Status: Not started.**
+**Status: In progress.**
 
 ## ✅ Submit to F-Droid
 

@@ -23,6 +23,7 @@ import android.util.Log
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.MessageDigest
+import java.util.zip.ZipFile
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
@@ -305,8 +306,27 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                     }
                 }
 
+                var baseApkFile: File? = null
+
+                try {
+                    ZipFile(tempFile).use { zip ->
+                        val baseEntry = zip.getEntry("base.apk")
+                        if (baseEntry != null) {
+                            baseApkFile = File.createTempFile("base", ".apk", getApplication<Application>().cacheDir)
+                            zip.getInputStream(baseEntry).use { input ->
+                                baseApkFile!!.outputStream().use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+
+                val apkPath = baseApkFile?.path ?: tempFile.path
+
                 val packageInfo = packageManager.getPackageArchiveInfo(
-                    tempFile.path,
+                    apkPath,
                     PackageManager.GET_SIGNING_CERTIFICATES
                 )
                 val applicationInfo = packageInfo?.applicationInfo ?: ApplicationInfo()
@@ -316,8 +336,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                     return
                 }
 
-                applicationInfo.sourceDir = tempFile.path
-                applicationInfo.publicSourceDir = tempFile.path
+                applicationInfo.sourceDir = apkPath
+                applicationInfo.publicSourceDir = apkPath
 
                 val packageName = packageInfo.packageName
 
@@ -332,7 +352,12 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 setAppIcon(packageManager.getApplicationIcon(applicationInfo))
             } finally {
                 if (!tempFile.delete()) {
-                    Log.e("VerifyAppViewModel", "Failed to delete temporary APK file")
+                    Log.e("VerifyAppViewModel", "Failed to delete temporary file")
+                }
+                baseApkFile?.let {
+                    if (!it.delete()) {
+                        Log.e("VerifyAppViewModel", "Failed to delete temporary base APK")
+                    }
                 }
             }
         } catch (e: Exception) {

@@ -161,7 +161,7 @@ fun AppVerifierApp(
                         navController.navigate(AppVerifierScreens.AppList.name)
                     },
                     onVerifyApkFileButtonClicked = {
-                        openApkFileLauncher.launch(arrayOf("application/vnd.android.package-archive"))
+                        openApkFileLauncher.launch(arrayOf("application/vnd.android.package-archive", "application/zip"))
                     },
                     onPasteFromClipboard = {
                         val text = clipboardManager.getText()?.text

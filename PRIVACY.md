@@ -26,9 +26,10 @@ discarded.
 
 ## APK files
 
-If you provide an APK file to this app, it is temporarily stored in this
-app's cache directory and deleted once the needed signature information
-has been processed.
+If you provide an APK or .apks file to this app, it is temporarily stored
+in this app's cache directory and deleted once the needed signature
+information has been processed. For .apks containers, the base APK is
+extracted and also deleted after processing.
 
 ## User database
 
