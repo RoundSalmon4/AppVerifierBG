@@ -19,7 +19,7 @@ data class VerifyAppUiState(
     val internalDatabaseInfo: MutableState<InternalDatabaseInfo> = mutableStateOf(
         InternalDatabaseInfo(
             InternalDatabaseStatus.NOT_FOUND,
-            listOf(Source.NONE)
+            hashSources = listOf(Source.NONE)
         )
     ),
 )
@@ -27,9 +27,9 @@ data class VerifyAppUiState(
 
 class InternalDatabaseInfo(
     val internalDatabaseStatus: InternalDatabaseStatus,
-    val sources: List<Source>,
+    val hashSources: List<Source>,
+    val domainSources: List<Source> = emptyList(),
     val isSubsetMatch: Boolean = false,
-    val hasVerifiedDomain: Boolean = false,
 )
 
 enum class InternalDatabaseStatus(

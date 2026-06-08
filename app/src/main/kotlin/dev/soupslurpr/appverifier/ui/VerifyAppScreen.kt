@@ -60,7 +60,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
-import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -213,7 +212,7 @@ fun VerifyAppScreen(
                                         iconContentColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                                     ),
                                 )
-                                if (internalDatabaseInfo.hasVerifiedDomain) {
+                                if (internalDatabaseInfo.domainSources.isNotEmpty()) {
                                     Spacer(Modifier.width(8.dp))
                                     val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')
                                     SuggestionChip(
@@ -516,7 +515,6 @@ fun VerifyAppScreen(
     }
 
     if (showMoreInfoAboutHashStatusDialog) {
-        val hashSources = internalDatabaseInfo.sources.filter { it != Source.VERIFIED_DOMAIN }
         val hashInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
             InternalDatabaseStatus.MATCH -> "This app's signing certificate hash matches an entry in the internal database. You don't need to verify normally."
             InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database, but its hash did NOT match. This app may be non-genuine."
@@ -549,10 +547,10 @@ fun VerifyAppScreen(
                         Text(hashInfoText)
                     }
                     item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && hashSources.isNotEmpty()) {
+                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && internalDatabaseInfo.hashSources.isNotEmpty()) {
                             Text("\nThe matched hash entry for this app is from the following sources:\n")
                             Text(
-                                text = hashSources.joinToString("\n") { it.displayName },
+                                text = internalDatabaseInfo.hashSources.joinToString("\n") { it.displayName },
                                 style = typography.bodyMedium,
                                 color = Gold80,
                             )
@@ -575,7 +573,12 @@ fun VerifyAppScreen(
     }
 
     if (showMoreInfoAboutDomainStatusDialog) {
-        val domainSources = internalDatabaseInfo.sources.filter { it == Source.VERIFIED_DOMAIN }
+        val domainSegments = packageName.split(".")
+        val domain = if (domainSegments.size >= 2) {
+            "${domainSegments[1]}.${domainSegments[0]}"
+        } else {
+            null
+        }
         val domainInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
             InternalDatabaseStatus.MATCH -> "This app's hash is verified by a domain-verified source in the internal database."
             InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database through a domain-verified source, but its hash did NOT match."
@@ -606,12 +609,19 @@ fun VerifyAppScreen(
                 LazyColumn {
                     item {
                         Text(domainInfoText)
+                        if (domain != null) {
+                            Text(
+                                text = "\n$domain",
+                                style = typography.headlineSmall,
+                            )
+                            Text("\nThe developer has verified ownership of this domain.")
+                        }
                     }
                     item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domainSources.isNotEmpty()) {
-                            Text("\nThe matched domain source:\n")
+                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && internalDatabaseInfo.domainSources.isNotEmpty()) {
+                            Text("\nSource:")
                             Text(
-                                text = domainSources.joinToString("\n") { it.displayName },
+                                text = internalDatabaseInfo.domainSources.joinToString("\n") { it.displayName },
                                 style = typography.headlineSmall,
                             )
                         }

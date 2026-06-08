@@ -273,17 +273,19 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         val entry = internalVerificationInfoDatabaseMap[verificationInfo.packageName]
             ?: return InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
 
-        val hasVerifiedDomain = entry.hashesList.any { hashSet ->
-            hashSet.sources.any { it == Source.VERIFIED_DOMAIN }
-        }
-
         val maybeMatchedHashes = entry.hashesList.find {
             it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
         }
-        return if (maybeMatchedHashes != null) {
-            InternalDatabaseInfo(InternalDatabaseStatus.MATCH, maybeMatchedHashes.sources, hasVerifiedDomain = hasVerifiedDomain)
+        if (maybeMatchedHashes != null) {
+            val hashSources = maybeMatchedHashes.sources.filter { it != Source.VERIFIED_DOMAIN }
+            val domainSources = maybeMatchedHashes.sources.filter { it == Source.VERIFIED_DOMAIN }
+            InternalDatabaseInfo(InternalDatabaseStatus.MATCH, hashSources, domainSources)
         } else {
-            InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE), hasVerifiedDomain = hasVerifiedDomain)
+            val domainSources = entry.hashesList
+                .flatMap { it.sources }
+                .filter { it == Source.VERIFIED_DOMAIN }
+                .distinct()
+            InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE), domainSources)
         }
     }
 
