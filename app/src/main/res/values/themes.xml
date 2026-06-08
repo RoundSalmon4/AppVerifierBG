@@ -3,5 +3,6 @@
 
     <style name="Theme.AppVerifier" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowSplashScreenBackground">#000000</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent</item>
     </style>
 </resources>
