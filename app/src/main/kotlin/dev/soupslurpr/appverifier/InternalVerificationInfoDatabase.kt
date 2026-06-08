@@ -3773,6 +3773,20 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.gpl.rpg.AndorsTrail",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "39:16:CB:37:00:F0:AB:8E:79:01:44:48:D0:00:42:9B:82:6A:59:E0:B4:36:4B:96:C9:4D:90:5A:65:59:D2:43"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.grindrapp.android",
         listOf(
             Hashes(
@@ -7887,6 +7901,26 @@ val internalVerificationInfoDatabase = setOf(
                     "69:72:4A:B4:62:25:A5:52:A7:EE:21:1C:D4:D7:2F:B8:74:88:9A:76:99:C5:83:6A:CA:1B:D8:DF:47:D3:CB:D2"
                 ),
                 false
+            ),
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "F2:24:CE:FC:32:11:F2:8D:66:0D:23:42:CD:FA:65:13:A3:83:77:42:48:EA:5C:6B:3E:EA:46:9A:CD:32:2D:F4"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.FDROID
+                ),
+                listOf(
+                    "69:72:4A:B4:62:25:A5:52:A7:EE:21:1C:D4:D7:2F:B8:74:88:9A:76:99:C5:83:6A:CA:1B:D8:DF:47:D3:CB:D2",
+                    "F2:24:CE:FC:32:11:F2:8D:66:0D:23:42:CD:FA:65:13:A3:83:77:42:48:EA:5C:6B:3E:EA:46:9A:CD:32:2D:F4"
+                ),
+                false
             )
         )
     ),
@@ -10904,6 +10938,22 @@ val internalVerificationInfoDatabase = setOf(
         )
     ),
     InternalDatabaseVerificationInfo(
+        "org.joinmastodon.android.moshinda",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.FDROID,
+                    Source.FDROID_IZZYONDROID
+                ),
+                listOf(
+                    "1D:D4:D6:DB:71:38:33:58:34:E3:92:7C:C7:45:AD:48:23:6A:BC:52:25:2B:BB:83:69:E9:6B:8B:BA:77:77:20"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "org.kde.kdeconnect_tp",
         listOf(
             Hashes(
@@ -12312,6 +12362,7 @@ val internalVerificationInfoDatabase = setOf(
         )
     )
 )
+
 
 
 val internalVerificationInfoDatabaseMap: Map<String, InternalDatabaseVerificationInfo> by lazy {
