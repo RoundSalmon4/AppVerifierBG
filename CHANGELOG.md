@@ -5,6 +5,9 @@ Dates are based on UTC (releases typically around 2am UTC).
 ## 2026-06-09
 
 - .apks split APK container support.
+- Normalized text sizing across error cards, labels, and dialogs.
+- DB dialog source names now use gold accent with readable body text.
+- Dialog titles no longer show underscores (NOT_FOUND -> NOT FOUND).
 
 ## 2026-06-08
 
