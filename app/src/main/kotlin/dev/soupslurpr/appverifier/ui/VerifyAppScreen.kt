@@ -337,7 +337,7 @@ fun VerifyAppScreen(
                     } else {
                         verificationStatus.simpleVerificationStatus.color
                     }
-                    Text("Verification Status:", style = typography.titleMedium)
+                    Text("Text Match:", style = typography.titleMedium)
                     Spacer(Modifier.height(4.dp))
                     SuggestionChip(
                         onClick = { showMoreInfoAboutVerificationStatusDialog = true },
