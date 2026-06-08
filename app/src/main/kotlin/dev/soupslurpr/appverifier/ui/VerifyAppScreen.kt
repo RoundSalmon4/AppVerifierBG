@@ -68,6 +68,7 @@ import dev.soupslurpr.appverifier.data.SimpleInternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationStatus
+import dev.soupslurpr.appverifier.ui.theme.Gold80
 import dev.soupslurpr.appverifier.ui.theme.UserDbPurple
 import dev.soupslurpr.appverifier.ui.theme.WarningOrange
 
@@ -509,7 +510,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        internalDatabaseInfo.internalDatabaseStatus.name,
+                        internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' '),
                         style = typography.headlineSmall,
                         color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
@@ -526,7 +527,7 @@ fun VerifyAppScreen(
                             Text(
                                 text = internalDatabaseInfo.sources.joinToString("\n") { it.displayName },
                                 style = typography.bodyMedium,
-                                color = WarningOrange,
+                                color = Gold80,
                             )
                             Text(
                                 "\nThis information can be useful if you distrust a specific source and want to make" +
@@ -612,7 +613,7 @@ fun VerifyAppScreen(
         } else if (sharedTextHashMatch != null) {
             if (sharedTextHashMatch) "MATCH" else "NOMATCH"
         } else {
-            verificationStatus.name
+            verificationStatus.name.replace('_', ' ')
         }
         val dialogColor = if (isSelfVerification) {
             Color.Gray
