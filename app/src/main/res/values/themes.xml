@@ -2,7 +2,6 @@
 <resources>
 
     <style name="Theme.AppVerifier" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground">#1A237E</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_screen</item>
+        <item name="android:windowSplashScreenBackground">#000000</item>
     </style>
 </resources>
