@@ -196,7 +196,7 @@ fun VerifyAppScreen(
                         Spacer(Modifier.height(8.dp))
                         if (showInternal) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.Center,
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 SuggestionChip(
@@ -211,6 +211,7 @@ fun VerifyAppScreen(
                                     ),
                                 )
                                 if (internalDatabaseInfo.hasVerifiedDomain) {
+                                    Spacer(Modifier.width(8.dp))
                                     val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')
                                     SuggestionChip(
                                         onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
