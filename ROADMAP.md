@@ -1,6 +1,6 @@
 # Roadmap
 
-## □ .apks split APK support
+## ✅ .apks split APK support
 
 The file picker and shared APK handling assume a single `.apk` file, but
 split APKs (`.apks`) are common for large apps (e.g., from APKMirror,
@@ -9,7 +9,12 @@ APK, and verify signatures.
 
 Ref: [#227](https://github.com/soupslurpr/AppVerifier/issues/227)
 
-**Status: In progress.**
+**Status: Completed.** The file picker and intent filters accept `application/zip`
+MIME to allow selecting `.apks` files. On selection, the container is opened as a
+ZIP, `base.apk` is extracted to a temporary file, and its signing certificates are
+verified using the same pipeline as regular APKs. Both container and extracted
+APK are deleted after processing. Non-`.apks` ZIPs fall through gracefully to the
+existing error handling.
 
 ## ✅ Submit to F-Droid
 

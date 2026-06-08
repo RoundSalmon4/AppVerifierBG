@@ -2,6 +2,10 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-09
+
+- .apks split APK container support.
+
 ## 2026-06-08
 
 - Privacy policy updated.
