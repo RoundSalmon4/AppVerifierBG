@@ -198,7 +198,7 @@ fun VerifyAppScreen(
                             SuggestionChip(
                                 onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
                                 label = {
-                                    Text("Internal: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}")
+                                    Text("Hash: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}")
                                 },
                                 colors = SuggestionChipDefaults.suggestionChipColors(
                                     containerColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color.copy(alpha = 0.12f),
@@ -207,6 +207,19 @@ fun VerifyAppScreen(
                                 ),
                             )
                             Spacer(Modifier.height(4.dp))
+                            if (internalDatabaseInfo.hasVerifiedDomain) {
+                                val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')
+                                SuggestionChip(
+                                    onClick = { showMoreInfoAboutInternalDatabaseStatusDialog = true },
+                                    label = { Text("Domain: $domainStatusText") },
+                                    colors = SuggestionChipDefaults.suggestionChipColors(
+                                        containerColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color.copy(alpha = 0.12f),
+                                        labelColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
+                                        iconContentColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
+                                    ),
+                                )
+                                Spacer(Modifier.height(4.dp))
+                            }
                         }
                         if (showUser) {
                             val userStatusText = if (userDbEntry != null) {
