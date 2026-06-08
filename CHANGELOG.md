@@ -5,7 +5,6 @@ Dates are based on UTC (releases typically around 2am UTC).
 ## 2026-06-08
 
 - Privacy policy updated.
-- System splash screen fixed.
 
 ## 2026-06-07
 
