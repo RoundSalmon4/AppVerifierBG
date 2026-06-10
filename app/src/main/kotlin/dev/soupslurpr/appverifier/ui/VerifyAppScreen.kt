@@ -612,9 +612,11 @@ fun VerifyAppScreen(
                     }
                     item {
                         if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domain != null) {
+                            Text("\nThe matched hash entry for this app was verified against the following domain:\n")
                             Text(
-                                text = "\nDerived domain: $domain",
-                                color = Color.Gray,
+                                text = domain,
+                                style = typography.bodyMedium,
+                                color = Gold80,
                             )
                         }
                     }
