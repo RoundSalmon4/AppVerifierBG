@@ -18,7 +18,6 @@ on:
         type: choice
         options:
           - feature/all-enhancements
-          - domain/dev
 
 permissions:
   contents: write
