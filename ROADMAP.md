@@ -18,11 +18,10 @@ existing error handling.
 
 ## ✅ Submit to F-Droid
 
-Metadata submitted to the F-Droid repository at
-[fdroid/fdroiddata!39736](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/39736).
-MR merged, awaiting the F-Droid build pipeline.
+Listed on F-Droid at
+[https://f-droid.org/en/packages/com.roundsalmon4.appverifier/](https://f-droid.org/en/packages/com.roundsalmon4.appverifier/).
 
-**Status: Merged.**
+**Status: Published.**
 
 ## ✅ Reorder the app list
 
