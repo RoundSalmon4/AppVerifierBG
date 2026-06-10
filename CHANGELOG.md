@@ -2,6 +2,10 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-11
+
+- Internal database status chip now shows separate Hash and Domain info with dedicated dialogs.
+
 ## 2026-06-09
 
 - .apks split APK container support.
