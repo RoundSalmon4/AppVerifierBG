@@ -510,7 +510,7 @@ fun VerifyAppScreen(
     if (showMoreInfoAboutHashStatusDialog) {
         val hashInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
             InternalDatabaseStatus.MATCH -> "This app's signing certificate hash matches an entry in the internal database. You don't need to verify normally."
-            InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database, but its hash did NOT match. This app may be non-genuine."
+            InternalDatabaseStatus.NOMATCH -> "Found in the database, but the hash does not match. The app may be tampered with or has a new signing key."
             InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database. This isn't anything to worry about, but please verify the app normally."
         }
         AlertDialog(
@@ -574,7 +574,7 @@ fun VerifyAppScreen(
         }
         val domainInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
             InternalDatabaseStatus.MATCH -> "This app's signing certificate hash matches against a domain-verified source in the internal database. You don't need to verify normally."
-            InternalDatabaseStatus.NOMATCH -> "This app was found in the internal database through a domain-verified source, but its hash did NOT match. This app may be non-genuine."
+            InternalDatabaseStatus.NOMATCH -> "Found via domain verification, but the hash does not match. The app may be tampered with or has a new signing key."
             InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database. This isn't anything to worry about, but please verify the app normally."
         }
         AlertDialog(
