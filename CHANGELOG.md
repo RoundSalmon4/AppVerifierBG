@@ -6,14 +6,16 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 - Internal database status chip now shows separate Hash and Domain info with dedicated dialogs.
 
-## 2026-06-11
+## 2026-06-12
 
 - Status chips now show NO MATCH instead of FAILURE, and NONE instead of UNKNOWN.
 - Filter chip renamed from "Failures only" to "Mismatches only".
 - Selection mode in app list lets you batch-add or batch-remove user database entries.
 - Debug-cert badge sits alongside user DB and clipboard badges instead of replacing them.
-- APK files shared or opened while app is running are now re-verified.
-- Bumped to 0.5.0.
+- Opening or sharing an APK while the app is already running now re-verifies correctly.
+- Rapidly switching between APK verifications no longer risks showing stale results.
+- Large APK files are handled more reliably without crashing.
+- Internal database generation hardened against edge cases in source data.
 
 ## 2026-06-09
 
