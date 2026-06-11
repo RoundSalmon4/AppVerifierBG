@@ -2,10 +2,6 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
-## 2026-06-11
-
-- Internal database status chip now shows separate Hash and Domain info with dedicated dialogs.
-
 ## 2026-06-12
 
 - Status chips now show NO MATCH instead of FAILURE, and NONE instead of UNKNOWN.
@@ -16,6 +12,10 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Rapidly switching between APK verifications no longer risks showing stale results.
 - Large APK files are handled more reliably without crashing.
 - Internal database generation hardened against edge cases in source data.
+
+## 2026-06-11
+
+- Internal database status chip now shows separate Hash and Domain info with dedicated dialogs.
 
 ## 2026-06-09
 
