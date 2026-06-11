@@ -109,6 +109,8 @@ fun VerifyAppScreen(
 
     var showMoreInfoAboutUserDatabaseStatusDialog by rememberSaveable { mutableStateOf(false) }
 
+    var showMoreInfoAboutDebugDialog by rememberSaveable { mutableStateOf(false) }
+
     var showHashComparison by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -252,7 +254,7 @@ fun VerifyAppScreen(
                         }
                         if (hashes.isDebug) {
                             SuggestionChip(
-                                onClick = { showMoreInfoAboutVerificationStatusDialog = true },
+                                onClick = { showMoreInfoAboutDebugDialog = true },
                                 icon = {
                                     Icon(
                                         Icons.Default.Warning,
@@ -332,15 +334,6 @@ fun VerifyAppScreen(
                             style = typography.bodySmall,
                         )
                     }
-                    if (hashes.isDebug) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "This app is signed with a debug certificate and may not be genuine.",
-                            color = WarningOrange,
-                            style = typography.bodySmall,
-                        )
-                    }
-
                     Spacer(Modifier.height(16.dp))
 
                     val displayVerificationStatus = if (isSelfVerification) {
@@ -739,6 +732,41 @@ fun VerifyAppScreen(
                     }
                 }
             }
+        )
+    }
+
+    if (showMoreInfoAboutDebugDialog) {
+        AlertDialog(
+            onDismissRequest = { showMoreInfoAboutDebugDialog = false },
+            confirmButton = {
+                TextButton(
+                    { showMoreInfoAboutDebugDialog = false }
+                ) {
+                    Text(stringResource(id = android.R.string.ok))
+                }
+            },
+            title = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = WarningOrange,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "DEBUG",
+                        style = typography.headlineSmall,
+                        color = WarningOrange,
+                    )
+                }
+            },
+            text = {
+                Text("This app is signed with a debug certificate and may not be genuine.")
+            },
         )
     }
 }
