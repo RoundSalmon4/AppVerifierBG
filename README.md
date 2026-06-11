@@ -22,7 +22,7 @@ Pasted hashes are checked for valid SHA-256 format and show a clear error if som
 
 ## App List
 
-Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches all at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text — pick whichever you need from the dropdown and it only shows modes with matching data. A filter chip hides everything except failures. The default sort order can be set in settings. A search bar lets you filter by name or package name. Long-press an app with a user database entry or clipboard checkmark to remove it individually.
+Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches all at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text — pick whichever you need from the dropdown and it only shows modes with matching data. A filter chip hides everything except mismatches. The default sort order can be set in settings. A search bar lets you filter by name or package name. Long-press an app with a user database entry or clipboard checkmark to remove it individually.
 
 ## Shared Text
 
@@ -34,7 +34,7 @@ Verify from clipboard with a single button on the startup screen. Successful cli
 
 ## User Database
 
-Save an app's verification info so you can check it later without needing the shared text. Add entries one at a time from the verification screen or bulk-add from a shared text filtered list. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed. Entries can be removed individually by long-pressing the app in the list.
+Save an app's verification info so you can check it later without needing the shared text. Add entries one at a time from the verification screen or bulk-add from a shared text filtered list. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed. Entries can be removed individually by long-pressing the app in the list, or removed in batch from selection mode.
 
 **Plain text** — entries separated by a blank line:
 ```

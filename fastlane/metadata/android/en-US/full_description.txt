@@ -2,7 +2,7 @@ AppVerifier BG verifies that installed Android apps match their expected signing
 
 <b>App List</b>
 
-Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text — pick whichever you need from the dropdown, and it only shows modes with matching data. A filter chip hides everything except failures. The default sort order can be set in settings. Search by name or package name. Long-press an app with a user database entry or clipboard checkmark to remove it individually.
+Every installed user app shows status icons for internal database matches, user database entries, clipboard verification, and shared text matches at a glance. Sort by name, database status, debug builds, clipboard verified, or shared text — pick whichever you need from the dropdown, and it only shows modes with matching data. A filter chip hides everything except mismatches. The default sort order can be set in settings. Search by name or package name. Long-press an app with a user database entry or clipboard checkmark to remove it individually.
 
 <b>Internal Database</b>
 
@@ -14,7 +14,7 @@ See internal and user database results side by side on the app list and verifica
 
 <b>User Database</b>
 
-Save verification info for later. Add entries individually from the verification screen or bulk-add from shared text. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed. Entries can be removed individually by long-pressing the app in the list.
+Save verification info for later. Add entries individually from the verification screen or bulk-add from shared text. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed. Entries can be removed individually by long-pressing the app in the list, or removed in batch from selection mode.
 
 <b>Shared Text</b>
 
