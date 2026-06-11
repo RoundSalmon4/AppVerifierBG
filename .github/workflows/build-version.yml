@@ -78,8 +78,8 @@ jobs:
       - name: Commit and push sync changes
         if: github.event.inputs.mode == 'publish'
         run: |
-          git config user.name "rss-bot"
-          git config user.email "rss-bot@users.noreply.github.com"
+          git config user.name "roundsalmon4"
+          git config user.email "209016228+RoundSalmon4@users.noreply.github.com"
           git add -A
           if ! git diff --quiet HEAD; then
             git commit -m "Sync privacyguides/verified-apps database"
@@ -258,8 +258,8 @@ jobs:
       - name: Create git tag
         if: github.event.inputs.mode == 'publish'
         run: |
-          git config user.name "rss-bot"
-          git config user.email "rss-bot@users.noreply.github.com"
+          git config user.name "roundsalmon4"
+          git config user.email "209016228+RoundSalmon4@users.noreply.github.com"
           VERSION_TAG="v${{ steps.version.outputs.version }}"
           if git rev-parse "$VERSION_TAG" >/dev/null 2>&1; then
             echo "Tag $VERSION_TAG already exists"

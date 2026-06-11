@@ -76,8 +76,8 @@ jobs:
 
       - name: Commit and push sync changes
         run: |
-          git config user.name "rss-bot"
-          git config user.email "rss-bot@users.noreply.github.com"
+          git config user.name "roundsalmon4"
+          git config user.email "209016228+RoundSalmon4@users.noreply.github.com"
           git add -A
           if ! git diff --quiet HEAD; then
             git commit -m "Sync privacyguides/verified-apps database"
