@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import android.util.Log
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.InputStream
 import java.security.MessageDigest
 import java.util.zip.ZipFile
 import java.security.cert.CertificateFactory
@@ -33,6 +34,9 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     val uiState: StateFlow<VerifyAppUiState> = _uiState.asStateFlow()
 
     var onVerificationResult: ((VerificationStatus) -> Unit)? = null
+
+    private var generationCounter = 0
+    private var currentGeneration = 0
 
     fun setAppVerificationInfo(
         name: String,
@@ -289,11 +293,30 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun copyBounded(input: InputStream, output: java.io.OutputStream, maxBytes: Long = 4L * 1024 * 1024 * 1024) {
+        val buffer = ByteArray(8192)
+        var total = 0L
+        while (true) {
+            val n = input.read(buffer)
+            if (n == -1) break
+            total += n
+            if (total > maxBytes) {
+                throw java.io.IOException("Input stream exceeded maximum size of $maxBytes bytes")
+            }
+            output.write(buffer, 0, n)
+        }
+    }
+
     fun setApkVerificationInfoAndInternalDatabaseStatusFromUri(
         contentResolver: ContentResolver,
         uri: Uri,
         packageManager: PackageManager,
     ) {
+        val generation = ++generationCounter
+        currentGeneration = generation
+
+        _uiState.value = VerifyAppUiState()
+
         var baseApkFile: File? = null
 
         try {
@@ -309,9 +332,11 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             try {
                 inputStream.use { fileIn ->
                     tempFile.outputStream().use { fileOut ->
-                        fileIn.copyTo(fileOut)
+                        copyBounded(fileIn, fileOut)
                     }
                 }
+
+                if (generation != currentGeneration) return
 
                 try {
                     ZipFile(tempFile).use { zip ->
@@ -320,13 +345,15 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                             baseApkFile = File.createTempFile("base", ".apk", getApplication<Application>().cacheDir)
                             zip.getInputStream(baseEntry).use { input ->
                                 baseApkFile!!.outputStream().use { output ->
-                                    input.copyTo(output)
+                                    copyBounded(input, output)
                                 }
                             }
                         }
                     }
                 } catch (_: Exception) {
                 }
+
+                if (generation != currentGeneration) return
 
                 val apkPath = baseApkFile?.path ?: tempFile.path
 
@@ -347,6 +374,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 val packageName = packageInfo.packageName
 
                 val hashes = getHashesFromPackageInfo(packageInfo)
+
+                if (generation != currentGeneration) return
 
                 setAppVerificationInfo(
                     packageManager.getApplicationLabel(applicationInfo).toString(),
