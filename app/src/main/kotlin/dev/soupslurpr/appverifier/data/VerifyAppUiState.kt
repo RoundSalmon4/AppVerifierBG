@@ -76,7 +76,7 @@ enum class SimpleVerificationStatus(val color: Color) {
 
 enum class VerificationStatus(val info: String, val simpleVerificationStatus: SimpleVerificationStatus) {
     UNKNOWN(
-        "Since you haven't provided any verification info, I'm unable to determine the verification status",
+        "No verification text has been compared against this app yet.",
         SimpleVerificationStatus.UNKNOWN,
     ),
     MATCH(

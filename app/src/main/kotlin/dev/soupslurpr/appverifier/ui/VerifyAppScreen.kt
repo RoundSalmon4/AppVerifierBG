@@ -340,6 +340,8 @@ fun VerifyAppScreen(
                         "SKIPPED"
                     } else if (sharedTextHashMatch != null) {
                         if (sharedTextHashMatch) "MATCH" else "NO MATCH"
+                    } else if (verificationStatus == VerificationStatus.UNKNOWN) {
+                        "NONE"
                     } else {
                         verificationStatus.simpleVerificationStatus.name
                     }
@@ -684,7 +686,7 @@ fun VerifyAppScreen(
         } else if (sharedTextHashMatch != null) {
             if (sharedTextHashMatch) "MATCH" else "NO MATCH"
         } else {
-            verificationStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")
+            if (verificationStatus == VerificationStatus.UNKNOWN) "NONE" else verificationStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")
         }
         val dialogColor = if (isSelfVerification) {
             Color.Gray
