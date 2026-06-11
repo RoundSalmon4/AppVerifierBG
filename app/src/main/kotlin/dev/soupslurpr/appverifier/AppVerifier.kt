@@ -249,6 +249,16 @@ fun AppVerifierApp(
                             preferencesViewModel.removeClipboardVerifiedPackage(packageName)
                         }
                     },
+                    onAddToUserDatabase = { entries ->
+                        snackbarCoroutineScope.launch {
+                            var count = 0
+                            for (entry in entries) {
+                                preferencesViewModel.addUserDatabaseEntry(entry)
+                                count++
+                            }
+                            snackbarHostState.showSnackbar("Added $count apps to user database")
+                        }
+                    },
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {

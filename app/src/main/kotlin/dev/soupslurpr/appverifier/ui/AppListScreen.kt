@@ -27,6 +27,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
@@ -106,6 +109,7 @@ fun AppListScreen(
     defaultSortMode: SortMode = SortMode.NAME_ASC,
     onRemoveFromUserDatabase: ((String) -> Unit)? = null,
     onRemoveClipboardVerification: ((String) -> Unit)? = null,
+    onAddToUserDatabase: ((List<UserDatabaseEntry>) -> Unit)? = null,
 ) {
     val context = LocalContext.current
 
@@ -125,6 +129,9 @@ fun AppListScreen(
 
     var sortMode by rememberSaveable { mutableStateOf(defaultSortMode) }
     var filterMode by rememberSaveable { mutableStateOf(FilterMode.ALL) }
+    var isSelecting by rememberSaveable { mutableStateOf(false) }
+    var selectedPackageNames by rememberSaveable { mutableStateOf(setOf<String>()) }
+    var showAddSelectedDialog by rememberSaveable { mutableStateOf(false) }
 
     data class AppSortStatus(
         val internalDbStatus: InternalDatabaseStatus,
@@ -293,35 +300,84 @@ fun AppListScreen(
             )
         ) {
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = filterMode == FilterMode.FAILURES_ONLY,
-                            onClick = { filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL else FilterMode.FAILURES_ONLY },
-                            label = { Text("Failures only") },
-                        )
-                    }
-                    Box {
-                        TextButton(onClick = { showSortMenu = true }) {
-                            Text(sortMode.label)
-                        }
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false },
-                        ) {
-                            availableSortModes.forEach { mode ->
-                                DropdownMenuItem(
-                                    text = { Text(mode.label) },
-                                    onClick = { sortMode = mode; showSortMenu = false },
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (!isSelecting) {
+                                FilterChip(
+                                    selected = filterMode == FilterMode.FAILURES_ONLY,
+                                    onClick = { filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL else FilterMode.FAILURES_ONLY },
+                                    label = { Text("Failures only") },
                                 )
                             }
                         }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (isSelecting && selectedPackageNames.isNotEmpty()) {
+                                TextButton(
+                                    onClick = { showAddSelectedDialog = true }
+                                ) {
+                                    Text("Add ${selectedPackageNames.size} selected")
+                                }
+                            }
+                            Box {
+                                if (!isSelecting) {
+                                    TextButton(onClick = { showSortMenu = true }) {
+                                        Text(sortMode.label)
+                                    }
+                                }
+                                DropdownMenu(
+                                    expanded = showSortMenu,
+                                    onDismissRequest = { showSortMenu = false },
+                                ) {
+                                    availableSortModes.forEach { mode ->
+                                        DropdownMenuItem(
+                                            text = { Text(mode.label) },
+                                            onClick = { sortMode = mode; showSortMenu = false },
+                                        )
+                                    }
+                                }
+                            }
+                            TextButton(onClick = {
+                                isSelecting = !isSelecting
+                                if (!isSelecting) selectedPackageNames = emptySet()
+                            }) {
+                                Text(if (isSelecting) "Cancel" else "Select")
+                            }
+                        }
                     }
-                }
+                    if (isSelecting) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            FilterChip(
+                                selected = selectedPackageNames == packageHashes.keys.filter { it !in existingPackageNames }.toSet() && selectedPackageNames.isNotEmpty(),
+                                onClick = {
+                                    selectedPackageNames = packageHashes.keys
+                                        .filter { it !in existingPackageNames }
+                                        .toSet()
+                                },
+                                label = { Text("Not in user DB") },
+                            )
+                            FilterChip(
+                                selected = selectedPackageNames == packageHashes.keys.filter {
+                                    it !in existingPackageNames && packageStatuses[it]?.internalDbStatus != InternalDatabaseStatus.MATCH
+                                }.toSet() && selectedPackageNames.isNotEmpty(),
+                                onClick = {
+                                    selectedPackageNames = packageHashes.keys
+                                        .filter {
+                                            it !in existingPackageNames &&
+                                            packageStatuses[it]?.internalDbStatus != InternalDatabaseStatus.MATCH
+                                        }
+                                        .toSet()
+                                },
+                                label = { Text("Not in either DB") },
+                            )
+                        }
+                    }
             }
             if (sharedFilteredEntries != null) {
                 item {
@@ -434,28 +490,97 @@ fun AppListScreen(
                         }
                     }
                 }
-                AppItem(
-                    name = name,
-                    packageName = packageInfo.packageName,
-                    hashes = hashes,
-                    icon = icon,
-                    onClickAppItem = onClickAppItem,
-                    internalDatabaseInfo = internalDbInfo,
-                    showInternalDbIcon = showInternalDbIcon,
-                    showUserDbIcon = showUserDbIcon,
-                    internalDbStatus = internalDbInfo.internalDatabaseStatus,
-                    userDbMatch = userDbMatch,
-                    sharedHashMatch = sharedHashMatch,
-                    showClipboardCheckmark = showClipboardCheckmark,
-                    isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
-                    onRemoveFromUserDatabase = onRemoveFromUserDatabase,
-                    onRemoveClipboardVerification = onRemoveClipboardVerification,
-                )
+                if (isSelecting) {
+                    val isSelected = packageInfo.packageName in selectedPackageNames
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = { checked ->
+                                selectedPackageNames = if (checked) {
+                                    selectedPackageNames + packageInfo.packageName
+                                } else {
+                                    selectedPackageNames - packageInfo.packageName
+                                }
+                            },
+                        )
+                        AppItem(
+                            name = name,
+                            packageName = packageInfo.packageName,
+                            hashes = hashes,
+                            icon = icon,
+                            onClickAppItem = onClickAppItem,
+                            internalDatabaseInfo = internalDbInfo,
+                            showInternalDbIcon = showInternalDbIcon,
+                            showUserDbIcon = showUserDbIcon,
+                            internalDbStatus = internalDbInfo.internalDatabaseStatus,
+                            userDbMatch = userDbMatch,
+                            sharedHashMatch = sharedHashMatch,
+                            showClipboardCheckmark = showClipboardCheckmark,
+                            isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                            onRemoveFromUserDatabase = onRemoveFromUserDatabase,
+                            onRemoveClipboardVerification = onRemoveClipboardVerification,
+                        )
+                    }
+                } else {
+                    AppItem(
+                        name = name,
+                        packageName = packageInfo.packageName,
+                        hashes = hashes,
+                        icon = icon,
+                        onClickAppItem = onClickAppItem,
+                        internalDatabaseInfo = internalDbInfo,
+                        showInternalDbIcon = showInternalDbIcon,
+                        showUserDbIcon = showUserDbIcon,
+                        internalDbStatus = internalDbInfo.internalDatabaseStatus,
+                        userDbMatch = userDbMatch,
+                        sharedHashMatch = sharedHashMatch,
+                        showClipboardCheckmark = showClipboardCheckmark,
+                        isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                        onRemoveFromUserDatabase = onRemoveFromUserDatabase,
+                        onRemoveClipboardVerification = onRemoveClipboardVerification,
+                    )
+                }
             }
             item {
                 Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
             }
         }
+    }
+
+    if (showAddSelectedDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddSelectedDialog = false },
+            confirmButton = {
+                TextButton(
+                    {
+                        showAddSelectedDialog = false
+                        val entries = selectedPackageNames.mapNotNull { packageName ->
+                            val hashes = packageHashes[packageName] ?: return@mapNotNull null
+                            UserDatabaseEntry(packageName, hashes.hashes, hashes.hasMultipleSigners)
+                        }
+                        onAddToUserDatabase?.invoke(entries)
+                        selectedPackageNames = emptySet()
+                        isSelecting = false
+                    }
+                ) {
+                    Text("Add")
+                }
+            },
+            dismissButton = {
+                TextButton({ showAddSelectedDialog = false }) {
+                    Text(stringResource(id = android.R.string.cancel))
+                }
+            },
+            title = {
+                Text("Add ${selectedPackageNames.size} apps to user database?")
+            },
+            text = {
+                Text("This will add the selected apps' signing certificate hashes to your user database.")
+            },
+        )
     }
 }
 
@@ -516,10 +641,10 @@ fun AppItem(
             trailingContent = {
                 if (hashes.isDebug) {
                     Icon(
-                        Icons.Filled.Error,
+                        Icons.Filled.Warning,
                         "This app is signed with a debug certificate",
                         Modifier,
-                        SimpleVerificationStatus.FAILURE.color,
+                        SimpleVerificationStatus.WARNING.color,
                     )
                 } else {
                 Row {
