@@ -132,6 +132,7 @@ fun AppListScreen(
     var isSelecting by rememberSaveable { mutableStateOf(false) }
     var selectedPackageNames by rememberSaveable { mutableStateOf(setOf<String>()) }
     var showAddSelectedDialog by rememberSaveable { mutableStateOf(false) }
+    var showRemoveSelectedDialog by rememberSaveable { mutableStateOf(false) }
 
     data class AppSortStatus(
         val internalDbStatus: InternalDatabaseStatus,
@@ -316,10 +317,21 @@ fun AppListScreen(
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (isSelecting && selectedPackageNames.isNotEmpty()) {
-                                TextButton(
-                                    onClick = { showAddSelectedDialog = true }
-                                ) {
-                                    Text("Add ${selectedPackageNames.size} selected")
+                                val selectedInDb = selectedPackageNames.count { it in existingPackageNames }
+                                val selectedNotInDb = selectedPackageNames.size - selectedInDb
+                                if (selectedNotInDb > 0) {
+                                    TextButton(
+                                        onClick = { showAddSelectedDialog = true }
+                                    ) {
+                                        Text("Add $selectedNotInDb selected")
+                                    }
+                                }
+                                if (selectedInDb > 0) {
+                                    TextButton(
+                                        onClick = { showRemoveSelectedDialog = true }
+                                    ) {
+                                        Text("Remove $selectedInDb selected")
+                                    }
                                 }
                             }
                             Box {
@@ -375,6 +387,15 @@ fun AppListScreen(
                                         .toSet()
                                 },
                                 label = { Text("Not in either DB") },
+                            )
+                            FilterChip(
+                                selected = selectedPackageNames == packageHashes.keys.filter { it in existingPackageNames }.toSet() && selectedPackageNames.isNotEmpty(),
+                                onClick = {
+                                    selectedPackageNames = packageHashes.keys
+                                        .filter { it in existingPackageNames }
+                                        .toSet()
+                                },
+                                label = { Text("In user DB") },
                             )
                         }
                     }
@@ -551,6 +572,7 @@ fun AppListScreen(
     }
 
     if (showAddSelectedDialog) {
+        val addCount = selectedPackageNames.count { it !in existingPackageNames }
         AlertDialog(
             onDismissRequest = { showAddSelectedDialog = false },
             confirmButton = {
@@ -558,6 +580,7 @@ fun AppListScreen(
                     {
                         showAddSelectedDialog = false
                         val entries = selectedPackageNames.mapNotNull { packageName ->
+                            if (packageName in existingPackageNames) return@mapNotNull null
                             val hashes = packageHashes[packageName] ?: return@mapNotNull null
                             UserDatabaseEntry(packageName, hashes.hashes, hashes.hasMultipleSigners)
                         }
@@ -575,10 +598,42 @@ fun AppListScreen(
                 }
             },
             title = {
-                Text("Add ${selectedPackageNames.size} apps to user database?")
+                Text("Add $addCount apps to user database?")
             },
             text = {
                 Text("This will add the selected apps' signing certificate hashes to your user database.")
+            },
+        )
+    }
+
+    if (showRemoveSelectedDialog) {
+        val removeNames = selectedPackageNames.filter { it in existingPackageNames }
+        AlertDialog(
+            onDismissRequest = { showRemoveSelectedDialog = false },
+            confirmButton = {
+                TextButton(
+                    {
+                        showRemoveSelectedDialog = false
+                        for (packageName in removeNames) {
+                            onRemoveFromUserDatabase?.invoke(packageName)
+                        }
+                        selectedPackageNames = emptySet()
+                        isSelecting = false
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton({ showRemoveSelectedDialog = false }) {
+                    Text(stringResource(id = android.R.string.cancel))
+                }
+            },
+            title = {
+                Text("Remove ${removeNames.size} apps from user database?")
+            },
+            text = {
+                Text("This will remove the selected apps from your user database.")
             },
         )
     }
