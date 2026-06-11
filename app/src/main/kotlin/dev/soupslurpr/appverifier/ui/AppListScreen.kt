@@ -694,16 +694,16 @@ fun AppItem(
                 }
             },
             trailingContent = {
-                if (hashes.isDebug) {
-                    Icon(
-                        Icons.Filled.Warning,
-                        "This app is signed with a debug certificate",
-                        Modifier,
-                        SimpleVerificationStatus.WARNING.color,
-                    )
-                } else {
                 Row {
-                    if (showInternalDbIcon) {
+                    if (hashes.isDebug) {
+                        Icon(
+                            Icons.Filled.Warning,
+                            "This app is signed with a debug certificate",
+                            Modifier,
+                            SimpleVerificationStatus.WARNING.color,
+                        )
+                    }
+                    if (showInternalDbIcon && !hashes.isDebug) {
                         when (internalDbStatus) {
                             InternalDatabaseStatus.MATCH -> Icon(
                                 Icons.Filled.Verified,
@@ -740,22 +740,23 @@ fun AppItem(
                             UserDbPurple,
                         )
                     }
-                    when (sharedHashMatch) {
-                        true -> Icon(
-                            Icons.Filled.Verified,
-                            "Shared text hashes match installed app",
-                            Modifier,
-                            WarningOrange,
-                        )
-                        false -> Icon(
-                            Icons.Filled.Error,
-                            "Shared text hashes do NOT match installed app",
-                            Modifier,
-                            WarningOrange,
-                        )
-                        null -> {}
+                    if (!hashes.isDebug) {
+                        when (sharedHashMatch) {
+                            true -> Icon(
+                                Icons.Filled.Verified,
+                                "Shared text hashes match installed app",
+                                Modifier,
+                                WarningOrange,
+                            )
+                            false -> Icon(
+                                Icons.Filled.Error,
+                                "Shared text hashes do NOT match installed app",
+                                Modifier,
+                                WarningOrange,
+                            )
+                            null -> {}
+                        }
                     }
-                }
                 }
             }
         )
