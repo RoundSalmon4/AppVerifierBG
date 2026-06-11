@@ -280,7 +280,7 @@ fun AppListScreen(
                         expanded = false,
                         onExpandedChange = {},
                         placeholder = { Text(stringResource(android.R.string.search_go)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                         colors = colors1.inputFieldColors,
                     )
                 },

@@ -257,7 +257,7 @@ fun VerifyAppScreen(
                                 onClick = { showMoreInfoAboutDebugDialog = true },
                                 icon = {
                                     Icon(
-                                        Icons.Default.Warning,
+                                        Icons.Filled.Warning,
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp),
                                     )
@@ -276,7 +276,7 @@ fun VerifyAppScreen(
                                 onClick = { },
                                 icon = {
                                     Icon(
-                                        Icons.Default.Info,
+                                        Icons.Filled.Info,
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp),
                                     )
@@ -364,7 +364,7 @@ fun VerifyAppScreen(
                         ),
                         icon = {
                             Icon(
-                                Icons.Default.Info,
+                                Icons.Filled.Info,
                                 "More info about verification status",
                                 modifier = Modifier.size(18.dp),
                             )
@@ -397,7 +397,7 @@ fun VerifyAppScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            Icons.Default.Share,
+                            Icons.Filled.Share,
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
                             tint = MaterialTheme.colorScheme.primary,
@@ -427,7 +427,7 @@ fun VerifyAppScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            Icons.Default.ContentCopy,
+                            Icons.Filled.ContentCopy,
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
                             tint = MaterialTheme.colorScheme.primary,
@@ -459,7 +459,7 @@ fun VerifyAppScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            Icons.Default.ContentPaste,
+                            Icons.Filled.ContentPaste,
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
                             tint = MaterialTheme.colorScheme.primary,
@@ -486,7 +486,7 @@ fun VerifyAppScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                Icons.Default.PersonAdd,
+                                Icons.Filled.PersonAdd,
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp),
                                 tint = MaterialTheme.colorScheme.primary,
@@ -753,7 +753,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(
-                        Icons.Default.Warning,
+                        Icons.Filled.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = WarningOrange,
