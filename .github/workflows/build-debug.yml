@@ -18,6 +18,7 @@ on:
         type: choice
         options:
           - feature/all-enhancements
+          - dev/test
 
 permissions:
   contents: write
