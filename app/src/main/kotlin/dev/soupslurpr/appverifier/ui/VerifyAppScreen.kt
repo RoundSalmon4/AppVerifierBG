@@ -206,7 +206,7 @@ fun VerifyAppScreen(
                                 SuggestionChip(
                                     onClick = { showMoreInfoAboutHashStatusDialog = true },
                                     label = {
-                                        Text("Hash: ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')}")
+                                        Text("Hash: ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")}")
                                     },
                                     colors = SuggestionChipDefaults.suggestionChipColors(
                                         containerColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color.copy(alpha = 0.12f),
@@ -216,7 +216,7 @@ fun VerifyAppScreen(
                                 )
                                 if (internalDatabaseInfo.domainSources.isNotEmpty()) {
                                     Spacer(Modifier.width(8.dp))
-                                    val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')
+                                    val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")
                                     SuggestionChip(
                                         onClick = { showMoreInfoAboutDomainStatusDialog = true },
                                         label = { Text("Domain: $domainStatusText") },
@@ -232,7 +232,7 @@ fun VerifyAppScreen(
                         }
                         if (showUser) {
                             val userStatusText = if (userDbEntry != null) {
-                                if (userDbMatch) "MATCH" else "NOMATCH"
+                                if (userDbMatch) "MATCH" else "NO MATCH"
                             } else {
                                 "NOT FOUND"
                             }
@@ -339,7 +339,7 @@ fun VerifyAppScreen(
                     val displayVerificationStatus = if (isSelfVerification) {
                         "SKIPPED"
                     } else if (sharedTextHashMatch != null) {
-                        if (sharedTextHashMatch) "MATCH" else "NOMATCH"
+                        if (sharedTextHashMatch) "MATCH" else "NO MATCH"
                     } else {
                         verificationStatus.simpleVerificationStatus.name
                     }
@@ -528,7 +528,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        "HASH ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')}",
+                        "HASH ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")}",
                         style = typography.headlineSmall,
                         color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
@@ -592,7 +592,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        "DOMAIN ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')}",
+                        "DOMAIN ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")}",
                         style = typography.headlineSmall,
                         color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
@@ -620,7 +620,7 @@ fun VerifyAppScreen(
 
     if (showMoreInfoAboutUserDatabaseStatusDialog) {
         val userDialogTitle = if (userDbEntry != null) {
-            if (userDbMatch) "MATCH" else "NOMATCH"
+            if (userDbMatch) "MATCH" else "NO MATCH"
         } else {
             "NOT FOUND"
         }
@@ -682,9 +682,9 @@ fun VerifyAppScreen(
         val dialogTitle = if (isSelfVerification) {
             "SKIPPED"
         } else if (sharedTextHashMatch != null) {
-            if (sharedTextHashMatch) "MATCH" else "NOMATCH"
+            if (sharedTextHashMatch) "MATCH" else "NO MATCH"
         } else {
-            verificationStatus.name.replace('_', ' ')
+            verificationStatus.name.replace('_', ' ').replace("NOMATCH", "NO MATCH")
         }
         val dialogColor = if (isSelfVerification) {
             Color.Gray
