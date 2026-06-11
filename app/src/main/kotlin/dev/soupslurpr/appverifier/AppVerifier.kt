@@ -1,6 +1,8 @@
 package dev.soupslurpr.appverifier
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -55,6 +57,8 @@ import dev.soupslurpr.appverifier.ui.SettingsScreen
 import dev.soupslurpr.appverifier.ui.StartupScreen
 import dev.soupslurpr.appverifier.ui.VerifyAppScreen
 import dev.soupslurpr.appverifier.ui.VerifyAppViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 enum class AppVerifierScreens(@StringRes val title: Int) {
@@ -75,6 +79,7 @@ fun AppVerifierApp(
     isActionSend: Boolean,
     isActionView: Boolean,
     sharedFilteredEntries: List<UserDatabaseEntry>? = null,
+    newIntentFlow: Flow<Intent> = emptyFlow(),
 ) {
     val preferencesUiState = preferencesViewModel.uiState.collectAsState()
 
@@ -106,6 +111,31 @@ fun AppVerifierApp(
         pendingNavigation?.let { route ->
             navController.navigate(route)
             pendingNavigation = null
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        newIntentFlow.collect { newIntent ->
+            if (newIntent.action == Intent.ACTION_SEND) {
+                val extraStream = newIntent.getParcelableExtra<Uri?>(Intent.EXTRA_STREAM)
+                if (extraStream != null) {
+                    verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
+                        context.contentResolver,
+                        extraStream,
+                        context.packageManager,
+                    )
+                    pendingNavigation = AppVerifierScreens.VerifyApp.name
+                }
+            } else if (newIntent.action == Intent.ACTION_VIEW) {
+                newIntent.data?.let { uri ->
+                    verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
+                        context.contentResolver,
+                        uri,
+                        context.packageManager,
+                    )
+                    pendingNavigation = AppVerifierScreens.VerifyApp.name
+                }
+            }
         }
     }
 

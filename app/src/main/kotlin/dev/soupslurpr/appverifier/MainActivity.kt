@@ -25,11 +25,15 @@ import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 
 import dev.soupslurpr.appverifier.ui.VerifyAppViewModel
 import dev.soupslurpr.appverifier.ui.theme.AppVerifierTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "preferences")
 
 class MainActivity : ComponentActivity() {
+
+    private val newIntentFlow = MutableSharedFlow<Intent>(extraBufferCapacity = 1)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -127,8 +131,14 @@ class MainActivity : ComponentActivity() {
                     isActionSend = isActionSend,
                     isActionView = isActionView,
                     sharedFilteredEntries = sharedFilteredEntries,
+                    newIntentFlow = newIntentFlow,
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        newIntentFlow.tryEmit(intent)
     }
 }
