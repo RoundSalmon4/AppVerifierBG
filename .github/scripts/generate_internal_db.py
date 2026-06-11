@@ -47,6 +47,16 @@ def build_display_name_map(header_text):
     return mapping
 
 
+def kotlin_string_escape(s):
+    s = s.replace("\\", "\\\\")
+    s = s.replace("$", "\\$")
+    s = s.replace('"', '\\"')
+    s = s.replace("\n", "\\n")
+    s = s.replace("\r", "\\r")
+    s = s.replace("\t", "\\t")
+    return s
+
+
 def find_unknown_sources(privacyguides_data):
     unknown = set()
     for app in privacyguides_data:
@@ -97,7 +107,7 @@ def insert_source_enum_values(header, new_enum_names):
     for name in sorted(additions.keys()):
         if additions[name] in existing_enum_text:
             continue
-        new_entries.append(f"    {additions[name]}(\"{name}\")")
+        new_entries.append(f"    {additions[name]}(\"{kotlin_string_escape(name)}\")")
 
     if new_entries:
         existing_clean = existing_enum_text.rstrip().rstrip(",")
@@ -236,7 +246,7 @@ def format_entry(package, signatures, extra_map=None):
         sorted_sources = sorted(source_set)
         sorted_fps = sorted(fingerprints)
         source_lines = ",\n".join(f"{S20}{s}" for s in sorted_sources)
-        fp_lines = ",\n".join(f'{S20}"{fp}"' for fp in sorted_fps)
+        fp_lines = ",\n".join(f'{S20}"{kotlin_string_escape(fp.upper())}"' for fp in sorted_fps)
 
         hashes_blocks.append(
             f"""{S12}Hashes(
@@ -258,7 +268,7 @@ def format_entry(package, signatures, extra_map=None):
         sorted_all_fps = sorted(fp_to_sources.keys())
 
         source_lines = ",\n".join(f"{S20}{s}" for s in sorted_sources)
-        fp_lines = ",\n".join(f'{S20}"{fp}"' for fp in sorted_all_fps)
+        fp_lines = ",\n".join(f'{S20}"{kotlin_string_escape(fp.upper())}"' for fp in sorted_all_fps)
 
         hashes_blocks.append(
             f"""{S12}Hashes(
@@ -276,7 +286,7 @@ def format_entry(package, signatures, extra_map=None):
 
     return (
         f"{S4}InternalDatabaseVerificationInfo(\n"
-        f'{S8}"{package}",\n'
+        f'{S8}"{kotlin_string_escape(package)}",\n'
         f"{S8}listOf(\n"
         f"{joined}\n"
         f"{S8})\n"
@@ -427,7 +437,7 @@ def main():
     if missing_enum_vals:
         body = ""
         for name, enum_val in missing_enum_vals:
-            body += f"    {enum_val}(\"{name}\"),\n"
+                body += f"    {enum_val}(\"{kotlin_string_escape(name)}\"),\n"
         enum_match = re.search(
             r"^(enum class Source\(.*?\)\s*\{)(.*?)(\})",
             header, re.MULTILINE | re.DOTALL,
