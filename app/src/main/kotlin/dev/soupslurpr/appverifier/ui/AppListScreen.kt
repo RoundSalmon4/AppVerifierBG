@@ -311,7 +311,7 @@ fun AppListScreen(
                                 FilterChip(
                                     selected = filterMode == FilterMode.FAILURES_ONLY,
                                     onClick = { filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL else FilterMode.FAILURES_ONLY },
-                                    label = { Text("Failures only") },
+                                    label = { Text("Mismatches only") },
                                 )
                             }
                         }

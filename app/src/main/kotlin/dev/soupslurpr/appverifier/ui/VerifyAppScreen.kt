@@ -206,7 +206,7 @@ fun VerifyAppScreen(
                                 SuggestionChip(
                                     onClick = { showMoreInfoAboutHashStatusDialog = true },
                                     label = {
-                                        Text("Hash: ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}")
+                                        Text("Hash: ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')}")
                                     },
                                     colors = SuggestionChipDefaults.suggestionChipColors(
                                         containerColor = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color.copy(alpha = 0.12f),
@@ -216,7 +216,7 @@ fun VerifyAppScreen(
                                 )
                                 if (internalDatabaseInfo.domainSources.isNotEmpty()) {
                                     Spacer(Modifier.width(8.dp))
-                                    val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')
+                                    val domainStatusText = internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')
                                     SuggestionChip(
                                         onClick = { showMoreInfoAboutDomainStatusDialog = true },
                                         label = { Text("Domain: $domainStatusText") },
@@ -528,7 +528,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        "HASH ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
+                        "HASH ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')}",
                         style = typography.headlineSmall,
                         color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
@@ -592,7 +592,7 @@ fun VerifyAppScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        "DOMAIN ${internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.name.replace('_', ' ')}",
+                        "DOMAIN ${internalDatabaseInfo.internalDatabaseStatus.name.replace('_', ' ')}",
                         style = typography.headlineSmall,
                         color = internalDatabaseInfo.internalDatabaseStatus.simpleInternalDatabaseStatus.color,
                     )
