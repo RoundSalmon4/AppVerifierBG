@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -537,29 +536,25 @@ fun VerifyAppScreen(
                 }
             },
             text = {
-                LazyColumn {
-                    item {
-                        Text(hashInfoText)
-                    }
-                    item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && internalDatabaseInfo.hashSources.isNotEmpty()) {
-                            Text("\nThe matched hash entry for this app is from the following sources:\n")
+                Column {
+                    Text(hashInfoText)
+                    if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && internalDatabaseInfo.hashSources.isNotEmpty()) {
+                        Text("\nThe matched hash entry for this app is from the following sources:\n")
+                        Text(
+                            text = internalDatabaseInfo.hashSources.joinToString("\n") { it.displayName },
+                            style = typography.bodyMedium,
+                            color = Gold80,
+                        )
+                        Text(
+                            "\nThis information can be useful if you distrust a specific source and want to make" +
+                                    " sure the app isn't from them."
+                        )
+                        if (internalDatabaseInfo.isSubsetMatch) {
                             Text(
-                                text = internalDatabaseInfo.hashSources.joinToString("\n") { it.displayName },
-                                style = typography.bodyMedium,
-                                color = Gold80,
+                                "\nNote: This app has fewer signing certificates than the database knows" +
+                                        " about. This is normal for signature rotation or older versions.",
+                                color = Color.Gray,
                             )
-                            Text(
-                                "\nThis information can be useful if you distrust a specific source and want to make" +
-                                        " sure the app isn't from them."
-                            )
-                            if (internalDatabaseInfo.isSubsetMatch) {
-                                Text(
-                                    "\nNote: This app has fewer signing certificates than the database knows" +
-                                            " about. This is normal for signature rotation or older versions.",
-                                    color = Color.Gray,
-                                )
-                            }
                         }
                     }
                 }
@@ -601,19 +596,15 @@ fun VerifyAppScreen(
                 }
             },
             text = {
-                LazyColumn {
-                    item {
-                        Text(domainInfoText)
-                    }
-                    item {
-                        if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domain != null) {
-                            Text("\nThe matched hash entry for this app was verified against the following domain:\n")
-                            Text(
-                                text = domain,
-                                style = typography.bodyMedium,
-                                color = Gold80,
-                            )
-                        }
+                Column {
+                    Text(domainInfoText)
+                    if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domain != null) {
+                        Text("\nThe matched hash entry for this app was verified against the following domain:\n")
+                        Text(
+                            text = domain,
+                            style = typography.bodyMedium,
+                            color = Gold80,
+                        )
                     }
                 }
             }
@@ -653,27 +644,21 @@ fun VerifyAppScreen(
                 }
             },
             text = {
-                LazyColumn {
-                    item {
-                        Text("Package Name: ${userDbEntry?.packageName ?: packageName}")
+                Column {
+                    Text("Package Name: ${userDbEntry?.packageName ?: packageName}")
+                    if (userDbEntry != null) {
+                        Text("\nStored hashes:")
+                        Text(
+                            text = userDbEntry.hashes.joinToString("\n"),
+                            fontFamily = FontFamily.Monospace,
+                        )
                     }
-                    item {
-                        if (userDbEntry != null) {
-                            Text("\nStored hashes:")
-                            Text(
-                                text = userDbEntry.hashes.joinToString("\n"),
-                                fontFamily = FontFamily.Monospace,
-                            )
-                        }
-                    }
-                    item {
-                        if (userDbEntry == null) {
-                            Text("\nThis app has no entry in the user database.")
-                        } else if (userDbMatch) {
-                            Text("\nThe current app hashes match the user database entry.")
-                        } else {
-                            Text("\nThe current app hashes do NOT match the user database entry.")
-                        }
+                    if (userDbEntry == null) {
+                        Text("\nThis app has no entry in the user database.")
+                    } else if (userDbMatch) {
+                        Text("\nThe current app hashes match the user database entry.")
+                    } else {
+                        Text("\nThe current app hashes do NOT match the user database entry.")
                     }
                 }
             }
@@ -728,10 +713,8 @@ fun VerifyAppScreen(
                 }
             },
             text = {
-                LazyColumn {
-                    item {
-                        Text(dialogInfo)
-                    }
+                Column {
+                    Text(dialogInfo)
                 }
             }
         )
