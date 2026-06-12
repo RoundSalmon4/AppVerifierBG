@@ -4,8 +4,8 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 ## 2026-06-13
 
-- App list no longer causes "App not responding" pop-ups. Verification statuses load in the background with a progress bar.
-- Going back from app details to the app list is now instant.
+- App list no longer causes "App not responding" pop-ups. Verification statuses load in the background with a progress bar. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
+- Going back from app details to the app list is now instant. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
 
 ## 2026-06-12
 
