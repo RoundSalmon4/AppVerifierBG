@@ -6,6 +6,11 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 - App list no longer causes "App not responding" pop-ups. Verification statuses load in the background with a progress bar. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
 - Going back from app details to the app list is now instant. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
+- Settings state made immutable for more reliable behavior.
+- Added unit tests for preferences logic.
+- APK signing includes V3 signature scheme.
+- Dependency graph submission enabled for supply chain transparency.
+- CI actions pinned to specific SHAs for security hardening.
 
 ## 2026-06-12
 
