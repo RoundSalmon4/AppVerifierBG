@@ -244,7 +244,7 @@ fun AppVerifierApp(
                     { searchQuery = it },
                     { verifyAppViewModel.getHashesFromPackageInfo(it) },
                     { verifyAppViewModel.getInternalDatabaseInfoFromVerificationInfo(it) },
-                    DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode.second.value),
+                    DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode),
                     userDatabaseEntries,
                     filteredEntries,
                     onDoneFiltered = {
@@ -264,11 +264,11 @@ fun AppVerifierApp(
                             snackbarHostState.showSnackbar("Added $count apps to user database")
                         }
                     },
-                    preferencesUiState.value.showClipboardCheckmark.second.value,
+                    preferencesUiState.value.showClipboardCheckmark,
                     preferencesViewModel.clipboardVerifiedPackages.collectAsState().value,
-                    preferencesUiState.value.showUnverifiedOnly.second.value,
-                    preferencesUiState.value.unverifiedExcludeUserDb.second.value,
-                    SortMode.valueOf(preferencesUiState.value.defaultSortMode.second.value),
+                    preferencesUiState.value.showUnverifiedOnly,
+                    preferencesUiState.value.unverifiedExcludeUserDb,
+                    SortMode.valueOf(preferencesUiState.value.defaultSortMode),
                     onRemoveFromUserDatabase = { packageName ->
                         snackbarCoroutineScope.launch {
                             preferencesViewModel.removeUserDatabaseEntry(packageName)
@@ -315,13 +315,13 @@ fun AppVerifierApp(
                     { navController.navigateUp() },
                     verifyAppUiState.value.internalDatabaseInfo.value,
                     verifyAppUiState.value.apkFailedToParse.value,
-                    preferencesUiState.value.showHasMultipleSigners.second.value,
+                    preferencesUiState.value.showHasMultipleSigners,
                     {
                         snackbarCoroutineScope.launch {
                             snackbarHostState.showSnackbar("Clipboard is empty!")
                         }
                     },
-                    DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode.second.value),
+                    DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode),
                     userDatabaseEntries.find { it.packageName == currentPackageName },
                     userDatabaseEntries.find { it.packageName == currentPackageName }?.let { entry ->
                         entry.hashes.toSet().containsAll(currentHashes.hashes.toSet())

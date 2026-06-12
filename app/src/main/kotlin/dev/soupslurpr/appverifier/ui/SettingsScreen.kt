@@ -57,6 +57,7 @@ import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.ImportSummary
 import dev.soupslurpr.appverifier.data.toText
 import dev.soupslurpr.appverifier.data.toYaml
+import dev.soupslurpr.appverifier.preferences.PreferencesUiState
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import kotlinx.coroutines.launch
 
@@ -72,9 +73,9 @@ fun SettingsScreen(
     val context = LocalContext.current
     val preferencesUiState by preferencesViewModel.uiState.collectAsState()
     val databaseStatusDisplayMode = DatabaseStatusDisplayMode.valueOf(
-        preferencesUiState.databaseStatusDisplayMode.second.value
+        preferencesUiState.databaseStatusDisplayMode
     )
-    val defaultSortMode = preferencesUiState.defaultSortMode.second.value
+    val defaultSortMode = preferencesUiState.defaultSortMode
     val userDatabaseEntries by preferencesViewModel.userDatabaseEntries.collectAsState()
     val clipboardVerifiedPackages by preferencesViewModel.clipboardVerifiedPackages.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -142,22 +143,22 @@ fun SettingsScreen(
                 name = stringResource(id = R.string.show_unverified_only_setting_name),
                 description = stringResource(id = R.string.show_unverified_only_setting_description),
                 hasSwitch = true,
-                checked = preferencesUiState.showUnverifiedOnly.second.value,
+                checked = preferencesUiState.showUnverifiedOnly,
                 onCheckedChange = {
                     coroutineScope.launch {
-                        preferencesViewModel.setPreference(preferencesUiState.showUnverifiedOnly.first, it)
+                        preferencesViewModel.setPreference(PreferencesUiState.Keys.SHOW_UNVERIFIED_ONLY, it)
                     }
                 }
             )
-            if (preferencesUiState.showUnverifiedOnly.second.value) {
+            if (preferencesUiState.showUnverifiedOnly) {
                 SettingsItem(
                     name = stringResource(id = R.string.unverified_exclude_user_db_setting_name),
                     description = stringResource(id = R.string.unverified_exclude_user_db_setting_description),
                     hasSwitch = true,
-                    checked = preferencesUiState.unverifiedExcludeUserDb.second.value,
+                    checked = preferencesUiState.unverifiedExcludeUserDb,
                     onCheckedChange = {
                         coroutineScope.launch {
-                            preferencesViewModel.setPreference(preferencesUiState.unverifiedExcludeUserDb.first, it)
+                            preferencesViewModel.setPreference(PreferencesUiState.Keys.UNVERIFIED_EXCLUDE_USER_DB, it)
                         }
                     }
                 )
@@ -166,14 +167,14 @@ fun SettingsScreen(
                 name = stringResource(id = R.string.clipboard_verification_setting_name),
                 description = stringResource(id = R.string.clipboard_verification_setting_description),
                 hasSwitch = true,
-                checked = preferencesUiState.showClipboardCheckmark.second.value,
+                checked = preferencesUiState.showClipboardCheckmark,
                 onCheckedChange = {
                     coroutineScope.launch {
-                        preferencesViewModel.setPreference(preferencesUiState.showClipboardCheckmark.first, it)
+                        preferencesViewModel.setPreference(PreferencesUiState.Keys.SHOW_CLIPBOARD_CHECKMARK, it)
                     }
                 }
             )
-            if (preferencesUiState.showClipboardCheckmark.second.value && clipboardVerifiedPackages.isNotEmpty()) {
+            if (preferencesUiState.showClipboardCheckmark && clipboardVerifiedPackages.isNotEmpty()) {
                 SettingsItem(
                         name = stringResource(id = R.string.clear_clipboard_checkmarks_setting_name),
                         description = stringResource(id = R.string.clear_clipboard_checkmarks_setting_description),
@@ -195,10 +196,10 @@ fun SettingsScreen(
                 name = stringResource(id = R.string.show_hasmultiplesigners_setting_name),
                 description = stringResource(R.string.show_hasmultiplesigners_setting_description),
                 hasSwitch = true,
-                checked = preferencesUiState.showHasMultipleSigners.second.value,
+                checked = preferencesUiState.showHasMultipleSigners,
                 onCheckedChange = {
                     coroutineScope.launch {
-                        preferencesViewModel.setPreference(preferencesUiState.showHasMultipleSigners.first, it)
+                        preferencesViewModel.setPreference(PreferencesUiState.Keys.SHOW_HAS_MULTIPLE_SIGNERS, it)
                     }
                 }
             )

@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
 
             verifyAppViewModel.onVerificationResult = { status ->
                 if (status.simpleVerificationStatus == SimpleVerificationStatus.SUCCESS
-                    && preferencesUiState.showClipboardCheckmark.second.value
+                    && preferencesUiState.showClipboardCheckmark
                 ) {
                     coroutineScope.launch {
                         preferencesViewModel.addClipboardVerifiedPackage(

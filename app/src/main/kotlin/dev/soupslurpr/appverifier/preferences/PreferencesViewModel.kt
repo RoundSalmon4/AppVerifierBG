@@ -1,6 +1,5 @@
 package dev.soupslurpr.appverifier.preferences
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : ViewModel() {
@@ -48,61 +46,17 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     }
 
     private suspend fun populateSettingsFromDatastore() {
-        dataStore.data.map { settings ->
-            _uiState.update { currentState ->
-                currentState.copy(
-                    acceptedPrivacyPolicyVersion = Pair(
-                        uiState.value.acceptedPrivacyPolicyVersion.first,
-                        mutableStateOf(
-                            settings[uiState.value.acceptedPrivacyPolicyVersion.first] ?: uiState.value
-                                .acceptedPrivacyPolicyVersion.second.value
-                        )
-                    ),
-                    showHasMultipleSigners = Pair(
-                        uiState.value.showHasMultipleSigners.first,
-                        mutableStateOf(
-                            settings[uiState.value.showHasMultipleSigners.first] ?: uiState.value
-                                .showHasMultipleSigners.second.value
-                        )
-                    ),
-                    databaseStatusDisplayMode = Pair(
-                        uiState.value.databaseStatusDisplayMode.first,
-                        mutableStateOf(
-                            settings[uiState.value.databaseStatusDisplayMode.first] ?: uiState.value
-                                .databaseStatusDisplayMode.second.value
-                        )
-                    ),
-                    showClipboardCheckmark = Pair(
-                        uiState.value.showClipboardCheckmark.first,
-                        mutableStateOf(
-                            settings[uiState.value.showClipboardCheckmark.first] ?: uiState.value
-                                .showClipboardCheckmark.second.value
-                        )
-                    ),
-                    showUnverifiedOnly = Pair(
-                        uiState.value.showUnverifiedOnly.first,
-                        mutableStateOf(
-                            settings[uiState.value.showUnverifiedOnly.first] ?: uiState.value
-                                .showUnverifiedOnly.second.value
-                        )
-                    ),
-                    unverifiedExcludeUserDb = Pair(
-                        uiState.value.unverifiedExcludeUserDb.first,
-                        mutableStateOf(
-                            settings[uiState.value.unverifiedExcludeUserDb.first] ?: uiState.value
-                                .unverifiedExcludeUserDb.second.value
-                        )
-                    ),
-                    defaultSortMode = Pair(
-                        uiState.value.defaultSortMode.first,
-                        mutableStateOf(
-                            settings[uiState.value.defaultSortMode.first] ?: uiState.value
-                                .defaultSortMode.second.value
-                        )
-                    ),
-                )
-            }
-        }.collect()
+        dataStore.data.collect { settings ->
+            _uiState.value = PreferencesUiState(
+                acceptedPrivacyPolicyVersion = settings[PreferencesUiState.Keys.PRIVACY_POLICY_ACCEPTED_VERSION] ?: 0,
+                showHasMultipleSigners = settings[PreferencesUiState.Keys.SHOW_HAS_MULTIPLE_SIGNERS] ?: false,
+                databaseStatusDisplayMode = settings[PreferencesUiState.Keys.DATABASE_STATUS_DISPLAY_MODE] ?: "BOTH",
+                showClipboardCheckmark = settings[PreferencesUiState.Keys.SHOW_CLIPBOARD_CHECKMARK] ?: false,
+                showUnverifiedOnly = settings[PreferencesUiState.Keys.SHOW_UNVERIFIED_ONLY] ?: false,
+                unverifiedExcludeUserDb = settings[PreferencesUiState.Keys.UNVERIFIED_EXCLUDE_USER_DB] ?: false,
+                defaultSortMode = settings[PreferencesUiState.Keys.DEFAULT_SORT_MODE] ?: "NAME_ASC",
+            )
+        }
     }
 
     private suspend fun populateUserDatabase() {
@@ -221,20 +175,20 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
 
     suspend fun acceptPrivacyPolicy() {
         dataStore.edit { preferences ->
-            preferences[uiState.value.acceptedPrivacyPolicyVersion.first] = CURRENT_PRIVACY_POLICY_VERSION
+            preferences[PreferencesUiState.Keys.PRIVACY_POLICY_ACCEPTED_VERSION] = CURRENT_PRIVACY_POLICY_VERSION
             preferences.remove(booleanPreferencesKey("ACCEPTED_PRIVACY_POLICY_AND_LICENSE_DATE_1/4/2024"))
         }
     }
 
     suspend fun setDatabaseStatusDisplayMode(mode: DatabaseStatusDisplayMode) {
         dataStore.edit { preferences ->
-            preferences[uiState.value.databaseStatusDisplayMode.first] = mode.name
+            preferences[PreferencesUiState.Keys.DATABASE_STATUS_DISPLAY_MODE] = mode.name
         }
     }
 
     suspend fun setDefaultSortMode(mode: String) {
         dataStore.edit { preferences ->
-            preferences[uiState.value.defaultSortMode.first] = mode
+            preferences[PreferencesUiState.Keys.DEFAULT_SORT_MODE] = mode
         }
     }
 
