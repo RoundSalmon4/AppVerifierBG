@@ -74,6 +74,10 @@ import dev.soupslurpr.appverifier.data.VerificationInfo
 import dev.soupslurpr.appverifier.ui.theme.ClipboardBlue
 import dev.soupslurpr.appverifier.ui.theme.UserDbPurple
 import dev.soupslurpr.appverifier.ui.theme.WarningOrange
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 
 enum class SortMode(val label: String) {
     NAME_ASC("Name A-Z"),
@@ -158,7 +162,26 @@ fun AppListScreen(
 
     val packageHashes: Map<String, Hashes> = appDataMap.mapValues { it.value.hashes }
 
-    LaunchedEffect(sharedFilteredEntries) {
+    var foregroundRefreshTrigger by remember { mutableStateOf(0) }
+    var hasSeenInitialResume by remember { mutableStateOf(false) }
+
+    (context as? LifecycleOwner)?.let { lifecycleOwner ->
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    if (!hasSeenInitialResume) {
+                        hasSeenInitialResume = true
+                    } else {
+                        foregroundRefreshTrigger++
+                    }
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+    }
+
+    LaunchedEffect(sharedFilteredEntries, foregroundRefreshTrigger) {
         isLoadingAppData = true
 
         val packages = withContext(Dispatchers.IO) {
