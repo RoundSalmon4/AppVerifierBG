@@ -194,9 +194,10 @@ fun AppListScreen(
         }
     }
 
-    val packageStatuses = remember(packageHashes, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
-        packageHashes.mapValues { (packageName, hashes) ->
-            val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes))
+    val packageStatuses = remember(appDataMap, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
+        appDataMap.mapValues { (packageName, appData) ->
+            val internalDbInfo = appData.internalDbInfo
+            val hashes = appData.hashes
             val userDbEntry = userDatabaseEntries.find { it.packageName == packageName }
             val userDbMatch = if (userDbEntry != null) {
                 userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
@@ -246,12 +247,10 @@ fun AppListScreen(
 
         val sorted = when (sortMode) {
             SortMode.NAME_ASC -> filtered.sortedBy { pkg ->
-                try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
-                catch (_: Exception) { pkg.packageName.lowercase() }
+                appDataMap[pkg.packageName]?.name?.lowercase() ?: pkg.packageName.lowercase()
             }
             SortMode.NAME_DESC -> filtered.sortedByDescending { pkg ->
-                try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString().lowercase() }
-                catch (_: Exception) { pkg.packageName.lowercase() }
+                appDataMap[pkg.packageName]?.name?.lowercase() ?: pkg.packageName.lowercase()
             }
             SortMode.INTERNAL_DB -> filtered.sortedBy { pkg ->
                 val s = packageStatuses[pkg.packageName]
@@ -277,7 +276,7 @@ fun AppListScreen(
 
         if (searchQuery.isNotBlank()) {
             sorted.filter { pkg ->
-                val name = try { packageManager.getApplicationLabel(pkg.applicationInfo ?: ApplicationInfo()).toString() } catch (_: Exception) { pkg.packageName }
+                val name = appDataMap[pkg.packageName]?.name ?: pkg.packageName
                 name.contains(searchQuery, true) || pkg.packageName.contains(searchQuery, true)
             }
         } else {
