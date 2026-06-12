@@ -107,19 +107,23 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 } else if (extraStream != null) {
-                    verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
-                        contentResolver,
-                        extraStream,
-                        packageManager
-                    )
+                    coroutineScope.launch {
+                        verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
+                            contentResolver,
+                            extraStream,
+                            packageManager
+                        )
+                    }
                 }
             } else if (isActionView) {
                 intent.data?.let {
-                    verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
-                        contentResolver,
-                        it,
-                        packageManager
-                    )
+                    coroutineScope.launch {
+                        verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
+                            contentResolver,
+                            it,
+                            packageManager
+                        )
+                    }
                 }
             }
 

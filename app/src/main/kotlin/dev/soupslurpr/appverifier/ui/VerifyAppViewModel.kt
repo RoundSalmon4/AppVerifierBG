@@ -17,6 +17,8 @@ import dev.soupslurpr.appverifier.data.VerificationInfo
 import dev.soupslurpr.appverifier.data.VerificationStatus
 import dev.soupslurpr.appverifier.data.VerifyAppUiState
 import dev.soupslurpr.appverifier.internalVerificationInfoDatabaseMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -310,11 +312,11 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun setApkVerificationInfoAndInternalDatabaseStatusFromUri(
+    suspend fun setApkVerificationInfoAndInternalDatabaseStatusFromUri(
         contentResolver: ContentResolver,
         uri: Uri,
         packageManager: PackageManager,
-    ) {
+    ) = withContext(Dispatchers.IO) {
         val generation = ++generationCounter
         currentGeneration = generation
 
@@ -327,7 +329,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
             if (inputStream == null) {
                 Log.e("VerifyAppViewModel", "openInputStream returned null for URI: $uri")
                 setApkFailedToParse(true)
-                return
+                return@withContext
             }
 
             val tempFile = File.createTempFile("temp", null, getApplication<Application>().cacheDir)
@@ -339,7 +341,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                     }
                 }
 
-                if (generation != currentGeneration) return
+                if (generation != currentGeneration) return@withContext
 
                 try {
                     ZipFile(tempFile).use { zip ->
@@ -356,7 +358,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 } catch (_: Exception) {
                 }
 
-                if (generation != currentGeneration) return
+                if (generation != currentGeneration) return@withContext
 
                 val apkPath = baseApkFile?.path ?: tempFile.path
 
@@ -369,7 +371,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
                 if (packageInfo == null) {
                     setApkFailedToParse(true)
-                    return
+                    return@withContext
                 }
 
                 applicationInfo.sourceDir = apkPath
@@ -379,7 +381,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
                 val hashes = getHashesFromPackageInfo(packageInfo)
 
-                if (generation != currentGeneration) return
+                if (generation != currentGeneration) return@withContext
 
                 setAppVerificationInfo(
                     packageManager.getApplicationLabel(applicationInfo).toString(),

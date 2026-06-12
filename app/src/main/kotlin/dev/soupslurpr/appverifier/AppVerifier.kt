@@ -91,6 +91,8 @@ fun AppVerifierApp(
 
     val snackbarCoroutineScope = rememberCoroutineScope()
 
+    val coroutineScope = rememberCoroutineScope()
+
     var filteredEntries by remember { mutableStateOf(sharedFilteredEntries) }
 
     LaunchedEffect(sharedFilteredEntries) {
@@ -142,11 +144,13 @@ fun AppVerifierApp(
     val openApkFileLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
-                verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
-                    context.contentResolver,
-                    uri,
-                    context.packageManager,
-                )
+                coroutineScope.launch {
+                    verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
+                        context.contentResolver,
+                        uri,
+                        context.packageManager,
+                    )
+                }
                 pendingNavigation = AppVerifierScreens.VerifyApp.name
             }
         }
