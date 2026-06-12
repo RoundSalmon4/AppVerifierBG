@@ -2,6 +2,11 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-13
+
+- App list no longer causes "App not responding" pop-ups. Verification statuses load in the background with a progress bar.
+- Going back from app details to the app list is now instant.
+
 ## 2026-06-12
 
 - Status chips now show NO MATCH instead of FAILURE, and NONE instead of UNKNOWN.
