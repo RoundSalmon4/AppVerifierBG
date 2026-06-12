@@ -7,7 +7,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
+
 import androidx.lifecycle.AndroidViewModel
 import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.Hashes
@@ -358,18 +358,11 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
                 val apkPath = baseApkFile?.path ?: tempFile.path
 
-                val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    packageManager.getPackageArchiveInfo(
-                        Uri.fromFile(File(apkPath)),
-                        PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong())
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageManager.getPackageArchiveInfo(
-                        apkPath,
-                        PackageManager.GET_SIGNING_CERTIFICATES
-                    )
-                }
+                @Suppress("DEPRECATION")
+                val packageInfo = packageManager.getPackageArchiveInfo(
+                    apkPath,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
                 val applicationInfo = packageInfo?.applicationInfo ?: ApplicationInfo()
 
                 if (packageInfo == null) {
