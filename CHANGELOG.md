@@ -4,16 +4,13 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 ## 2026-06-13
 
-- App list no longer causes "App not responding" pop-ups. Verification statuses load in the background with a progress bar. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
-- Going back from app details to the app list is now instant. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
-- Settings state made immutable for more reliable behavior.
-- Added unit tests for preferences logic.
-- APK signing includes V3 signature scheme.
-- Dependency graph submission enabled for supply chain transparency.
-- CI actions pinned to specific SHAs for security hardening.
+- No more "App not responding" pop-ups. Verification statuses load in the background. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
+- Back navigation from app details is instant. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
+- App list refreshes when returning to the app. Newly installed or uninstalled apps are picked up automatically.
+- Settings are more reliable.
 - APK verification no longer freezes the UI.
-- App list sorting and search are faster, use less memory, and reflect new/uninstalled apps immediately.
-- Info dialogs are more reliable (no lazy list inside dialogs).
+- App list sorting and search are faster and use less memory.
+- Info dialogs are more reliable.
 
 ## 2026-06-12
 
