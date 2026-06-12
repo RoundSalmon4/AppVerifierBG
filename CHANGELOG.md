@@ -11,6 +11,9 @@ Dates are based on UTC (releases typically around 2am UTC).
 - APK signing includes V3 signature scheme.
 - Dependency graph submission enabled for supply chain transparency.
 - CI actions pinned to specific SHAs for security hardening.
+- APK verification no longer freezes the UI.
+- App list sorting and search are faster, use less memory, and reflect new/uninstalled apps immediately.
+- Info dialogs are more reliable (no lazy list inside dialogs).
 
 ## 2026-06-12
 
