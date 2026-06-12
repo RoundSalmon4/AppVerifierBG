@@ -58,6 +58,7 @@ android {
                     keyAlias = "androiddebugkey"
                     keyPassword = "android"
                 }
+                enableV3Signing = true
             }
         }
     }
@@ -101,4 +102,12 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.kotlinx.coroutines.test)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

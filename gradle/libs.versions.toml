@@ -7,6 +7,8 @@ activity-compose = "1.10.1"
 navigation-compose = "2.8.9"
 datastore-preferences = "1.1.4"
 accompanist-drawablepainter = "0.37.2"
+junit-jupiter = "5.11.4"
+kotlinx-coroutines-test = "1.10.1"
 
 [libraries]
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
@@ -19,6 +21,10 @@ compose-material-icons-extended = { module = "androidx.compose.material:material
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanist-drawablepainter" }
+
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-test" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
