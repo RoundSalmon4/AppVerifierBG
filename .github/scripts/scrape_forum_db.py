@@ -154,6 +154,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--diff", help="Path to previous JSON to diff against")
+    parser.add_argument("--txt-only", action="store_true", help="Only produce .txt output, skip .yaml and .json")
     parser.add_argument("output", help="Path to write output JSON")
     args = parser.parse_args()
 
@@ -186,17 +187,18 @@ def main():
                 f.write(h + "\n")
             f.write("\n")
 
-    yaml_path = root + ".yaml"
-    with open(yaml_path, "w") as f:
-        for entry in merged:
-            f.write("---\n")
-            f.write(f"packageName: {entry['packageName']}\n")
-            f.write("hashes:\n")
-            for h in entry["hashes"]:
-                f.write(f"  - {h}\n")
+    if not args.txt_only:
+        yaml_path = root + ".yaml"
+        with open(yaml_path, "w") as f:
+            for entry in merged:
+                f.write("---\n")
+                f.write(f"packageName: {entry['packageName']}\n")
+                f.write("hashes:\n")
+                for h in entry["hashes"]:
+                    f.write(f"  - {h}\n")
 
-    with open(args.output, "w") as f:
-        json.dump(merged, f, indent=2)
+        with open(args.output, "w") as f:
+            json.dump(merged, f, indent=2)
 
     if args.diff:
         changed = diff_stats(merged, args.diff)
