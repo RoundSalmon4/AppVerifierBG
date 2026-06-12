@@ -298,7 +298,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun copyBounded(input: InputStream, output: java.io.OutputStream, maxBytes: Long = 4L * 1024 * 1024 * 1024) {
+    private fun copyBounded(input: InputStream, output: java.io.OutputStream, maxBytes: Long = 4L * 1024 * 1024 * 1024) {
         val buffer = ByteArray(8192)
         var total = 0L
         while (true) {

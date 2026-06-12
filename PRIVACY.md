@@ -72,4 +72,4 @@ at: https://github.com/RoundSalmon4/AppVerifierBG
 This privacy policy may be updated from time to time. When it does, you
 will be prompted to accept the new policy upon opening the app.
 
-*Last updated: May 27, 2026.*
+*Last updated: June 8, 2026.*

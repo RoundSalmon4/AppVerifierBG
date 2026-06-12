@@ -3,7 +3,6 @@ package dev.soupslurpr.appverifier.preferences
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.lifecycle.ViewModel
@@ -170,13 +169,6 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     suspend fun setPreference(key: Preferences.Key<Boolean>, value: Boolean) {
         dataStore.edit { preferences ->
             preferences[key] = value
-        }
-    }
-
-    suspend fun acceptPrivacyPolicy() {
-        dataStore.edit { preferences ->
-            preferences[PreferencesUiState.Keys.PRIVACY_POLICY_ACCEPTED_VERSION] = CURRENT_PRIVACY_POLICY_VERSION
-            preferences.remove(booleanPreferencesKey("ACCEPTED_PRIVACY_POLICY_AND_LICENSE_DATE_1/4/2024"))
         }
     }
 

@@ -60,11 +60,5 @@ class PreferencesViewModelTest {
         assertTrue(state.showUnverifiedOnly)
     }
 
-    @Test
-    fun acceptPrivacyPolicyPersistsVersion() = runTest {
-        viewModel.acceptPrivacyPolicy()
 
-        val state = viewModel.uiState.first()
-        assertEquals(CURRENT_PRIVACY_POLICY_VERSION, state.acceptedPrivacyPolicyVersion)
-    }
 }

@@ -25,7 +25,6 @@ class InternalDatabaseInfo(
     val internalDatabaseStatus: InternalDatabaseStatus,
     val hashSources: List<Source>,
     val domainSources: List<Source> = emptyList(),
-    val isSubsetMatch: Boolean = false,
 )
 
 enum class InternalDatabaseStatus(
