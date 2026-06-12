@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     coroutineScope.launch {
                         preferencesViewModel.addClipboardVerifiedPackage(
-                            verifyAppViewModel.uiState.value.packageName.value
+                            verifyAppViewModel.uiState.value.packageName
                         )
                     }
                 }

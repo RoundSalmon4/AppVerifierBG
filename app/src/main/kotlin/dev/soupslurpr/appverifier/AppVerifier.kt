@@ -292,8 +292,8 @@ fun AppVerifierApp(
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {
-                val currentPackageName = verifyAppUiState.value.packageName.value
-                val currentHashes = verifyAppUiState.value.hashes.value
+                val currentPackageName = verifyAppUiState.value.packageName
+                val currentHashes = verifyAppUiState.value.hashes
 
                 val sharedTextEntryForVerify = filteredEntries?.find { it.packageName == currentPackageName }
                 val sharedTextHashMatchForVerify = if (sharedTextEntryForVerify != null && sharedTextEntryForVerify.hashes.isNotEmpty()) {
@@ -303,18 +303,18 @@ fun AppVerifierApp(
                 }
 
                 VerifyAppScreen(
-                    verifyAppUiState.value.icon.value,
-                    verifyAppUiState.value.name.value,
+                    verifyAppUiState.value.icon,
+                    verifyAppUiState.value.name,
                     currentPackageName,
                     currentHashes,
-                    verifyAppUiState.value.verificationStatus.value,
-                    verifyAppUiState.value.appNotFoundOrInvalidFormat.value,
-                    verifyAppUiState.value.invalidHashFormat.value,
-                    verifyAppUiState.value.expectedHashes.value,
+                    verifyAppUiState.value.verificationStatus,
+                    verifyAppUiState.value.appNotFoundOrInvalidFormat,
+                    verifyAppUiState.value.invalidHashFormat,
+                    verifyAppUiState.value.expectedHashes,
                     { verifyAppViewModel.verifyFromText(it) },
                     { navController.navigateUp() },
-                    verifyAppUiState.value.internalDatabaseInfo.value,
-                    verifyAppUiState.value.apkFailedToParse.value,
+                    verifyAppUiState.value.internalDatabaseInfo,
+                    verifyAppUiState.value.apkFailedToParse,
                     preferencesUiState.value.showHasMultipleSigners,
                     {
                         snackbarCoroutineScope.launch {
@@ -335,7 +335,7 @@ fun AppVerifierApp(
                                     hasMultipleSigners = currentHashes.hasMultipleSigners,
                                 )
                             )
-                            snackbarHostState.showSnackbar("Added ${verifyAppUiState.value.name.value} to user database")
+                            snackbarHostState.showSnackbar("Added ${verifyAppUiState.value.name} to user database")
                         }
                     },
                     sharedTextHashMatch = sharedTextHashMatchForVerify,

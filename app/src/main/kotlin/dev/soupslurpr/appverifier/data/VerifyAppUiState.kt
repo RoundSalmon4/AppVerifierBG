@@ -1,26 +1,22 @@
 package dev.soupslurpr.appverifier.data
 
 import android.graphics.drawable.Drawable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import dev.soupslurpr.appverifier.Source
 
 data class VerifyAppUiState(
-    val name: MutableState<String> = mutableStateOf(""),
-    val packageName: MutableState<String> = mutableStateOf(""),
-    val hashes: MutableState<Hashes> = mutableStateOf(Hashes(listOf(Source.NONE), listOf(""), false)),
-    val icon: MutableState<Drawable?> = mutableStateOf(null),
-    val verificationStatus: MutableState<VerificationStatus> = mutableStateOf(VerificationStatus.UNKNOWN),
-    val appNotFoundOrInvalidFormat: MutableState<Boolean> = mutableStateOf(false),
-    val apkFailedToParse: MutableState<Boolean> = mutableStateOf(false),
-    val invalidHashFormat: MutableState<Boolean> = mutableStateOf(false),
-    val expectedHashes: MutableState<List<String>> = mutableStateOf(emptyList()),
-    val internalDatabaseInfo: MutableState<InternalDatabaseInfo> = mutableStateOf(
-        InternalDatabaseInfo(
-            InternalDatabaseStatus.NOT_FOUND,
-            hashSources = listOf(Source.NONE)
-        )
+    val name: String = "",
+    val packageName: String = "",
+    val hashes: Hashes = Hashes(listOf(Source.NONE), listOf(""), false),
+    val icon: Drawable? = null,
+    val verificationStatus: VerificationStatus = VerificationStatus.UNKNOWN,
+    val appNotFoundOrInvalidFormat: Boolean = false,
+    val apkFailedToParse: Boolean = false,
+    val invalidHashFormat: Boolean = false,
+    val expectedHashes: List<String> = emptyList(),
+    val internalDatabaseInfo: InternalDatabaseInfo = InternalDatabaseInfo(
+        InternalDatabaseStatus.NOT_FOUND,
+        hashSources = listOf(Source.NONE)
     ),
 )
 

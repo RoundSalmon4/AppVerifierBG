@@ -20,6 +20,7 @@ import dev.soupslurpr.appverifier.internalVerificationInfoDatabaseMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import android.util.Log
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -45,25 +46,27 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         hashes: Hashes,
         internalDatabaseInfo: InternalDatabaseInfo,
     ) {
-        _uiState.value.name.value = name
-        _uiState.value.packageName.value = packageName
-        _uiState.value.hashes.value = hashes
-        _uiState.value.internalDatabaseInfo.value = internalDatabaseInfo
-        _uiState.value.verificationStatus.value = VerificationStatus.UNKNOWN
-        _uiState.value.appNotFoundOrInvalidFormat.value = false
-        _uiState.value.apkFailedToParse.value = false
-        _uiState.value.invalidHashFormat.value = false
-        _uiState.value.expectedHashes.value = emptyList()
+        _uiState.update { it.copy(
+            name = name,
+            packageName = packageName,
+            hashes = hashes,
+            internalDatabaseInfo = internalDatabaseInfo,
+            verificationStatus = VerificationStatus.UNKNOWN,
+            appNotFoundOrInvalidFormat = false,
+            apkFailedToParse = false,
+            invalidHashFormat = false,
+            expectedHashes = emptyList(),
+        ) }
     }
 
     fun setAppIcon(icon: Drawable) {
-        _uiState.value.icon.value = icon
+        _uiState.update { it.copy(icon = icon) }
     }
 
     fun verifyFromText(text: String) {
         val verificationInfoText = getVerificationInfoText(text)
         val lines = verificationInfoText.lines().filter { it.isNotBlank() }
-        val packageName = _uiState.value.packageName.value
+        val packageName = _uiState.value.packageName
 
         val hashLines = if (lines.isNotEmpty() && (lines[0] == packageName || !isValidSha256Hash(lines[0].trim()))) {
             lines.drop(1)
@@ -74,16 +77,20 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
         val allHashesAreValid = hashLines.all { isValidSha256Hash(it.trim()) }
 
         if (!allHashesAreValid) {
-            _uiState.value.invalidHashFormat.value = true
-            _uiState.value.verificationStatus.value = VerificationStatus.UNKNOWN
+            _uiState.update { it.copy(
+                invalidHashFormat = true,
+                verificationStatus = VerificationStatus.UNKNOWN,
+            ) }
             onVerificationResult?.invoke(VerificationStatus.UNKNOWN)
             return
         }
 
-        _uiState.value.expectedHashes.value = hashLines
-        _uiState.value.invalidHashFormat.value = false
         val status = parseTextToVerificationStatus(text)
-        _uiState.value.verificationStatus.value = status
+        _uiState.update { it.copy(
+            expectedHashes = hashLines,
+            invalidHashFormat = false,
+            verificationStatus = status,
+        ) }
         onVerificationResult?.invoke(status)
     }
 
@@ -128,8 +135,9 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
     private fun parseTextToVerificationStatus(text: String): VerificationStatus {
         fun parseVerificationInfoTextToVerificationStatus(verificationInfoText: String): VerificationStatus {
+            val state = uiState.value
             val lines = verificationInfoText.trimEnd().lines()
-            if (uiState.value.hashes.value.hashes.toSet().isNotEmpty() && uiState.value.hashes.value.hashes.toSet() == lines.toSet()) {
+            if (state.hashes.hashes.toSet().isNotEmpty() && state.hashes.hashes.toSet() == lines.toSet()) {
                 return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
             }
 
@@ -144,7 +152,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                     }
                     result
                 }
-                if (convertedHash.uppercase() in uiState.value.hashes.value.hashes) {
+                if (convertedHash.uppercase() in state.hashes.hashes) {
                     return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
                 }
                 if (lines[0].length == 95) {
@@ -157,7 +165,7 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 lines[0].trim().length + lines[1].trim().length == 128
             ) {
                 if (lines[0].trim() + ":" + lines[1].trim()
-                    in uiState.value.hashes.value.hashes
+                    in state.hashes.hashes
                 ) {
                     return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
                 }
@@ -167,8 +175,8 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
             }
 
-            val isPackageNameMatch = lines[0] == uiState.value.packageName.value
-            val verificationStatus = if (uiState.value.hashes.value.hashes.toSet().isNotEmpty() && uiState.value.hashes.value.hashes.toSet() == lines.drop(1).toSet()) {
+            val isPackageNameMatch = lines[0] == state.packageName
+            val verificationStatus = if (state.hashes.hashes.toSet().isNotEmpty() && state.hashes.hashes.toSet() == lines.drop(1).toSet()) {
                 VerificationStatus.MATCH
             } else {
                 VerificationStatus.NOMATCH
@@ -257,17 +265,11 @@ class VerifyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun setAppNotFoundOrInvalidFormat(b: Boolean) {
-        _uiState.value.appNotFoundOrInvalidFormat.value = b
-        if (b) {
-            _uiState.value.apkFailedToParse.value = false
-        }
+        _uiState.update { it.copy(appNotFoundOrInvalidFormat = b, apkFailedToParse = if (b) false else it.apkFailedToParse) }
     }
 
     fun setApkFailedToParse(b: Boolean) {
-        _uiState.value.apkFailedToParse.value = b
-        if (b) {
-            _uiState.value.appNotFoundOrInvalidFormat.value = false
-        }
+        _uiState.update { it.copy(apkFailedToParse = b, appNotFoundOrInvalidFormat = if (b) false else it.appNotFoundOrInvalidFormat) }
     }
 
     fun getInternalDatabaseInfoFromVerificationInfo(verificationInfo: VerificationInfo): InternalDatabaseInfo {
