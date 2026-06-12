@@ -42,8 +42,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -60,6 +62,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.soupslurpr.appverifier.R
+import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -82,6 +85,14 @@ enum class SortMode(val label: String) {
 }
 
 enum class FilterMode { ALL, FAILURES_ONLY }
+
+data class AppListData(
+    val hashes: Hashes,
+    val name: String,
+    val internalDbInfo: InternalDatabaseInfo,
+)
+
+private val appDataCache = mutableMapOf<String, AppListData>()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,15 +153,45 @@ fun AppListScreen(
         val hasSharedText: Boolean,
     )
 
-    val packageHashes = remember(filteredPackages) {
-        filteredPackages.mapNotNull { pkg ->
-            if (pkg.packageName == context.packageName) return@mapNotNull null
-            val packageInfo = try {
-                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            } catch (_: Exception) { null } ?: return@mapNotNull null
-            val hashes = getHashesFromPackageInfo(packageInfo)
-            pkg.packageName to hashes
-        }.toMap()
+    var isLoadingAppData by remember { mutableStateOf(true) }
+    var appDataMap by remember { mutableStateOf<Map<String, AppListData>>(emptyMap()) }
+
+    val packageHashes: Map<String, Hashes> = appDataMap.mapValues { it.value.hashes }
+
+    LaunchedEffect(filteredPackages.map { it.packageName }) {
+        isLoadingAppData = true
+        val allCached = filteredPackages.all { pkg ->
+            pkg.packageName == context.packageName || pkg.packageName in appDataCache
+        }
+        if (allCached) {
+            appDataMap = filteredPackages.mapNotNull { pkg ->
+                if (pkg.packageName == context.packageName) return@mapNotNull null
+                appDataCache[pkg.packageName]?.let { pkg.packageName to it }
+            }.toMap()
+            isLoadingAppData = false
+        } else {
+            val result = withContext(Dispatchers.IO) {
+                filteredPackages.mapNotNull { pkg ->
+                    if (pkg.packageName == context.packageName) return@mapNotNull null
+                    val appData = appDataCache.getOrPut(pkg.packageName) {
+                        val packageInfo = try {
+                            packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                        } catch (_: Exception) { null } ?: return@mapNotNull null
+                        val hashes = getHashesFromPackageInfo(packageInfo)
+                        val name = packageInfo.applicationInfo?.let {
+                            packageManager.getApplicationLabel(it).toString()
+                        } ?: pkg.packageName
+                        val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(
+                            VerificationInfo(pkg.packageName, hashes)
+                        )
+                        AppListData(hashes, name, internalDbInfo)
+                    }
+                    pkg.packageName to appData
+                }.toMap()
+            }
+            appDataMap = result
+            isLoadingAppData = false
+        }
     }
 
     val packageStatuses = remember(packageHashes, userDatabaseEntries, clipboardVerifiedPackages, sharedFilteredEntries) {
@@ -251,21 +292,18 @@ fun AppListScreen(
             databaseStatusDisplayMode == DatabaseStatusDisplayMode.INTERNAL_ONLY
 
     val existingPackageNames = userDatabaseEntries.map { it.packageName }.toSet()
-    val verifiedEntries = if (sharedFilteredEntries != null) {
-        filteredPackages.mapNotNull { pkg ->
-            if (pkg.packageName in existingPackageNames) return@mapNotNull null
-            val packageInfo = try {
-                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            } catch (_: Exception) { null } ?: return@mapNotNull null
-            val hashes = getHashesFromPackageInfo(packageInfo)
-            val sharedEntry = sharedFilteredEntries.find { it.packageName == pkg.packageName }
-            if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
-                val match = sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
-                if (match) UserDatabaseEntry(pkg.packageName, hashes.hashes, hashes.hasMultipleSigners) else null
-            } else null
+    val verifiedEntries = remember(sharedFilteredEntries, packageHashes, existingPackageNames) {
+        if (sharedFilteredEntries != null) {
+            sharedFilteredEntries.mapNotNull { entry ->
+                if (entry.packageName in existingPackageNames) return@mapNotNull null
+                if (entry.hashes.isEmpty()) return@mapNotNull null
+                val hashes = packageHashes[entry.packageName] ?: return@mapNotNull null
+                val match = entry.hashes.toSet().containsAll(hashes.hashes.toSet())
+                if (match) UserDatabaseEntry(entry.packageName, hashes.hashes, hashes.hasMultipleSigners) else null
+            }
+        } else {
+            emptyList()
         }
-    } else {
-        emptyList()
     }
 
     Scaffold(
@@ -442,36 +480,24 @@ fun AppListScreen(
                     }
                 }
             }
+            if (isLoadingAppData) {
+                item {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            }
             items(displayPackages, key = { it.packageName }) {
-                if (it.packageName == context.packageName) return@items
+                val pkg = it
+                if (pkg.packageName == context.packageName) return@items
 
-                val packageInfo = remember(it.packageName) {
-                    packageManager.getPackageInfo(
-                        it.packageName,
-                        PackageManager.GET_SIGNING_CERTIFICATES
-                    )
-                }
-                val name = remember(it.packageName) {
-                    packageInfo.applicationInfo?.let { appInfo ->
-                        packageManager.getApplicationLabel(appInfo)
-                            .toString()
-                    } ?: it.packageName
-                }
-
-                val hashes = remember(it.packageName) {
-                    getHashesFromPackageInfo(packageInfo)
-                }
-
-                val internalDbInfo = remember(it.packageName) {
-                    getInternalDatabaseInfoFromVerificationInfo(
-                        VerificationInfo(packageInfo.packageName, hashes)
-                    )
-                }
+                val appData = appDataMap[pkg.packageName]
+                val name = appData?.name ?: pkg.packageName
+                val hashes = appData?.hashes ?: Hashes(listOf(Source.NONE), emptyList(), false)
+                val internalDbInfo = appData?.internalDbInfo ?: InternalDatabaseInfo(InternalDatabaseStatus.NOT_FOUND, listOf(Source.NONE))
 
                 if (showUnverifiedOnly && internalDbInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH) return@items
 
-                val userDbEntry = userDatabaseEntries.find {
-                    it.packageName == packageInfo.packageName
+                val userDbEntry = userDatabaseEntries.find { entry ->
+                    entry.packageName == pkg.packageName
                 }
                 val userDbMatch = if (userDbEntry != null) {
                     userDbEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
@@ -481,29 +507,24 @@ fun AppListScreen(
 
                 if (showUnverifiedOnly && unverifiedExcludeUserDb && userDbMatch) return@items
 
-                val sharedEntry = sharedFilteredEntries?.find {
-                    it.packageName == packageInfo.packageName
+                val sharedEntry = sharedFilteredEntries?.find { entry ->
+                    entry.packageName == pkg.packageName
                 }
                 val sharedHashMatch = if (sharedEntry != null && sharedEntry.hashes.isNotEmpty()) {
                     sharedEntry.hashes.toSet().containsAll(hashes.hashes.toSet())
                 } else {
                     null
                 }
-
-                val pkg = it
                 val icon by produceState<Drawable?>(
-                    initialValue = AppIconCache.get(pkg.packageName) ?: runCatching {
-                        packageManager.getApplicationIcon(packageInfo.applicationInfo ?: ApplicationInfo()).also { icon ->
-                            AppIconCache.put(pkg.packageName, icon)
-                        }
-                    }.getOrNull(),
+                    initialValue = AppIconCache.get(pkg.packageName),
                     key1 = pkg.packageName,
                 ) {
                     if (value == null) {
                         value = withContext(Dispatchers.IO) {
                             runCatching {
+                                val info = packageManager.getPackageInfo(pkg.packageName, 0)
                                 val loaded = packageManager.getApplicationIcon(
-                                    packageInfo.applicationInfo ?: ApplicationInfo()
+                                    info.applicationInfo ?: ApplicationInfo()
                                 )
                                 AppIconCache.put(pkg.packageName, loaded)
                                 loaded
@@ -512,7 +533,7 @@ fun AppListScreen(
                     }
                 }
                 if (isSelecting) {
-                    val isSelected = packageInfo.packageName in selectedPackageNames
+                    val isSelected = pkg.packageName in selectedPackageNames
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -521,15 +542,15 @@ fun AppListScreen(
                             checked = isSelected,
                             onCheckedChange = { checked ->
                                 selectedPackageNames = if (checked) {
-                                    selectedPackageNames + packageInfo.packageName
+                                    selectedPackageNames + pkg.packageName
                                 } else {
-                                    selectedPackageNames - packageInfo.packageName
+                                    selectedPackageNames - pkg.packageName
                                 }
                             },
                         )
                         AppItem(
                             name = name,
-                            packageName = packageInfo.packageName,
+                            packageName = pkg.packageName,
                             hashes = hashes,
                             icon = icon,
                             onClickAppItem = onClickAppItem,
@@ -540,7 +561,7 @@ fun AppListScreen(
                             userDbMatch = userDbMatch,
                             sharedHashMatch = sharedHashMatch,
                             showClipboardCheckmark = showClipboardCheckmark,
-                            isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                            isClipboardVerified = pkg.packageName in clipboardVerifiedPackages,
                             onRemoveFromUserDatabase = onRemoveFromUserDatabase,
                             onRemoveClipboardVerification = onRemoveClipboardVerification,
                         )
@@ -548,7 +569,7 @@ fun AppListScreen(
                 } else {
                     AppItem(
                         name = name,
-                        packageName = packageInfo.packageName,
+                        packageName = pkg.packageName,
                         hashes = hashes,
                         icon = icon,
                         onClickAppItem = onClickAppItem,
@@ -559,7 +580,7 @@ fun AppListScreen(
                         userDbMatch = userDbMatch,
                         sharedHashMatch = sharedHashMatch,
                         showClipboardCheckmark = showClipboardCheckmark,
-                        isClipboardVerified = packageInfo.packageName in clipboardVerifiedPackages,
+                        isClipboardVerified = pkg.packageName in clipboardVerifiedPackages,
                         onRemoveFromUserDatabase = onRemoveFromUserDatabase,
                         onRemoveClipboardVerification = onRemoveClipboardVerification,
                     )
