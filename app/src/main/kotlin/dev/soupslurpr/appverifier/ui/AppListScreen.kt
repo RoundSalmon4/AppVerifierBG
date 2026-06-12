@@ -129,10 +129,7 @@ fun AppListScreen(
 
     val packageManager: PackageManager = context.packageManager
 
-    val userInstalledPackages = remember {
-        packageManager.getInstalledPackages(0)
-            .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
-    }
+    var userInstalledPackages by remember { mutableStateOf(emptyList<PackageInfo>()) }
 
     val filteredPackages = if (sharedFilteredEntries != null) {
         val filterNames = sharedFilteredEntries.map { it.packageName }.toSet()
@@ -161,20 +158,34 @@ fun AppListScreen(
 
     val packageHashes: Map<String, Hashes> = appDataMap.mapValues { it.value.hashes }
 
-    LaunchedEffect(filteredPackages.map { it.packageName }) {
+    LaunchedEffect(sharedFilteredEntries) {
         isLoadingAppData = true
-        val allCached = filteredPackages.all { pkg ->
+
+        val packages = withContext(Dispatchers.IO) {
+            packageManager.getInstalledPackages(0)
+                .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
+        }
+        userInstalledPackages = packages
+
+        val packagesToLoad = if (sharedFilteredEntries != null) {
+            val filterNames = sharedFilteredEntries.map { it.packageName }.toSet()
+            packages.filter { it.packageName in filterNames }
+        } else {
+            packages
+        }
+
+        val allCached = packagesToLoad.all { pkg ->
             pkg.packageName == context.packageName || appDataCache.get(pkg.packageName) != null
         }
         if (allCached) {
-            appDataMap = filteredPackages.mapNotNull { pkg ->
+            appDataMap = packagesToLoad.mapNotNull { pkg ->
                 if (pkg.packageName == context.packageName) return@mapNotNull null
                 appDataCache.get(pkg.packageName)?.let { pkg.packageName to it }
             }.toMap()
             isLoadingAppData = false
         } else {
             val result = withContext(Dispatchers.IO) {
-                filteredPackages.mapNotNull { pkg ->
+                packagesToLoad.mapNotNull { pkg ->
                     if (pkg.packageName == context.packageName) return@mapNotNull null
                     val appData = appDataCache.get(pkg.packageName)
                         ?: run {
