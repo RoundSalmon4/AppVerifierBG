@@ -4,6 +4,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -92,7 +93,9 @@ data class AppListData(
     val internalDbInfo: InternalDatabaseInfo,
 )
 
-private val appDataCache = mutableMapOf<String, AppListData>()
+private val appDataCache = object : LruCache<String, AppListData>(256) {
+    override fun sizeOf(packageName: String, appData: AppListData): Int = 1
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -161,31 +164,34 @@ fun AppListScreen(
     LaunchedEffect(filteredPackages.map { it.packageName }) {
         isLoadingAppData = true
         val allCached = filteredPackages.all { pkg ->
-            pkg.packageName == context.packageName || pkg.packageName in appDataCache
+            pkg.packageName == context.packageName || appDataCache.get(pkg.packageName) != null
         }
         if (allCached) {
             appDataMap = filteredPackages.mapNotNull { pkg ->
                 if (pkg.packageName == context.packageName) return@mapNotNull null
-                appDataCache[pkg.packageName]?.let { pkg.packageName to it }
+                appDataCache.get(pkg.packageName)?.let { pkg.packageName to it }
             }.toMap()
             isLoadingAppData = false
         } else {
             val result = withContext(Dispatchers.IO) {
                 filteredPackages.mapNotNull { pkg ->
                     if (pkg.packageName == context.packageName) return@mapNotNull null
-                    val appData = appDataCache.getOrPut(pkg.packageName) {
-                        val packageInfo = try {
-                            packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-                        } catch (_: Exception) { null } ?: return@mapNotNull null
-                        val hashes = getHashesFromPackageInfo(packageInfo)
-                        val name = packageInfo.applicationInfo?.let {
-                            packageManager.getApplicationLabel(it).toString()
-                        } ?: pkg.packageName
-                        val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(
-                            VerificationInfo(pkg.packageName, hashes)
-                        )
-                        AppListData(hashes, name, internalDbInfo)
-                    }
+                    val appData = appDataCache.get(pkg.packageName)
+                        ?: run {
+                            val packageInfo = try {
+                                packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                            } catch (_: Exception) { null } ?: return@mapNotNull null
+                            val hashes = getHashesFromPackageInfo(packageInfo)
+                            val name = packageInfo.applicationInfo?.let {
+                                packageManager.getApplicationLabel(it).toString()
+                            } ?: pkg.packageName
+                            val internalDbInfo = getInternalDatabaseInfoFromVerificationInfo(
+                                VerificationInfo(pkg.packageName, hashes)
+                            )
+                            AppListData(hashes, name, internalDbInfo).also {
+                                appDataCache.put(pkg.packageName, it)
+                            }
+                        }
                     pkg.packageName to appData
                 }.toMap()
             }
