@@ -6,7 +6,7 @@ on:
       - feature/all-enhancements
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   dependency-graph:
