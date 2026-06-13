@@ -57,7 +57,7 @@ class PreferencesViewModelTest {
     fun setPreferenceUpdatesUiState() = runTest {
         viewModel.setPreference(booleanPreferencesKey("SHOW_UNVERIFIED_ONLY"), true)
 
-        val state = viewModel.uiState.first()
+        val state = viewModel.uiState.first { it.showUnverifiedOnly }
         assertTrue(state.showUnverifiedOnly)
     }
 
