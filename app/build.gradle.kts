@@ -13,12 +13,12 @@ val appVersionPatch: Int by extra
 
 android {
     namespace = "dev.soupslurpr.appverifier"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.roundsalmon4.appverifier"
         minSdk = 28
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = (project.findProperty("versionOverride") as? String) ?: ("$appVersionMajor.$appVersionMinor.$appVersionPatch" + (project.findProperty("versionSuffix") ?: ""))
 
