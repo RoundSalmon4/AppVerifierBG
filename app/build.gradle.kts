@@ -103,6 +103,14 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 
+    constraints {
+        implementation("androidx.core:core") {
+            version {
+                strictly(libs.versions.core.ktx.get())
+            }
+        }
+    }
+
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.kotlinx.coroutines.test)
