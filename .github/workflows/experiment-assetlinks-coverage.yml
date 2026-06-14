@@ -9,6 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: dev/domtest
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -19,12 +21,12 @@ jobs:
         run: pip install pyyaml
 
       - name: Run coverage check
-        run: python .github/scripts/check_assetlinks_coverage.py 2>&1 | tee coverage_output.txt
+        run: python experiment/check_assetlinks_coverage.py 2>&1 | tee coverage_output.txt
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: assetlinks-coverage-report
           path: |
-            .github/scripts/coverage_report.json
+            experiment/coverage_report.json
             coverage_output.txt
