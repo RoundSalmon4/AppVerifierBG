@@ -118,6 +118,10 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
+      - name: Run lint
+        continue-on-error: true
+        run: ./gradlew lint
+
       - name: Set up release keystore
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
