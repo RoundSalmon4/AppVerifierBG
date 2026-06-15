@@ -25,7 +25,6 @@ class HashVerifierTest {
 
         @ParameterizedTest
         @ValueSource(strings = [
-            "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d",
             "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
             "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
         ])
@@ -36,6 +35,7 @@ class HashVerifierTest {
         @ParameterizedTest
         @ValueSource(strings = [
             "",
+            "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d",
             "not a hash",
             "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434dXXX",
             "XX:BB:CC:DD",
@@ -104,9 +104,17 @@ class HashVerifierTest {
     @Nested
     inner class ParseTextToVerificationStatus {
 
+        private val hexMatchingHash = "AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA"
+
         private val hashes = Hashes(
             listOf(Source.NONE),
             listOf("AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"),
+            false,
+        )
+
+        private val matchingHashes = Hashes(
+            listOf(Source.NONE),
+            listOf(hexMatchingHash),
             false,
         )
 
@@ -119,7 +127,7 @@ class HashVerifierTest {
 
         @Test
         fun noMatch() {
-            val text = "com.example.app\n11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00"
+            val text = "com.other.app\n11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00"
             val result = verifier.parseTextToVerificationStatus(text, hashes, "com.example.app")
             assertEquals(VerificationStatus.NOMATCH, result)
         }
@@ -162,7 +170,7 @@ class HashVerifierTest {
         @Test
         fun hashOnlyText64CharHexMatch() {
             val hexMatch = "AA".repeat(32)
-            val result = verifier.parseTextToVerificationStatus(hexMatch, hashes, "com.example.app")
+            val result = verifier.parseTextToVerificationStatus(hexMatch, matchingHashes, "com.example.app")
             assertEquals(VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH, result)
         }
 
@@ -171,7 +179,7 @@ class HashVerifierTest {
             val emptyHashes = Hashes(listOf(Source.NONE), listOf(""), false)
             val text = "com.example.app\nAA:BB:CC"
             val result = verifier.parseTextToVerificationStatus(text, emptyHashes, "com.example.app")
-            assertEquals(VerificationStatus.NOMATCH, result)
+            assertEquals(VerificationStatus.PKG_MATCH_BUT_SIG_HASH_NOMATCH, result)
         }
 
         @Test

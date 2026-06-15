@@ -11,19 +11,13 @@ class HashVerifier {
     fun getVerificationInfoText(text: String): String {
         val trimmedText = text.trim().trim('"').lines().joinToString("") { it.trim().plus('\n') }
 
-        return if (trimmedText.contains('"')) {
+        return if (trimmedText.contains('"') || trimmedText.contains(' ')) {
             trimmedText
                 .lines()
-                .dropLast(2)
-                .joinToString("") {
-                    it.trim().replace(' ', '\n').trim('"').plus('\n')
-                }
-        } else if (trimmedText.contains(' ')) {
-            trimmedText
-                .lines()
-                .joinToString("") {
-                    it.trim().replace(' ', '\n').plus('\n')
-                }
+                .filter { it.isNotBlank() }
+                .joinToString("\n") {
+                    it.trim().replace('"', ' ').replace(' ', '\n').trim()
+                } + "\n"
         } else {
             trimmedText
         }
@@ -73,8 +67,9 @@ class HashVerifier {
             return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
         }
 
-        if (lines.size == 2 && lines[1].length == 64 && lines[0].trim().length + lines[1].trim().length == 128) {
-            if (lines[0].trim() + ":" + lines[1].trim() in currentHashes.hashes) {
+        if (lines.size == 2) {
+            val combinedColonHash = lines[0].trim() + ":" + lines[1].trim()
+            if (combinedColonHash.length == 95 && combinedColonHash in currentHashes.hashes) {
                 return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
             }
         }
