@@ -184,6 +184,7 @@ fun AppVerifierApp(
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.Start) {
                 StartupScreen(
                     modifier = modifier,
+                    preferencesViewModel = preferencesViewModel,
                     onSettingsButtonClicked = {
                         navController.navigate(AppVerifierScreens.Settings.name)
                     },

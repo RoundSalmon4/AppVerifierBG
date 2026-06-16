@@ -45,7 +45,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -54,7 +53,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.startActivity
 import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
-import dev.soupslurpr.appverifier.data.ImportSummary
 import dev.soupslurpr.appverifier.data.toText
 import dev.soupslurpr.appverifier.data.toYaml
 import dev.soupslurpr.appverifier.preferences.PreferencesUiState
@@ -80,23 +78,7 @@ fun SettingsScreen(
     val clipboardVerifiedPackages by preferencesViewModel.clipboardVerifiedPackages.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    var pendingImportJson by remember { mutableStateOf<String?>(null) }
-    var importSummary by remember { mutableStateOf<ImportSummary?>(null) }
     var showClearedDialog by remember { mutableStateOf(false) }
-    var pendingReportText by remember { mutableStateOf("") }
-
-    val reportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/plain")
-    ) { uri ->
-        if (uri != null) {
-            coroutineScope.launch {
-                context.contentResolver.openOutputStream(uri)?.use { out ->
-                    out.write(pendingReportText.toByteArray())
-                }
-            }
-        }
-        importSummary = null
-    }
 
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var pendingExportFormat by remember { mutableStateOf<ExportFormat?>(null) }
@@ -115,19 +97,6 @@ fun SettingsScreen(
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     out.write(data.toByteArray())
                 }
-            }
-        }
-    }
-
-    val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            coroutineScope.launch {
-                val json = context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    inputStream.bufferedReader().readText()
-                }
-                pendingImportJson = json
             }
         }
     }
@@ -339,93 +308,7 @@ fun SettingsScreen(
                     },
                 )
             }
-            SettingsItem(
-                name = stringResource(id = R.string.import_user_database),
-                description = stringResource(id = R.string.import_user_database_description),
-                hasIcon = true,
-                onClickIconSetting = {
-                    importLauncher.launch(arrayOf("*/*"))
-                },
-                icon = {
-                    Icon(Icons.Filled.FileDownload, null)
-                }
-            )
-            pendingImportJson?.let { json ->
-                AlertDialog(
-                    onDismissRequest = { pendingImportJson = null },
-                    title = { Text(stringResource(R.string.import_title)) },
-                    text = { Text(stringResource(R.string.import_how_to)) },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val summary = preferencesViewModel.importUserDatabase(json, replace = false)
-                                    importSummary = summary
-                                }
-                                pendingImportJson = null
-                            }
-                        ) {
-                            Text(stringResource(R.string.import_combine))
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val summary = preferencesViewModel.importUserDatabase(json, replace = true)
-                                    importSummary = summary
-                                }
-                                pendingImportJson = null
-                            }
-                        ) {
-                            Text(stringResource(R.string.import_replace))
-                        }
-                    }
-                )
-            }
-            importSummary?.let { summary ->
-                AlertDialog(
-                    onDismissRequest = { importSummary = null },
-                    title = { Text(stringResource(R.string.import_complete)) },
-                    text = {
-                        val formatNotRecognized = stringResource(R.string.format_not_recognized)
-                        val couldNotBeRead = stringResource(R.string.could_not_be_read, summary.skippedLines.size)
-                        val msg = buildString {
-                            if (summary.newCount == 0 && summary.updatedCount == 0) {
-                                append(formatNotRecognized)
-                            } else {
-                                val parts = mutableListOf<String>()
-                                if (summary.newCount > 0) parts.add("${summary.newCount} imported")
-                                if (summary.updatedCount > 0) parts.add("${summary.updatedCount} already imported")
-                                append(parts.joinToString(", "))
-                                append(".")
-                            }
-                            if (summary.skippedLines.isNotEmpty()) {
-                                append("\n\n")
-                                append(couldNotBeRead)
-                            }
-                        }
-                        Text(msg)
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { importSummary = null }) {
-                            Text(stringResource(R.string.continue_to_app))
-                        }
-                    },
-                    dismissButton = {
-                        if (summary.skippedLines.isNotEmpty()) {
-                            TextButton(
-                                onClick = {
-                                    pendingReportText = summary.skippedLines.joinToString("\n\n---\n\n")
-                                    reportLauncher.launch("import_errors.txt")
-                                }
-                            ) {
-                                Text(stringResource(R.string.download_report))
-                            }
-                        }
-                    }
-                )
-            }
+
             SettingsItem(
                 name = stringResource(id = R.string.clear_user_database),
                 description = stringResource(id = R.string.clear_user_database_description),
