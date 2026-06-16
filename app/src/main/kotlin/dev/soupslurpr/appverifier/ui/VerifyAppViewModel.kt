@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import android.util.Log
+import androidx.lifecycle.ViewModelProvider
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -314,5 +315,15 @@ class VerifyAppViewModel(
 
     fun clearUiState() {
         _uiState.value = VerifyAppUiState()
+    }
+
+    class VerifyAppViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(VerifyAppViewModel::class.java)) {
+                return VerifyAppViewModel(application) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        }
     }
 }
