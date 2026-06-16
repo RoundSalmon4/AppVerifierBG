@@ -33,12 +33,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -66,8 +69,18 @@ fun StartupScreen(
     preferencesViewModel: PreferencesViewModel,
 ) {
     val context = LocalContext.current
-    val icon = remember { context.packageManager.getApplicationIcon(context.packageName) }
+    val packageManager = context.packageManager
+    val icon = remember { packageManager.getApplicationIcon(context.packageName) }
     val coroutineScope = rememberCoroutineScope()
+
+    var installedPackages by remember { mutableStateOf(emptySet<String>()) }
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            installedPackages = packageManager.getInstalledPackages(0)
+                .map { it.packageName }
+                .toSet()
+        }
+    }
 
     var pendingImportJson by remember { mutableStateOf<String?>(null) }
     var importSummary by remember { mutableStateOf<ImportSummary?>(null) }
@@ -204,7 +217,7 @@ fun StartupScreen(
                 TextButton(
                     onClick = {
                         coroutineScope.launch {
-                            val summary = preferencesViewModel.importUserDatabase(json, replace = false)
+                            val summary = preferencesViewModel.importUserDatabase(json, replace = false, installedPackages)
                             importSummary = summary
                         }
                         pendingImportJson = null
@@ -217,7 +230,7 @@ fun StartupScreen(
                 TextButton(
                     onClick = {
                         coroutineScope.launch {
-                            val summary = preferencesViewModel.importUserDatabase(json, replace = true)
+                            val summary = preferencesViewModel.importUserDatabase(json, replace = true, installedPackages)
                             importSummary = summary
                         }
                         pendingImportJson = null
@@ -247,17 +260,18 @@ fun StartupScreen(
             onDismissRequest = { importSummary = null },
             title = { Text(stringResource(R.string.import_complete)) },
             text = {
-                val formatNotRecognized = stringResource(R.string.format_not_recognized)
                 val couldNotBeRead = stringResource(R.string.could_not_be_read, summary.skippedLines.size)
                 val msg = buildString {
-                    if (summary.newCount == 0 && summary.updatedCount == 0) {
-                        append(formatNotRecognized)
+                    if (summary.totalEntries == 0) {
+                        append(stringResource(R.string.format_not_recognized))
                     } else {
+                        append("${summary.totalEntries} entries imported.")
                         val parts = mutableListOf<String>()
-                    if (summary.newCount > 0) parts.add("${summary.newCount} new entries added")
-                    if (summary.updatedCount > 0) parts.add("${summary.updatedCount} entries already exist and were updated")
-                        append(parts.joinToString(", "))
-                        append(".")
+                        if (summary.verifiedCount > 0) parts.add("${summary.verifiedCount} apps verified")
+                        if (summary.updatedCount > 0) parts.add("${summary.updatedCount} apps updated")
+                        if (parts.isNotEmpty()) {
+                            append(" ${parts.joinToString(", ")}.")
+                        }
                     }
                     if (summary.skippedLines.isNotEmpty()) {
                         append("\n\n")

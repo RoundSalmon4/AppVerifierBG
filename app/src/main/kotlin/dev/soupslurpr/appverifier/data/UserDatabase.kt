@@ -21,7 +21,8 @@ data class ImportResult(
 )
 
 data class ImportSummary(
-    val newCount: Int,
+    val totalEntries: Int,
+    val verifiedCount: Int,
     val updatedCount: Int,
     val skippedLines: List<String>,
 )

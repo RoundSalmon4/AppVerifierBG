@@ -96,34 +96,36 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
         return _userDatabaseEntries.value.toJson()
     }
 
-    suspend fun importUserDatabase(data: String, replace: Boolean = true): ImportSummary {
+    suspend fun importUserDatabase(data: String, replace: Boolean = true, installedPackages: Set<String> = emptySet()): ImportSummary {
         val result = parseUserDatabaseEntriesFromAny(data)
         val entries = result.entries
-        if (entries.isEmpty()) return ImportSummary(0, 0, result.skippedLines)
+        if (entries.isEmpty()) return ImportSummary(0, 0, 0, result.skippedLines)
 
-        var newCount = 0
+        var verifiedCount = 0
         var updatedCount = 0
         val updated: List<UserDatabaseEntry>
         if (replace) {
-            newCount = entries.count { entry ->
-                _userDatabaseEntries.value.none { it.packageName == entry.packageName }
+            for (entry in entries) {
+                val alreadyExists = _userDatabaseEntries.value.any { it.packageName == entry.packageName }
+                if (entry.packageName in installedPackages) {
+                    if (alreadyExists) updatedCount++ else verifiedCount++
+                }
             }
-            updatedCount = entries.size - newCount
             updated = entries
         } else {
             val current = _userDatabaseEntries.value.toMutableList()
             for (entry in entries) {
                 val index = current.indexOfFirst { it.packageName == entry.packageName }
                 if (index != -1) {
-                    updatedCount++
                     val existing = current[index]
                     current[index] = existing.copy(
                         hashes = (existing.hashes + entry.hashes).distinct(),
                         hasMultipleSigners = existing.hasMultipleSigners || entry.hasMultipleSigners,
                     )
+                    if (entry.packageName in installedPackages) updatedCount++
                 } else {
-                    newCount++
                     current.add(entry)
+                    if (entry.packageName in installedPackages) verifiedCount++
                 }
             }
             updated = current
@@ -132,7 +134,7 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
             preferences[USER_DATABASE_JSON] = updated.toJson()
         }
         _userDatabaseEntries.value = updated
-        return ImportSummary(newCount, updatedCount, result.skippedLines)
+        return ImportSummary(entries.size, verifiedCount, updatedCount, result.skippedLines)
     }
 
     private suspend fun populateClipboardVerifiedPackages() {
