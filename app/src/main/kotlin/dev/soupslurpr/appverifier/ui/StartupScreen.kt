@@ -159,7 +159,7 @@ fun StartupScreen(
                     icon = Icons.Filled.FileDownload,
                     title = stringResource(R.string.import_user_database),
                     description = stringResource(R.string.import_user_database_description),
-                    onClick = { importLauncher.launch(arrayOf("*/*")) },
+                    onClick = { importLauncher.launch(arrayOf("text/plain", "application/json", "*/*")) },
                 )
                 HorizontalDivider()
                 ActionItem(
@@ -227,8 +227,8 @@ fun StartupScreen(
                         append(formatNotRecognized)
                     } else {
                         val parts = mutableListOf<String>()
-                        if (summary.newCount > 0) parts.add("${summary.newCount} imported")
-                        if (summary.updatedCount > 0) parts.add("${summary.updatedCount} already imported")
+                    if (summary.newCount > 0) parts.add("${summary.newCount} new entries added")
+                    if (summary.updatedCount > 0) parts.add("${summary.updatedCount} entries already exist and were updated")
                         append(parts.joinToString(", "))
                         append(".")
                     }
