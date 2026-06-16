@@ -62,7 +62,8 @@
     <string name="db_desc_user">Show only user database status</string>
     <string name="import_how_to">Choose how to import:</string>
     <string name="import_complete">Import complete</string>
-    <string name="format_not_recognized">The file format was not recognized. Supported formats are JSON, YAML, plain text, and the PrivacyGuides format.</string>
+    <string name="import_invalid_format_title">Invalid format</string>
+    <string name="format_not_recognized">The file format was not recognized.</string>
     <string name="could_not_be_read">%d entries could not be read.</string>
     <string name="download_report">Download report</string>
     <string name="cancel">Cancel</string>

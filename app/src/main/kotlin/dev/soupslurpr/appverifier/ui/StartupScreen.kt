@@ -51,6 +51,7 @@ import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import androidx.compose.foundation.Image
 import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.data.ImportSummary
+import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import kotlinx.coroutines.launch
 
@@ -70,6 +71,7 @@ fun StartupScreen(
 
     var pendingImportJson by remember { mutableStateOf<String?>(null) }
     var importSummary by remember { mutableStateOf<ImportSummary?>(null) }
+    var showImportParseError by remember { mutableStateOf(false) }
     var pendingReportText by remember { mutableStateOf("") }
 
     val reportLauncher = rememberLauncherForActivityResult(
@@ -90,10 +92,22 @@ fun StartupScreen(
     ) { uri ->
         if (uri != null) {
             coroutineScope.launch {
-                val json = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val mimeType = context.contentResolver.getType(uri)
+                if (mimeType == null || !(mimeType.startsWith("text/") || mimeType == "application/json")) {
+                    showImportParseError = true
+                    return@launch
+                }
+                val content = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     inputStream.bufferedReader().readText()
                 }
-                pendingImportJson = json
+                if (content != null) {
+                    val parsed = parseUserDatabaseEntriesFromAny(content)
+                    if (parsed.entries.isNotEmpty()) {
+                        pendingImportJson = content
+                    } else {
+                        showImportParseError = true
+                    }
+                }
             }
         }
     }
@@ -159,7 +173,7 @@ fun StartupScreen(
                     icon = Icons.Filled.FileDownload,
                     title = stringResource(R.string.import_user_database),
                     description = stringResource(R.string.import_user_database_description),
-                    onClick = { importLauncher.launch(arrayOf("text/plain", "application/json", "*/*")) },
+                    onClick = { importLauncher.launch(arrayOf("*/*")) },
                 )
                 HorizontalDivider()
                 ActionItem(
@@ -210,6 +224,19 @@ fun StartupScreen(
                     }
                 ) {
                     Text(stringResource(R.string.import_replace))
+                }
+            }
+        )
+    }
+
+    if (showImportParseError) {
+        AlertDialog(
+            onDismissRequest = { showImportParseError = false },
+            title = { Text(stringResource(R.string.import_invalid_format_title)) },
+            text = { Text(stringResource(R.string.format_not_recognized)) },
+            confirmButton = {
+                TextButton(onClick = { showImportParseError = false }) {
+                    Text(stringResource(R.string.continue_to_app))
                 }
             }
         )
