@@ -91,6 +91,7 @@ fun StartupScreen(
         contract = ActivityResultContracts.CreateDocument("text/plain")
     ) { uri ->
         if (uri != null) {
+            @Suppress("CoroutineCreationDuringComposition")
             coroutineScope.launch {
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     out.write(pendingReportText.toByteArray())
@@ -104,6 +105,7 @@ fun StartupScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
+            @Suppress("CoroutineCreationDuringComposition")
             coroutineScope.launch {
                 val mimeType = context.contentResolver.getType(uri)
                 if (mimeType == null || !(mimeType.startsWith("text/") || mimeType == "application/json")) {
