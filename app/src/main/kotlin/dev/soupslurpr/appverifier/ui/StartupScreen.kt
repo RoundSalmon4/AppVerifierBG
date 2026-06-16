@@ -156,6 +156,13 @@ fun StartupScreen(
                 )
                 HorizontalDivider()
                 ActionItem(
+                    icon = Icons.Filled.FileDownload,
+                    title = stringResource(R.string.import_user_database),
+                    description = stringResource(R.string.import_user_database_description),
+                    onClick = { importLauncher.launch(arrayOf("*/*")) },
+                )
+                HorizontalDivider()
+                ActionItem(
                     icon = Icons.Filled.Settings,
                     title = stringResource(R.string.settings),
                     description = stringResource(R.string.startup_settings_description),
@@ -167,23 +174,6 @@ fun StartupScreen(
                     title = stringResource(R.string.startup_privacy_policy_title),
                     description = stringResource(R.string.startup_privacy_policy_description),
                     onClick = onPrivacyPolicyButtonClicked,
-                )
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                ActionItem(
-                    icon = Icons.Filled.FileDownload,
-                    title = stringResource(R.string.import_user_database),
-                    description = stringResource(R.string.import_user_database_description),
-                    onClick = { importLauncher.launch(arrayOf("*/*")) },
                 )
             }
         }
