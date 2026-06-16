@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -110,7 +111,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 } else if (extraStream != null) {
-                    coroutineScope.launch {
+                    LaunchedEffect(extraStream) {
                         verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
                             contentResolver,
                             extraStream,
@@ -119,11 +120,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             } else if (isActionView) {
-                intent.data?.let {
-                    coroutineScope.launch {
+                val uri = intent.data
+                if (uri != null) {
+                    LaunchedEffect(uri) {
                         verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
                             contentResolver,
-                            it,
+                            uri,
                             packageManager
                         )
                     }
