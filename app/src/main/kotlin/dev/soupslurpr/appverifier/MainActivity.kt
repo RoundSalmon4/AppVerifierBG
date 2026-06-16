@@ -19,6 +19,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
+import dev.soupslurpr.appverifier.ui.VerifyAppViewModel.VerifyAppViewModelFactory
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
@@ -39,7 +40,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val verifyAppViewModel: VerifyAppViewModel = viewModel()
+            val verifyAppViewModel: VerifyAppViewModel = viewModel(
+                factory = VerifyAppViewModelFactory(application)
+            )
 
             val preferencesViewModel: PreferencesViewModel = viewModel(
                 factory = PreferencesViewModel.PreferencesViewModelFactory(dataStore)

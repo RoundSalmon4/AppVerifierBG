@@ -36,7 +36,7 @@
     <string name="clear_user_database">Clear user database</string>
     <string name="clear_user_database_description">Remove all entries from your database</string>
     <string name="clipboard_verification_setting_name">Clipboard verification checkmark</string>
-    <string name="clipboard_verification_setting_description">Shows a checkmark next to apps in the list that have been successfully verified from clipboard</string>
+    <string name="clipboard_verification_setting_description">Shows a checkmark next to apps in the list that have been successfully verified from clipboard. Does not show for apps already verified in the internal database.</string>
     <string name="clear_clipboard_checkmarks_setting_name">Clear clipboard checkmarks</string>
     <string name="clear_clipboard_checkmarks_setting_description">Remove all clipboard verification checkmarks from the app list</string>
     <string name="default_sort_mode_name">Default sort order</string>
@@ -62,8 +62,9 @@
     <string name="db_desc_user">Show only user database status</string>
     <string name="import_how_to">Choose how to import:</string>
     <string name="import_complete">Import complete</string>
+    <string name="import_invalid_format_title">Invalid format</string>
     <string name="format_not_recognized">The file format was not recognized.</string>
-    <string name="could_not_be_read">%d could not be read.</string>
+    <string name="could_not_be_read">%d entries could not be read.</string>
     <string name="download_report">Download report</string>
     <string name="cancel">Cancel</string>
     <string name="user_database_cleared">All user database entries removed.</string>
