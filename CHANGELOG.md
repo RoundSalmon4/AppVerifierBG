@@ -7,7 +7,6 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Import user database moved from Settings to the main screen for easier access.
 - Import now validates the file type before reading. Non-text selections show an error immediately.
 - Import summary now shows total entries found, how many apps were verified (new, installed), and how many were updated (already in user DB).
-- Added unit tests for hash verification logic and CI lint checks.
 
 ## 2026-06-13
 
