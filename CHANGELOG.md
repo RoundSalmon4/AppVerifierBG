@@ -2,6 +2,14 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-17
+
+- Import user database moved from Settings to the main screen for easier access.
+- Import now validates the file type before reading. Non-text selections show an error immediately.
+- Import summary now shows total entries found, how many apps were verified (new, installed), and how many were updated (already in user DB).
+- Added unit tests for hash verification logic and CI lint checks.
+- Fixed a startup crash when opening the verify app screen.
+
 ## 2026-06-13
 
 - No more "App not responding" pop-ups. Verification statuses load in the background. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
