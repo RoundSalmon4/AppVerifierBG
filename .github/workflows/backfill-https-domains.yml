@@ -56,8 +56,9 @@ jobs:
             "$RUNNER_TEMP/data.yml"
 
       - name: Sync internal database from upstream
-        run: python .github/scripts/generate_internal_db.py \
-          --data-yml "$RUNNER_TEMP/data.yml"
+        run: |
+          python .github/scripts/generate_internal_db.py \
+            --data-yml "$RUNNER_TEMP/data.yml"
 
       - name: Backfill HTTPS Verified Domain sources
         id: backfill
@@ -66,7 +67,7 @@ jobs:
             --data-yml "$RUNNER_TEMP/data.yml" 2>&1 | tee "$RUNNER_TEMP/backfill_output.txt"
 
       - name: Report results
-        if: always()
+        if: steps.backfill.outcome == 'success'
         run: |
           {
             echo "## Backfill HTTPS Verified Domains"
