@@ -10,7 +10,7 @@ accompanist-drawablepainter = "0.37.2"
 junit-jupiter = "5.11.4"
 kotlinx-coroutines = "1.11.0"
 kotlinx-coroutines-test = "1.11.0"
-mockk = "1.13.14"
+mockk = "1.14.11"
 
 [libraries]
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
