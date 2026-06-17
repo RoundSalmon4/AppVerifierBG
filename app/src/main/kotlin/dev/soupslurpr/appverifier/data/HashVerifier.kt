@@ -33,16 +33,7 @@ class HashVerifier {
     }
 
     fun convertHexHashToColonFormat(hexHash: String): String {
-        return hexHash.iterator().run {
-            var result = ""
-            this.withIndex().forEach {
-                result += it.value
-                if (it.index % 2 != 0 && it.index != hexHash.length.dec()) {
-                    result += ":"
-                }
-            }
-            result
-        }
+        return hexHash.chunked(2).joinToString(":").uppercase()
     }
 
     private fun parseVerificationInfoTextToVerificationStatus(

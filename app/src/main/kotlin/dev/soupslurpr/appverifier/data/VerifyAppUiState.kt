@@ -7,7 +7,7 @@ import dev.soupslurpr.appverifier.Source
 data class VerifyAppUiState(
     val name: String = "",
     val packageName: String = "",
-    val hashes: Hashes = Hashes(listOf(Source.NONE), listOf(""), false),
+    val hashes: Hashes = Hashes(listOf(Source.NONE), emptyList(), false),
     val icon: Drawable? = null,
     val verificationStatus: VerificationStatus = VerificationStatus.UNKNOWN,
     val appNotFoundOrInvalidFormat: Boolean = false,
@@ -21,7 +21,7 @@ data class VerifyAppUiState(
 )
 
 
-class InternalDatabaseInfo(
+data class InternalDatabaseInfo(
     val internalDatabaseStatus: InternalDatabaseStatus,
     val hashSources: List<Source>,
     val domainSources: List<Source> = emptyList(),

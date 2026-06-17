@@ -108,8 +108,8 @@ class VerifyAppViewModel(
     }
 
     fun getHashesFromPackageInfo(packageInfo: PackageInfo): Hashes {
-        val signingInfo = packageInfo.signingInfo
-        val hasMultipleSigners = signingInfo!!.hasMultipleSigners()
+        val signingInfo = packageInfo.signingInfo ?: return Hashes(listOf(Source.NONE), emptyList(), false)
+        val hasMultipleSigners = signingInfo.hasMultipleSigners()
 
         val certFactory = CertificateFactory.getInstance("X.509")
 

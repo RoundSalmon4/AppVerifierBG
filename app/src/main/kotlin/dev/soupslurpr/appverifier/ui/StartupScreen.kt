@@ -82,9 +82,14 @@ fun StartupScreen(
         }
     }
 
-    var pendingImportJson by remember { mutableStateOf<String?>(null) }
-    var importSummary by remember { mutableStateOf<ImportSummary?>(null) }
-    var showImportParseError by remember { mutableStateOf(false) }
+    sealed interface ImportDialogState {
+        data object Idle : ImportDialogState
+        data class CombineOrReplace(val json: String) : ImportDialogState
+        data class Summary(val summary: ImportSummary) : ImportDialogState
+        data object ParseError : ImportDialogState
+    }
+
+    var importDialogState by remember { mutableStateOf<ImportDialogState>(ImportDialogState.Idle) }
     var pendingReportText by remember { mutableStateOf("") }
 
     val reportLauncher = rememberLauncherForActivityResult(
@@ -98,7 +103,7 @@ fun StartupScreen(
                 }
             }
         }
-        importSummary = null
+        importDialogState = ImportDialogState.Idle
     }
 
     val importLauncher = rememberLauncherForActivityResult(
@@ -109,7 +114,7 @@ fun StartupScreen(
             coroutineScope.launch {
                 val mimeType = context.contentResolver.getType(uri)
                 if (mimeType == null || !(mimeType.startsWith("text/") || mimeType == "application/json")) {
-                    showImportParseError = true
+                    importDialogState = ImportDialogState.ParseError
                     return@launch
                 }
                 val content = context.contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -118,9 +123,9 @@ fun StartupScreen(
                 if (content != null) {
                     val parsed = parseUserDatabaseEntriesFromAny(content)
                     if (parsed.entries.isNotEmpty()) {
-                        pendingImportJson = content
+                        importDialogState = ImportDialogState.CombineOrReplace(content)
                     } else {
-                        showImportParseError = true
+                        importDialogState = ImportDialogState.ParseError
                     }
                 }
             }
@@ -210,96 +215,95 @@ fun StartupScreen(
         Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
     }
 
-    pendingImportJson?.let { json ->
-        AlertDialog(
-            onDismissRequest = { pendingImportJson = null },
-            title = { Text(stringResource(R.string.import_title)) },
-            text = { Text(stringResource(R.string.import_how_to)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            val summary = preferencesViewModel.importUserDatabase(json, replace = false, installedPackages)
-                            importSummary = summary
-                        }
-                        pendingImportJson = null
-                    }
-                ) {
-                    Text(stringResource(R.string.import_combine))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            val summary = preferencesViewModel.importUserDatabase(json, replace = true, installedPackages)
-                            importSummary = summary
-                        }
-                        pendingImportJson = null
-                    }
-                ) {
-                    Text(stringResource(R.string.import_replace))
-                }
-            }
-        )
-    }
-
-    if (showImportParseError) {
-        AlertDialog(
-            onDismissRequest = { showImportParseError = false },
-            title = { Text(stringResource(R.string.import_invalid_format_title)) },
-            text = { Text(stringResource(R.string.format_not_recognized)) },
-            confirmButton = {
-                TextButton(onClick = { showImportParseError = false }) {
-                    Text(stringResource(R.string.continue_to_app))
-                }
-            }
-        )
-    }
-
-    importSummary?.let { summary ->
-        AlertDialog(
-            onDismissRequest = { importSummary = null },
-            title = { Text(stringResource(R.string.import_complete)) },
-            text = {
-                val couldNotBeRead = stringResource(R.string.could_not_be_read, summary.skippedLines.size)
-                val msg = buildString {
-                    if (summary.totalEntries == 0) {
-                        append(stringResource(R.string.format_not_recognized))
-                    } else {
-                        append("${summary.totalEntries} entries imported.")
-                        val parts = mutableListOf<String>()
-                        if (summary.verifiedCount > 0) parts.add("${summary.verifiedCount} apps verified")
-                        if (summary.updatedCount > 0) parts.add("${summary.updatedCount} apps updated")
-                        if (parts.isNotEmpty()) {
-                            append(" ${parts.joinToString(", ")}.")
-                        }
-                    }
-                    if (summary.skippedLines.isNotEmpty()) {
-                        append("\n\n")
-                        append(couldNotBeRead)
-                    }
-                }
-                Text(msg)
-            },
-            confirmButton = {
-                TextButton(onClick = { importSummary = null }) {
-                    Text(stringResource(R.string.continue_to_app))
-                }
-            },
-            dismissButton = {
-                if (summary.skippedLines.isNotEmpty()) {
+    when (val state = importDialogState) {
+        is ImportDialogState.Idle -> {}
+        is ImportDialogState.CombineOrReplace -> {
+            AlertDialog(
+                onDismissRequest = { importDialogState = ImportDialogState.Idle },
+                title = { Text(stringResource(R.string.import_title)) },
+                text = { Text(stringResource(R.string.import_how_to)) },
+                confirmButton = {
                     TextButton(
                         onClick = {
-                            pendingReportText = summary.skippedLines.joinToString("\n\n---\n\n")
-                            reportLauncher.launch("import_errors.txt")
+                            coroutineScope.launch {
+                                val summary = preferencesViewModel.importUserDatabase(state.json, replace = false, installedPackages)
+                                importDialogState = ImportDialogState.Summary(summary)
+                            }
                         }
                     ) {
-                        Text(stringResource(R.string.download_report))
+                        Text(stringResource(R.string.import_combine))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                val summary = preferencesViewModel.importUserDatabase(state.json, replace = true, installedPackages)
+                                importDialogState = ImportDialogState.Summary(summary)
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.import_replace))
                     }
                 }
-            }
-        )
+            )
+        }
+        is ImportDialogState.ParseError -> {
+            AlertDialog(
+                onDismissRequest = { importDialogState = ImportDialogState.Idle },
+                title = { Text(stringResource(R.string.import_invalid_format_title)) },
+                text = { Text(stringResource(R.string.format_not_recognized)) },
+                confirmButton = {
+                    TextButton(onClick = { importDialogState = ImportDialogState.Idle }) {
+                        Text(stringResource(R.string.continue_to_app))
+                    }
+                }
+            )
+        }
+        is ImportDialogState.Summary -> {
+            AlertDialog(
+                onDismissRequest = { importDialogState = ImportDialogState.Idle },
+                title = { Text(stringResource(R.string.import_complete)) },
+                text = {
+                    val couldNotBeRead = stringResource(R.string.could_not_be_read, state.summary.skippedLines.size)
+                    val msg = buildString {
+                        if (state.summary.totalEntries == 0) {
+                            append(stringResource(R.string.format_not_recognized))
+                        } else {
+                            append("${state.summary.totalEntries} entries imported.")
+                            val parts = mutableListOf<String>()
+                            if (state.summary.verifiedCount > 0) parts.add("${state.summary.verifiedCount} apps verified")
+                            if (state.summary.updatedCount > 0) parts.add("${state.summary.updatedCount} apps updated")
+                            if (parts.isNotEmpty()) {
+                                append(" ${parts.joinToString(", ")}.")
+                            }
+                        }
+                        if (state.summary.skippedLines.isNotEmpty()) {
+                            append("\n\n")
+                            append(couldNotBeRead)
+                        }
+                    }
+                    Text(msg)
+                },
+                confirmButton = {
+                    TextButton(onClick = { importDialogState = ImportDialogState.Idle }) {
+                        Text(stringResource(R.string.continue_to_app))
+                    }
+                },
+                dismissButton = {
+                    if (state.summary.skippedLines.isNotEmpty()) {
+                        TextButton(
+                            onClick = {
+                                pendingReportText = state.summary.skippedLines.joinToString("\n\n---\n\n")
+                                reportLauncher.launch("import_errors.txt")
+                            }
+                        ) {
+                            Text(stringResource(R.string.download_report))
+                        }
+                    }
+                }
+            )
+        }
     }
 }
 
