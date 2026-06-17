@@ -26,8 +26,8 @@ SOURCE_MAP = {
     "Google Pixel OS": "GOOGLE_PIXEL_OS",
     "Direct APK Link": "DIRECT_APK_LINK",
     "AppVerifier": "APPVERIFIER",
-    "Verified Domain (HTTPS)": "VERIFIED_DOMAIN_HTTPS",
-    "Verified Domain (DNS)": "VERIFIED_DOMAIN_DNS",
+    "HTTPS Verified Domain": "VERIFIED_DOMAIN_HTTPS",
+    "DNS Verified Domain": "VERIFIED_DOMAIN_DNS",
 }
 
 
