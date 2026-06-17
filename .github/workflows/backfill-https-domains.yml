@@ -55,6 +55,10 @@ jobs:
             --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
             "$RUNNER_TEMP/data.yml"
 
+      - name: Sync internal database from upstream
+        run: python .github/scripts/generate_internal_db.py \
+          --data-yml "$RUNNER_TEMP/data.yml"
+
       - name: Backfill HTTPS Verified Domain sources
         id: backfill
         run: |
@@ -80,7 +84,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Backfill HTTPS Verified Domain sources from assetlinks.json"
+            git commit -m "Sync upstream database and backfill HTTPS Verified Domain sources"
             git remote set-url origin https://RoundSalmon4:${{ secrets.PAT }}@github.com/RoundSalmon4/AppVerifierBG.git
             git push origin ${{ github.event.inputs.branch }}
             git remote set-url origin https://github.com/RoundSalmon4/AppVerifierBG.git
