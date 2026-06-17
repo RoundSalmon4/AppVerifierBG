@@ -58,6 +58,13 @@ import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
 import kotlinx.coroutines.launch
 
+private sealed interface ImportDialogState {
+    data object Idle : ImportDialogState
+    data class CombineOrReplace(val json: String) : ImportDialogState
+    data class Summary(val summary: ImportSummary) : ImportDialogState
+    data object ParseError : ImportDialogState
+}
+
 @Composable
 fun StartupScreen(
     modifier: Modifier,
@@ -80,13 +87,6 @@ fun StartupScreen(
                 .map { it.packageName }
                 .toSet()
         }
-    }
-
-    sealed interface ImportDialogState {
-        data object Idle : ImportDialogState
-        data class CombineOrReplace(val json: String) : ImportDialogState
-        data class Summary(val summary: ImportSummary) : ImportDialogState
-        data object ParseError : ImportDialogState
     }
 
     var importDialogState by remember { mutableStateOf<ImportDialogState>(ImportDialogState.Idle) }
