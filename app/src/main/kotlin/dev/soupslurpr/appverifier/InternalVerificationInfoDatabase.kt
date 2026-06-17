@@ -50,6 +50,8 @@ enum class Source(val displayName: String) {
     F_DROID_GROBOX_DE("F-Droid (grobox.de)"),
     F_DROID_PRIVACYGUIDES_GITHUB_IO("F-Droid (privacyguides.github.io)"),
     VERIFIED_DOMAIN("Verified Domain"),
+    VERIFIED_DOMAIN_HTTPS("Verified Domain (HTTPS)"),
+    VERIFIED_DOMAIN_DNS("Verified Domain (DNS)"),
     F_DROID_FDROID_TYPEBLOG_NET("F-Droid (fdroid.typeblog.net)"),
 }
 

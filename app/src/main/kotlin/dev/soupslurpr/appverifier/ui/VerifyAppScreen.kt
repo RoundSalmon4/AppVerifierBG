@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
 import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
@@ -591,6 +592,11 @@ fun VerifyAppScreen(
             text = {
                 Column {
                     Text(domainInfoText)
+                    val domainMethods = buildList {
+                        if (Source.VERIFIED_DOMAIN_HTTPS in internalDatabaseInfo.domainSources) add("HTTPS (assetlinks.json)")
+                        if (Source.VERIFIED_DOMAIN_DNS in internalDatabaseInfo.domainSources) add("DNS (TXT record)")
+                        if (isEmpty() && Source.VERIFIED_DOMAIN in internalDatabaseInfo.domainSources) add("Domain")
+                    }
                     if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domain != null) {
                         Text("\nThe matched hash entry for this app was verified against the following domain:\n")
                         Text(
@@ -598,6 +604,14 @@ fun VerifyAppScreen(
                             style = typography.bodyMedium,
                             color = Gold80,
                         )
+                        if (domainMethods.isNotEmpty()) {
+                            Text("\nVerification method${if (domainMethods.size > 1) "s" else ""}:\n")
+                            Text(
+                                text = domainMethods.joinToString("\n"),
+                                style = typography.bodyMedium,
+                                color = Gold80,
+                            )
+                        }
                     }
                 }
             }

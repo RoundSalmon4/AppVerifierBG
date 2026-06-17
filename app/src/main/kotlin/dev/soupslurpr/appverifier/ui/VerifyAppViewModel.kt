@@ -192,14 +192,15 @@ class VerifyAppViewModel(
         val maybeMatchedHashes = entry.hashesList.find {
             it.hashes.toSet().containsAll(verificationInfo.hashes.hashes.toSet())
         }
+        val domainSourceValues = listOf(Source.VERIFIED_DOMAIN, Source.VERIFIED_DOMAIN_HTTPS, Source.VERIFIED_DOMAIN_DNS)
         return if (maybeMatchedHashes != null) {
-            val hashSources = maybeMatchedHashes.sources.filter { it != Source.VERIFIED_DOMAIN }
-            val domainSources = maybeMatchedHashes.sources.filter { it == Source.VERIFIED_DOMAIN }
+            val hashSources = maybeMatchedHashes.sources.filter { it !in domainSourceValues }
+            val domainSources = maybeMatchedHashes.sources.filter { it in domainSourceValues }
             InternalDatabaseInfo(InternalDatabaseStatus.MATCH, hashSources, domainSources)
         } else {
             val domainSources = entry.hashesList
                 .flatMap { it.sources }
-                .filter { it == Source.VERIFIED_DOMAIN }
+                .filter { it in domainSourceValues }
                 .distinct()
             InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE), domainSources)
         }
