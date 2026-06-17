@@ -56,8 +56,21 @@ jobs:
             "$RUNNER_TEMP/data.yml"
 
       - name: Backfill HTTPS Verified Domain sources
-        run: python .github/scripts/backfill_https_domains.py \
-          --data-yml "$RUNNER_TEMP/data.yml"
+        id: backfill
+        run: |
+          python .github/scripts/backfill_https_domains.py \
+            --data-yml "$RUNNER_TEMP/data.yml" 2>&1 | tee "$RUNNER_TEMP/backfill_output.txt"
+
+      - name: Report results
+        if: always()
+        run: |
+          {
+            echo "## Backfill HTTPS Verified Domains"
+            echo ""
+            echo '```'
+            cat "$RUNNER_TEMP/backfill_output.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit updated database
         run: |
