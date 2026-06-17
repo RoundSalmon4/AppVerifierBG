@@ -2,6 +2,11 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-18
+
+- Domain verification now distinguishes between HTTPS (assetlinks.json) and DNS (TXT record) verification methods in the domain info dialog.
+- Internal database generation updated for upstream source name changes.
+
 ## 2026-06-17
 
 - Import user database moved from Settings to the main screen for easier access.
