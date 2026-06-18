@@ -250,6 +250,7 @@ def main():
 
     # Check assetlinks for each domain and collect matches
     matches = []
+    serving_domains = 0
 
     for i, (domain, pkg_list) in enumerate(
         sorted(domain_to_pkgs.items(), key=lambda x: x[0].lower()), 1
@@ -261,6 +262,8 @@ def main():
         if assetlinks is None:
             time.sleep(REQUEST_DELAY)
             continue
+
+        serving_domains += 1
 
         for pkg, known_fps in pkg_list:
             pkg_assetlinks_fps = assetlinks.get(pkg)
@@ -275,7 +278,8 @@ def main():
         time.sleep(REQUEST_DELAY)
 
     deduplicated = list(dict.fromkeys(matches))
-    print(f"\nMatches found (after dedup): {len(deduplicated)}", file=sys.stderr)
+    print(f"\nDomains with assetlinks:         {serving_domains}", file=sys.stderr)
+    print(f"Matching apps found:             {len(deduplicated)}", file=sys.stderr)
 
     if not deduplicated:
         print("Nothing to backfill.", file=sys.stderr)

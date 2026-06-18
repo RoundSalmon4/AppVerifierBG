@@ -69,12 +69,17 @@ jobs:
       - name: Report results
         if: steps.backfill.outcome == 'success'
         run: |
+          SERVING=$(grep -oP 'Domains with assetlinks:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
+          MATCHES=$(grep -oP 'Matching apps found:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
+          MODIFIED=$(grep -oP 'Modified\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           {
             echo "## Backfill HTTPS Verified Domains"
             echo ""
-            echo '```'
-            cat "$RUNNER_TEMP/backfill_output.txt"
-            echo '```'
+            echo "| Metric | Count |"
+            echo "|--------|-------|"
+            echo "| Domains serving assetlinks | $SERVING |"
+            echo "| Matching apps found | $MATCHES |"
+            echo "| Entries modified in database | $MODIFIED |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit updated database
