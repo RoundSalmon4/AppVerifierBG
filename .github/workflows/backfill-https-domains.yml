@@ -35,25 +35,40 @@ jobs:
       - name: Pull latest
         run: git pull --rebase origin ${{ github.event.inputs.branch }}
 
-      - name: Download verified-apps database
-        run: curl -fsSL -o "$RUNNER_TEMP/data.yml" "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
-
-      - name: Verify database attestation
+      - name: Download and verify database
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for i in 1 2 3 4 5; do
-            if gh attestation verify -R privacyguides/verified-apps \
+          verify_main() {
+            local file=$1
+            gh attestation verify -R privacyguides/verified-apps \
               --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
-              "$RUNNER_TEMP/data.yml" 2>/dev/null; then
-              exit 0
+              "$file"
+          }
+          verify_release() {
+            local file=$1
+            local tag
+            tag=$(gh release view -R privacyguides/verified-apps --json tagName -q .tagName)
+            gh release verify-asset -R privacyguides/verified-apps "$tag" "$file"
+          }
+          # Try main tip first (freshest data). Attestations will exist once
+          # upstream resumes signing submission commits.
+          curl -fsSL -o "$RUNNER_TEMP/data.yml" \
+            "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" \
+            || { echo "Failed to download from main" >&2; exit 1; }
+          if verify_main "$RUNNER_TEMP/data.yml"; then
+            echo "Attestation verified (main)"
+          else
+            echo "main not attested, using latest release data..."
+            gh release download -R privacyguides/verified-apps \
+              -p "data.yml" --dir "$RUNNER_TEMP" --clobber
+            if verify_release "$RUNNER_TEMP/data.yml"; then
+              echo "Attestation verified (release)"
+            else
+              echo "ERROR: Release data also not attested" >&2
+              exit 1
             fi
-            echo "Attestation not yet available, retrying in 10s (attempt $i/5)..."
-            sleep 10
-          done
-          gh attestation verify -R privacyguides/verified-apps \
-            --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
-            "$RUNNER_TEMP/data.yml"
+          fi
 
       - name: Sync internal database from upstream
         run: |
