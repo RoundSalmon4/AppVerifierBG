@@ -94,6 +94,7 @@ jobs:
         run: |
           git fetch origin feature/all-enhancements --depth=1
           git show FETCH_HEAD:app/verified_domains.json > app/verified_domains.json 2>/dev/null || echo "[]" > app/verified_domains.json
+          git show FETCH_HEAD:.github/scripts/merge_https_domains.py > .github/scripts/merge_https_domains.py
           python .github/scripts/merge_https_domains.py
 
       - name: Commit and push sync changes
