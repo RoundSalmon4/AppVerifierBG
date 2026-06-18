@@ -231,6 +231,10 @@ def add_https_source_to_all_hashes(kotlin_text, package):
             insert_text = f"{S20}Source.VERIFIED_DOMAIN_HTTPS,\n"
             insert_pos = last_nl + 1
             modifications.append((insert_pos, insert_text))
+            # Add comma after the previous last item (before the newline)
+            # so Kotlin doesn't see "Source.A\nSource.B" without a separator
+            if kotlin_text[last_nl - 1] != ',':
+                modifications.append((last_nl, ","))
 
     if not modifications:
         print(f"  skip {package}: no new HTTPS source needed", file=sys.stderr)
