@@ -127,10 +127,11 @@ def find_entry_by_package(text, package):
     return entry_start, entry_end
 
 
-def find_fingerprint_in_entry(text, fingerprint):
-    """Return the absolute position of the quoted fingerprint in text, or -1."""
+def find_fingerprint_in_entry(text, fingerprint, entry_start, entry_end):
+    """Return the absolute position of the quoted fingerprint within entry bounds, or -1."""
     fp_quoted = f'"{fingerprint}"'
-    return text.find(fp_quoted)
+    pos = text.find(fp_quoted, entry_start, entry_end)
+    return pos
 
 
 def hashes_start_before(text, fp_pos):
@@ -165,8 +166,8 @@ def add_https_source_to_kotlin(kotlin_text, package, fingerprint):
 
     entry_start, entry_end = entry_bounds
 
-    fp_pos = find_fingerprint_in_entry(kotlin_text, fingerprint)
-    if fp_pos == -1 or fp_pos >= entry_end:
+    fp_pos = find_fingerprint_in_entry(kotlin_text, fingerprint, entry_start, entry_end)
+    if fp_pos == -1:
         print(f"  skip {package}: fingerprint {fingerprint[:16]} not in entry", file=sys.stderr)
         return kotlin_text
 
