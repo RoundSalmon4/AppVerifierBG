@@ -248,6 +248,33 @@ def add_https_source_to_all_hashes(kotlin_text, package):
     return kotlin_text
 
 
+def find_all_packages_with_source(kotlin_text, source_name):
+    """Return sorted list of package names whose entry contains source_name."""
+    packages = []
+    pos = 0
+    while True:
+        entry_start = kotlin_text.find("InternalDatabaseVerificationInfo(", pos)
+        if entry_start == -1:
+            break
+        paren_start = entry_start + len("InternalDatabaseVerificationInfo(")
+        entry_end = extract_balanced(kotlin_text, paren_start)
+        entry_text = kotlin_text[entry_start:entry_end]
+        m = re.search(r'"([^"]+)"', entry_text)
+        if m and source_name in entry_text:
+            packages.append(m.group(1))
+        pos = entry_end
+    return sorted(packages)
+
+
+def write_verified_domains_json(kotlin_text):
+    packages = find_all_packages_with_source(kotlin_text, "Source.VERIFIED_DOMAIN_HTTPS")
+    json_path = "app/verified_domains.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(packages, f, indent=2)
+        f.write("\n")
+    print(f"Exported {len(packages)} packages to {json_path}", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Backfill HTTPS Verified Domain sources from assetlinks.json"
@@ -333,7 +360,8 @@ def main():
     if modified:
         with open(args.kotlin, "w", encoding="utf-8", newline="") as f:
             f.write(kotlin_text)
-        print(f"Written to {args.kotlin}", file=sys.stderr)
+
+    write_verified_domains_json(kotlin_text)
 
 
 if __name__ == "__main__":

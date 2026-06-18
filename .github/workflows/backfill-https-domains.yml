@@ -1,15 +1,6 @@
 name: Backfill HTTPS Verified Domains
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to backfill'
-        required: true
-        default: feature/all-enhancements
-        type: choice
-        options:
-          - feature/all-enhancements
-          - dev/test
 
 permissions:
   contents: write
@@ -21,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: feature/all-enhancements
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -33,7 +24,7 @@ jobs:
         run: pip install pyyaml
 
       - name: Pull latest
-        run: git pull --rebase origin ${{ github.event.inputs.branch }}
+        run: git pull --rebase origin feature/all-enhancements
 
       - name: Download and verify database
         env:
@@ -51,8 +42,6 @@ jobs:
             tag=$(gh release view -R privacyguides/verified-apps --json tagName -q .tagName)
             gh release verify-asset -R privacyguides/verified-apps "$tag" "$file"
           }
-          # Try main tip first (freshest data). Attestations will exist once
-          # upstream resumes signing submission commits.
           curl -fsSL -o "$RUNNER_TEMP/data.yml" \
             "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" \
             || { echo "Failed to download from main" >&2; exit 1; }
@@ -101,7 +90,7 @@ jobs:
             echo "| New sources added | $ADDED |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit updated database
+      - name: Commit updated database and verified domains
         run: |
           git config user.name "roundsalmon4"
           git config user.email "209016228+RoundSalmon4@users.noreply.github.com"
@@ -111,6 +100,6 @@ jobs:
           else
             git commit -m "Sync upstream database and backfill HTTPS Verified Domain sources"
             git remote set-url origin https://RoundSalmon4:${{ secrets.PAT }}@github.com/RoundSalmon4/AppVerifierBG.git
-            git push origin ${{ github.event.inputs.branch }}
+            git push origin feature/all-enhancements
             git remote set-url origin https://github.com/RoundSalmon4/AppVerifierBG.git
           fi

@@ -90,6 +90,12 @@ jobs:
       - name: Run sync script
         run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
 
+      - name: Merge HTTPS verified domains
+        run: |
+          git fetch origin feature/all-enhancements --depth=1
+          git show FETCH_HEAD:app/verified_domains.json > app/verified_domains.json 2>/dev/null || echo "[]" > app/verified_domains.json
+          python .github/scripts/merge_https_domains.py
+
       - name: Commit and push sync changes
         if: github.event.inputs.mode == 'publish'
         run: |
