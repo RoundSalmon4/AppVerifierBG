@@ -2,6 +2,12 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-06-19
+
+- HTTPS domain verification backfilled to existing database entries.
+- Code audit: cleaned up unused params, null checks, and visibility.
+- Fixed sealed class compile error in import dialog state.
+
 ## 2026-06-18
 
 - Domain verification now distinguishes between HTTPS (assetlinks.json) and DNS (TXT record) verification methods in the domain info dialog.
