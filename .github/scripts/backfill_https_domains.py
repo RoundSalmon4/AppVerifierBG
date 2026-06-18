@@ -3,6 +3,11 @@
 self-verified domains via .well-known/assetlinks.json and inject
 Source.VERIFIED_DOMAIN_HTTPS into InternalVerificationInfoDatabase.kt.
 
+Match on package name only — if a domain serves assetlinks.json that
+mentions the package, that's domain verification. Fingerprints aren't
+cross-checked since the purpose is proving domain control, not verifying
+a specific hash.
+
 Operates directly on the Kotlin file, independent of generate_internal_db.py.
 """
 
@@ -23,16 +28,46 @@ DEFAULT_KOTLIN = (
 )
 USER_AGENT = "AppVerifierBackfill/1.0"
 REQUEST_DELAY = 0.3
+MAX_ASSETLINKS_SIZE = 1048576  # 1 MB, matching upstream --max-filesize
 
 S20 = "                    "
 
 ssl_ctx = ssl.create_default_context()
 
 
-def fetch_url(url, timeout=15):
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout, context=ssl_ctx) as resp:
-        return resp.read().decode("utf-8", errors="replace")
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+no_redirect_opener = urllib.request.build_opener(NoRedirectHandler)
+
+
+def fetch_assetlinks(url, max_size=MAX_ASSETLINKS_SIZE, timeout=20, retries=2):
+    """Fetch assetlinks.json with strict HTTP 200 (no redirects).
+    Matches upstream _domain_https_fetch_200 behaviour:
+      - only https:// URLs
+      - must return HTTP 200 (no -L)
+      - body capped at 1 MB
+      - retries on transient errors (2 retries, 1s delay)
+    Returns body string or None.
+    """
+    for attempt in range(1 + retries):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with no_redirect_opener.open(req, timeout=timeout) as resp:
+                if resp.getcode() != 200:
+                    return None
+                body = resp.read(max_size + 1)
+                if len(body) > max_size:
+                    return None
+                return body.decode("utf-8", errors="replace")
+        except Exception:
+            if attempt < retries:
+                time.sleep(1)
+            else:
+                return None
+    return None
 
 
 def derive_domain(package_name):
@@ -42,8 +77,63 @@ def derive_domain(package_name):
     return f"{parts[1]}.{parts[0]}"
 
 
-def normalize_fingerprint(fp):
-    return fp.replace(":", "").upper()
+def check_assetlinks_packages(domain, max_docs=10):
+    """Fetch assetlinks.json and return set of package names that the
+    domain associates with android_app statements.
+
+    Follows `include` references (bounded by max_docs) per upstream's
+    domain_fetch_https_record. Returns None if the top-level file is
+    missing or unparseable.
+    """
+    url = f"https://{domain}/.well-known/assetlinks.json"
+    visited = set()
+    queue = [url]
+    docs = 0
+    found_top = False
+    all_packages = set()
+
+    while queue and docs < max_docs:
+        cur = queue.pop(0)
+        if cur in visited:
+            continue
+        visited.add(cur)
+
+        body = fetch_assetlinks(cur)
+        if body is None:
+            if cur == url:
+                return None
+            continue
+
+        docs += 1
+        if cur == url:
+            found_top = True
+
+        try:
+            statements = json.loads(body)
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(statements, dict):
+            statements = [statements]
+        elif not isinstance(statements, list):
+            continue
+
+        for item in statements:
+            if not isinstance(item, dict):
+                continue
+            # Follow include references
+            if "include" in item and isinstance(item["include"], str):
+                inc_url = item["include"]
+                if inc_url.startswith("https://") and inc_url not in visited:
+                    queue.append(inc_url)
+            # Collect android_app statements
+            target = item.get("target")
+            if isinstance(target, dict) and target.get("namespace") == "android_app":
+                pkg = target.get("package_name", "")
+                if pkg:
+                    all_packages.add(pkg)
+
+    return all_packages if found_top and all_packages else None
 
 
 def load_data_yaml(path):
@@ -54,37 +144,7 @@ def load_data_yaml(path):
     return data
 
 
-def check_assetlinks(domain):
-    url = f"https://{domain}/.well-known/assetlinks.json"
-    try:
-        body = fetch_url(url)
-    except Exception:
-        return None
-
-    try:
-        statements = json.loads(body)
-    except (json.JSONDecodeError, TypeError):
-        return None
-
-    if not isinstance(statements, list):
-        return None
-
-    result = defaultdict(set)
-    for item in statements:
-        if not isinstance(item, dict):
-            continue
-        target = item.get("target", {})
-        if not isinstance(target, dict):
-            continue
-        if target.get("namespace") != "android_app":
-            continue
-        pkg = target.get("package_name", "")
-        fps = target.get("sha256_cert_fingerprints", [])
-        if pkg and isinstance(fps, list):
-            for fp in fps:
-                if isinstance(fp, str):
-                    result[pkg].add(normalize_fingerprint(fp))
-    return dict(result) if result else None
+# --- Kotlin text manipulation helpers (unchanged from original) ---
 
 
 def extract_balanced(text, start):
@@ -120,32 +180,30 @@ def find_entry_by_package(text, package):
     m = pattern.search(text)
     if not m:
         return None
-
     entry_start = m.start()
     paren_pos = entry_start + len("InternalDatabaseVerificationInfo(")
     entry_end = extract_balanced(text, paren_pos)
     return entry_start, entry_end
 
 
-def find_fingerprint_in_entry(text, fingerprint, entry_start, entry_end):
-    """Return the absolute position of the quoted fingerprint within entry bounds, or -1."""
-    fp_quoted = f'"{fingerprint}"'
-    pos = text.find(fp_quoted, entry_start, entry_end)
-    return pos
-
-
-def hashes_start_before(text, fp_pos):
-    """Find the start of the Hashes block containing the fingerprint position."""
-    # Search backward for Hashes(
-    hs = text.rfind("Hashes(", 0, fp_pos)
-    if hs == -1:
-        return None
-    return hs
+def find_all_hashes_in_entry(text, entry_start, entry_end):
+    """Return list of (hashes_start, hashes_end) for each Hashes(...) block."""
+    result = []
+    pos = entry_start
+    while pos < entry_end:
+        hs = text.find("Hashes(", pos, entry_end)
+        if hs == -1:
+            break
+        paren_start = hs + len("Hashes(")
+        paren_end = extract_balanced(text, paren_start)
+        if paren_end <= entry_end:
+            result.append((hs, paren_end))
+        pos = paren_end + 1
+    return result
 
 
 def source_list_bounds_in_hashes(text, hashes_pos):
     """Find the (start, end) of the source listOf inside a Hashes block."""
-    # First listOf after Hashes( is the source list
     sl = text.find("listOf(", hashes_pos)
     if sl == -1:
         return None
@@ -154,8 +212,9 @@ def source_list_bounds_in_hashes(text, hashes_pos):
     return sl, close
 
 
-def add_https_source_to_kotlin(kotlin_text, package, fingerprint):
-    """Add Source.VERIFIED_DOMAIN_HTTPS to the Hashes block for (package, fingerprint).
+def add_https_source_to_all_hashes(kotlin_text, package):
+    """Add Source.VERIFIED_DOMAIN_HTTPS to every Hashes block in the
+    given package's entry that doesn't already have it.
 
     Returns the modified text, or original text if nothing changed.
     """
@@ -165,42 +224,42 @@ def add_https_source_to_kotlin(kotlin_text, package, fingerprint):
         return kotlin_text
 
     entry_start, entry_end = entry_bounds
+    hashes_blocks = find_all_hashes_in_entry(kotlin_text, entry_start, entry_end)
 
-    fp_pos = find_fingerprint_in_entry(kotlin_text, fingerprint, entry_start, entry_end)
-    if fp_pos == -1:
-        print(f"  skip {package}: fingerprint {fingerprint[:16]} not in entry", file=sys.stderr)
+    modifications = []
+    for hs, _ in hashes_blocks:
+        sl_bounds = source_list_bounds_in_hashes(kotlin_text, hs)
+        if sl_bounds is None:
+            continue
+        sl_open, sl_close = sl_bounds
+        if "Source.VERIFIED_DOMAIN_HTTPS" in kotlin_text[sl_open:sl_close]:
+            continue
+
+        # Insert before the closing paren of the source list
+        close_paren = sl_close - 1
+        last_nl = kotlin_text.rfind("\n", sl_open, close_paren)
+        if last_nl == -1:
+            insert = ", Source.VERIFIED_DOMAIN_HTTPS"
+            modifications.append((close_paren, insert))
+        else:
+            insert_text = f"{S20}Source.VERIFIED_DOMAIN_HTTPS,\n"
+            insert_pos = last_nl + 1
+            modifications.append((insert_pos, insert_text))
+
+    if not modifications:
+        print(f"  skip {package}: no new HTTPS source needed", file=sys.stderr)
         return kotlin_text
 
-    hs = hashes_start_before(kotlin_text, fp_pos)
-    if hs is None or hs < entry_start:
-        print(f"  skip {package}: no Hashes block found", file=sys.stderr)
-        return kotlin_text
+    # Apply right-to-left so positions stay valid
+    modifications.sort(key=lambda x: -x[0])
+    for pos, insert_text in modifications:
+        kotlin_text = kotlin_text[:pos] + insert_text + kotlin_text[pos:]
 
-    sl_bounds = source_list_bounds_in_hashes(kotlin_text, hs)
-    if sl_bounds is None:
-        print(f"  skip {package}: no source list in Hashes block", file=sys.stderr)
-        return kotlin_text
-
-    sl_open, sl_close = sl_bounds
-
-    # Check if already present
-    if "Source.VERIFIED_DOMAIN_HTTPS" in kotlin_text[sl_open:sl_close]:
-        return kotlin_text
-
-    # Insert before the closing paren of the source list
-    close_paren = sl_close - 1
-
-    # Find the last newline before the closing paren
-    last_nl = kotlin_text.rfind("\n", sl_open, close_paren)
-    if last_nl == -1:
-        # Single-line listOf(Source.X) — unlikely in generated file
-        insert = f", Source.VERIFIED_DOMAIN_HTTPS"
-        return kotlin_text[:close_paren] + insert + kotlin_text[close_paren:]
-
-    # Add new source line after the last newline
-    new_source_line = f"{S20}Source.VERIFIED_DOMAIN_HTTPS,\n"
-    insert_pos = last_nl + 1
-    return kotlin_text[:insert_pos] + new_source_line + kotlin_text[insert_pos:]
+    print(
+        f"  modified: {package} ({len(modifications)} Hashes blocks)",
+        file=sys.stderr,
+    )
+    return kotlin_text
 
 
 def main():
@@ -223,32 +282,24 @@ def main():
 
     entries = load_data_yaml(args.data_yml)
 
-    # Build domain -> [(package, [fingerprints])] map
+    # Collect packages and derive domains (fingerprints not needed)
     pkgs = []
     for app in entries:
         pkg = app.get("package", "")
-        if not pkg:
-            continue
-        sigs = app.get("signature", [])
-        fingerprints = []
-        for sig in sigs:
-            fp = sig.get("fingerprint", "").strip()
-            if fp:
-                fingerprints.append(fp)
-        if fingerprints:
-            pkgs.append((pkg, fingerprints))
+        if pkg:
+            pkgs.append(pkg)
 
     domain_to_pkgs = defaultdict(list)
-    for pkg, fps in pkgs:
+    for pkg in pkgs:
         d = derive_domain(pkg)
         if d:
-            domain_to_pkgs[d].append((pkg, fps))
+            domain_to_pkgs[d].append(pkg)
 
     total_domains = len(domain_to_pkgs)
-    print(f"Packages with fingerprints: {len(pkgs)}", file=sys.stderr)
-    print(f"Derived unique domains:     {total_domains}", file=sys.stderr)
+    print(f"Packages in data.yml:   {len(pkgs)}", file=sys.stderr)
+    print(f"Derived unique domains: {total_domains}", file=sys.stderr)
 
-    # Check assetlinks for each domain and collect matches
+    # Check assetlinks for each domain and collect package-name matches
     matches = []
     serving_domains = 0
 
@@ -258,28 +309,22 @@ def main():
         if i % 20 == 0:
             print(f"  Progress: {i}/{total_domains}...", file=sys.stderr)
 
-        assetlinks = check_assetlinks(domain)
-        if assetlinks is None:
+        assetlinks_pkgs = check_assetlinks_packages(domain)
+        if assetlinks_pkgs is None:
             time.sleep(REQUEST_DELAY)
             continue
 
         serving_domains += 1
 
-        for pkg, known_fps in pkg_list:
-            pkg_assetlinks_fps = assetlinks.get(pkg)
-            if pkg_assetlinks_fps is None:
-                continue
-            for known_fp in known_fps:
-                nfp = normalize_fingerprint(known_fp)
-                if nfp in pkg_assetlinks_fps:
-                    matches.append((pkg, known_fp))
-                    break
+        for pkg in pkg_list:
+            if pkg in assetlinks_pkgs:
+                matches.append(pkg)
 
         time.sleep(REQUEST_DELAY)
 
     deduplicated = list(dict.fromkeys(matches))
-    print(f"\nDomains with assetlinks:         {serving_domains}", file=sys.stderr)
-    print(f"Matching apps found:             {len(deduplicated)}", file=sys.stderr)
+    print(f"\nDomains serving assetlinks:     {serving_domains}", file=sys.stderr)
+    print(f"Matching apps found:           {len(deduplicated)}", file=sys.stderr)
 
     if not deduplicated:
         print("Nothing to backfill.", file=sys.stderr)
@@ -290,14 +335,11 @@ def main():
         kotlin_text = f.read()
 
     modified = 0
-    for pkg, fp in sorted(deduplicated):
-        new_text = add_https_source_to_kotlin(kotlin_text, pkg, fp)
+    for pkg in sorted(deduplicated):
+        new_text = add_https_source_to_all_hashes(kotlin_text, pkg)
         if new_text is not kotlin_text:
             kotlin_text = new_text
             modified += 1
-            print(f"  modified: {pkg} ({fp[:16]}...)", file=sys.stderr)
-        else:
-            print(f"  skipped:  {pkg} ({fp[:16]}...)", file=sys.stderr)
 
     print(f"\nModified {modified} entries", file=sys.stderr)
 

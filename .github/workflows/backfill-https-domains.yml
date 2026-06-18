@@ -69,7 +69,7 @@ jobs:
       - name: Report results
         if: steps.backfill.outcome == 'success'
         run: |
-          SERVING=$(grep -oP 'Domains with assetlinks:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
+          SERVING=$(grep -oP 'Domains serving assetlinks:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           MATCHES=$(grep -oP 'Matching apps found:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           MODIFIED=$(grep -oP 'Modified\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           {
@@ -77,8 +77,8 @@ jobs:
             echo ""
             echo "| Metric | Count |"
             echo "|--------|-------|"
-            echo "| Domains serving assetlinks | $SERVING |"
-            echo "| Matching apps found | $MATCHES |"
+          echo "| Domains serving assetlinks | $SERVING |"
+          echo "| Matching (pkg in assetlinks) | $MATCHES |"
             echo "| Entries modified in database | $MODIFIED |"
           } >> "$GITHUB_STEP_SUMMARY"
 
