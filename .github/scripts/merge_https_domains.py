@@ -26,7 +26,7 @@ def main():
         print("verified_domains.json not found, nothing to merge", file=sys.stderr)
         return 0
 
-    with open(JSON_FILE, "r") as f:
+    with open(JSON_FILE, "r", encoding="utf-8-sig") as f:
         packages = json.load(f)
 
     if not packages:
