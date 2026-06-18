@@ -35,29 +35,15 @@ S20 = "                    "
 ssl_ctx = ssl.create_default_context()
 
 
-class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
-
-
-no_redirect_opener = urllib.request.build_opener(NoRedirectHandler)
-
-
 def fetch_assetlinks(url, max_size=MAX_ASSETLINKS_SIZE, timeout=20, retries=2):
-    """Fetch assetlinks.json with strict HTTP 200 (no redirects).
-    Matches upstream _domain_https_fetch_200 behaviour:
-      - only https:// URLs
-      - must return HTTP 200 (no -L)
-      - body capped at 1 MB
-      - retries on transient errors (2 retries, 1s delay)
+    """Fetch assetlinks.json following redirects.
+    Body capped at 1 MB, retries on transient errors (2 retries, 1s delay).
     Returns body string or None.
     """
     for attempt in range(1 + retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with no_redirect_opener.open(req, timeout=timeout) as resp:
-                if resp.getcode() != 200:
-                    return None
+            with urllib.request.urlopen(req, timeout=timeout, context=ssl_ctx) as resp:
                 body = resp.read(max_size + 1)
                 if len(body) > max_size:
                     return None
@@ -323,24 +309,25 @@ def main():
         time.sleep(REQUEST_DELAY)
 
     deduplicated = list(dict.fromkeys(matches))
+    total_matched = len(deduplicated)
     print(f"\nDomains serving assetlinks:     {serving_domains}", file=sys.stderr)
-    print(f"Matching apps found:           {len(deduplicated)}", file=sys.stderr)
+    print(f"Matching apps found:           {total_matched}", file=sys.stderr)
 
-    if not deduplicated:
-        print("Nothing to backfill.", file=sys.stderr)
-        return
-
-    # Read Kotlin file
     with open(args.kotlin, "r", encoding="utf-8") as f:
         kotlin_text = f.read()
 
+    already_had = 0
     modified = 0
     for pkg in sorted(deduplicated):
         new_text = add_https_source_to_all_hashes(kotlin_text, pkg)
-        if new_text is not kotlin_text:
+        if new_text is kotlin_text:
+            already_had += 1
+        else:
             kotlin_text = new_text
             modified += 1
 
+    print(f"  Already had VERIFIED_DOMAIN_HTTPS: {already_had}", file=sys.stderr)
+    print(f"  New sources added:               {modified}", file=sys.stderr)
     print(f"\nModified {modified} entries", file=sys.stderr)
 
     if modified:

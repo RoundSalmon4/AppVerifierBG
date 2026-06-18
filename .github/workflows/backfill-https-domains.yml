@@ -84,17 +84,21 @@ jobs:
       - name: Report results
         if: steps.backfill.outcome == 'success'
         run: |
+          TOTAL=$(grep -oP 'Derived unique domains:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           SERVING=$(grep -oP 'Domains serving assetlinks:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           MATCHES=$(grep -oP 'Matching apps found:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
-          MODIFIED=$(grep -oP 'Modified\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
+          SKIPPED=$(grep -oP 'Already had VERIFIED_DOMAIN_HTTPS:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
+          ADDED=$(grep -oP 'New sources added:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           {
             echo "## Backfill HTTPS Verified Domains"
             echo ""
             echo "| Metric | Count |"
             echo "|--------|-------|"
-          echo "| Domains serving assetlinks | $SERVING |"
-          echo "| Matching (pkg in assetlinks) | $MATCHES |"
-            echo "| Entries modified in database | $MODIFIED |"
+            echo "| Total domains checked | $TOTAL |"
+            echo "| Domains serving assetlinks | $SERVING |"
+            echo "| Matching apps found | $MATCHES |"
+            echo "| Already had VERIFIED_DOMAIN_HTTPS | $SKIPPED |"
+            echo "| New sources added | $ADDED |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit updated database
