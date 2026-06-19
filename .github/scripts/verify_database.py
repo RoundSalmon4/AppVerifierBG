@@ -95,14 +95,29 @@ def _is_valid_apk(path):
         return True
 
 
+def _find_apksigner():
+    for root_var in ("ANDROID_SDK_ROOT", "ANDROID_HOME"):
+        sdk_root = os.environ.get(root_var)
+        if not sdk_root:
+            continue
+        bt_dir = os.path.join(sdk_root, "build-tools")
+        if not os.path.isdir(bt_dir):
+            continue
+        for ver in sorted(os.listdir(bt_dir), reverse=True):
+            apksigner = os.path.join(bt_dir, ver, "apksigner")
+            if os.path.isfile(apksigner) and os.access(apksigner, os.X_OK):
+                return apksigner
+    return None
+
+
 def extract_fingerprint(apk_path):
     if not os.path.getsize(apk_path):
         return None
 
-    # apksigner handles all signing schemes (requires Android SDK build-tools)
+    apksigner_path = _find_apksigner() or "apksigner"
     try:
         result = subprocess.run(
-            ["apksigner", "verify", "--print-certs", apk_path],
+            [apksigner_path, "verify", "--print-certs", apk_path],
             capture_output=True,
             text=True,
             timeout=15,
