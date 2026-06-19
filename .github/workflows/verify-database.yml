@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: read
+  attestations: read
 
 jobs:
   verify:
@@ -44,12 +45,40 @@ jobs:
           java-version: "17"
           distribution: temurin
 
-      - name: Download privacyguides data
+      - name: Download and verify database
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          verify_main() {
+            local file=$1
+            gh attestation verify -R privacyguides/verified-apps \
+              --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+              "$file"
+          }
+          verify_release() {
+            local file=$1
+            local tag
+            tag=$(gh release view -R privacyguides/verified-apps --json tagName -q .tagName)
+            gh release verify-asset -R privacyguides/verified-apps "$tag" "$file"
+          }
+          # Try main tip first (freshest data). Attestations will exist once
+          # upstream resumes signing submission commits.
           curl -fsSL -o "$RUNNER_TEMP/data.yml" \
-            "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
+            "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" \
+            || { echo "Failed to download from main" >&2; exit 1; }
+          if verify_main "$RUNNER_TEMP/data.yml"; then
+            echo "Attestation verified (main)"
+          else
+            echo "main not attested, using latest release data..."
+            gh release download -R privacyguides/verified-apps \
+              -p "data.yml" --dir "$RUNNER_TEMP" --clobber
+            if verify_release "$RUNNER_TEMP/data.yml"; then
+              echo "Attestation verified (release)"
+            else
+              echo "ERROR: Release data also not attested" >&2
+              exit 1
+            fi
+          fi
 
       - name: Run verification
         id: verify
