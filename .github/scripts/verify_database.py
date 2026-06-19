@@ -110,6 +110,13 @@ def _find_apksigner():
     return None
 
 
+def _search_output(output):
+    m = FP_RE.search(output)
+    if m:
+        return normalize_fp(m.group(0))
+    return None
+
+
 def extract_fingerprint(apk_path):
     if not os.path.getsize(apk_path):
         return None
@@ -122,10 +129,11 @@ def extract_fingerprint(apk_path):
             text=True,
             timeout=15,
         )
-        for line in result.stdout.splitlines():
-            m = FP_RE.search(line)
-            if m:
-                return normalize_fp(m.group(0))
+        fp = _search_output(result.stdout) or _search_output(result.stderr)
+        if fp:
+            return fp
+        if result.returncode != 0:
+            print(f"  apksigner exited {result.returncode}: {result.stderr.strip()}", file=sys.stderr)
     except (subprocess.TimeoutExpired, FileNotFoundError):
         pass
 
@@ -137,9 +145,9 @@ def extract_fingerprint(apk_path):
             text=True,
             timeout=15,
         )
-        m = FP_RE.search(result.stdout)
-        if m:
-            return normalize_fp(m.group(0))
+        fp = _search_output(result.stdout) or _search_output(result.stderr)
+        if fp:
+            return fp
     except (subprocess.TimeoutExpired, FileNotFoundError):
         pass
 
@@ -158,9 +166,9 @@ def extract_fingerprint(apk_path):
                     capture_output=True,
                     timeout=15,
                 )
-                m = FP_RE.search(cert_result.stdout.decode())
-                if m:
-                    return normalize_fp(m.group(0))
+                fp = _search_output(cert_result.stdout.decode())
+                if fp:
+                    return fp
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
 
