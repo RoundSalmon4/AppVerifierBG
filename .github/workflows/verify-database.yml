@@ -78,34 +78,5 @@ jobs:
         if: always()
         run: |
           if [ -f "$RUNNER_TEMP/report.json" ]; then
-            python3 -c "
-import json
-with open('$RUNNER_TEMP/report.json') as f:
-    r = json.load(f)
-s = r['stats']
-print(f'### Database Verification Results')
-print(f'')
-print(f'| Result | Count |')
-print(f'|---|---|')
-print(f'| Matches | {s["match"]} |')
-print(f'| Mismatches | {s["mismatch"]} |')
-print(f'| Errors | {s["error"]} |')
-print(f'')
-if s['mismatch'] > 0:
-    print('### Mismatches')
-    print('')
-    print('| Package | Source | Recorded | Actual |')
-    print('|---|---|---|---|')
-    for r in r['results']:
-        if r['status'] == 'mismatch':
-            rfp = r['recorded'][:23] + '...'
-            afp = (r['actual'] or 'N/A')[:23] + '...'
-            print(f'| {r[\"package\"]} | {r[\"source\"]} | {rfp} | {afp} |')
-if s['error'] > 0:
-    print('### Errors')
-    print('')
-    for r in r['results']:
-        if r['status'] == 'error':
-            print(f'- **{r[\"package\"]}** ({r[\"source\"]}): {r[\"error\"]}')
-" >> "$GITHUB_STEP_SUMMARY"
+            python .github/scripts/generate_summary.py "$RUNNER_TEMP/report.json" >> "$GITHUB_STEP_SUMMARY"
           fi
