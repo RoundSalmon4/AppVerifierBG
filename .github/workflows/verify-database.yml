@@ -86,6 +86,7 @@ jobs:
       - name: Run verification
         id: verify
         env:
+          GH_TOKEN: ${{ github.token }}
           MODE: ${{ inputs.mode || 'all' }}
           PERCENT: ${{ inputs.percent || '5' }}
           PACKAGES: ${{ inputs.packages || '' }}

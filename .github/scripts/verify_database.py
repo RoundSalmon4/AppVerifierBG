@@ -37,19 +37,62 @@ def normalize_fp(fp):
     return ":".join(fp[i : i + 2] for i in range(0, len(fp), 2))
 
 
+def _gh_token():
+    for var in ("GH_TOKEN", "GITHUB_TOKEN"):
+        val = os.environ.get(var, "")
+        if val:
+            return val
+    return None
+
+
+def _is_github_url(url):
+    return "github.com" in url and "releases" in url
+
+
 def download(url, dest, timeout=60):
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "AppVerifierBG-verify/1.0"}
-    )
+    token = _gh_token() if _is_github_url(url) else None
+    headers = {"User-Agent": "AppVerifierBG-verify/1.0"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status != 200:
-                return False
+                return False, f"HTTP {resp.status}"
             with open(dest, "wb") as f:
                 f.write(resp.read())
-        return True
-    except Exception:
+    except Exception as e:
+        return _download_curl(url, dest, timeout)
+    return True, None
+
+
+def _download_curl(url, dest, timeout):
+    token = _gh_token() if _is_github_url(url) else None
+    cmd = ["curl", "-fsSL", "--retry", "3", "--retry-delay", "2",
+           "--max-time", str(timeout), "-o", dest]
+    if token:
+        cmd.extend(["-H", f"Authorization: Bearer {token}"])
+    cmd.append(url)
+    try:
+        subprocess.run(cmd, capture_output=True, timeout=timeout + 30)
+        if os.path.getsize(dest) > 0:
+            return True, None
+        return False, "curl download returned empty file"
+    except Exception as e:
+        return False, str(e)
+
+
+def _is_valid_apk(path):
+    try:
+        result = subprocess.run(
+            ["file", path], capture_output=True, text=True, timeout=10
+        )
+        output = result.stdout.lower()
+        if "zip archive" in output or "android" in output or "java archive" in output:
+            return True
         return False
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return True
 
 
 def extract_fingerprint(apk_path):
@@ -133,10 +176,13 @@ def check_apk(url, timeout=60):
     with tempfile.NamedTemporaryFile(suffix=".apk", delete=False) as f:
         apk_path = f.name
     try:
-        if not download(url, apk_path, timeout):
-            return None, "download failed"
+        ok, err = download(url, apk_path, timeout)
+        if not ok:
+            return None, err
         if os.path.getsize(apk_path) == 0:
             return None, "downloaded file is empty"
+        if not _is_valid_apk(apk_path):
+            return None, "downloaded file is not a valid APK"
         fp = extract_fingerprint(apk_path)
         if not fp:
             return None, "could not extract certificate fingerprint"
