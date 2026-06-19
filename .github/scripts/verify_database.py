@@ -56,7 +56,22 @@ def extract_fingerprint(apk_path):
     if not os.path.getsize(apk_path):
         return None
 
-    # keytool -printcert -jarfile handles APKs signed with any scheme
+    # apksigner handles all signing schemes (requires Android SDK build-tools)
+    try:
+        result = subprocess.run(
+            ["apksigner", "verify", "--print-certs", apk_path],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        for line in result.stdout.splitlines():
+            m = FP_RE.search(line)
+            if m:
+                return normalize_fp(m.group(0))
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # keytool -printcert -jarfile works on JAR-signed APKs (no SDK needed)
     try:
         result = subprocess.run(
             ["keytool", "-printcert", "-jarfile", apk_path],
@@ -90,21 +105,6 @@ def extract_fingerprint(apk_path):
                     return normalize_fp(m.group(0))
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
-
-    # last resort: apksigner (requires Android SDK build-tools)
-    try:
-        result = subprocess.run(
-            ["apksigner", "verify", "--print-certs", apk_path],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        for line in result.stdout.splitlines():
-            m = FP_RE.search(line)
-            if m:
-                return normalize_fp(m.group(0))
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
 
     return None
 
@@ -254,11 +254,12 @@ def main():
         count = max(1, int(len(packages) * args.percent / 100))
         packages = packages[:count]
 
-    source_filter = None
     if args.mode == "direct":
         source_filter = {DIRECT_SOURCE}
     elif args.mode == "fdroid":
         source_filter = FDROID_SOURCES
+    else:
+        source_filter = {DIRECT_SOURCE} | FDROID_SOURCES
 
     stats = {"match": 0, "mismatch": 0, "error": 0}
     results = []
