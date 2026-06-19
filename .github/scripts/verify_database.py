@@ -55,24 +55,43 @@ def download(url, dest, timeout=60):
 def extract_fingerprint(apk_path):
     if not os.path.getsize(apk_path):
         return None
+
+    # keytool -printcert -jarfile handles APKs signed with any scheme
     try:
         result = subprocess.run(
-            ["unzip", "-p", apk_path, "META-INF/CERT.RSA"],
+            ["keytool", "-printcert", "-jarfile", apk_path],
             capture_output=True,
+            text=True,
             timeout=15,
         )
-        if result.returncode == 0 and result.stdout:
-            cert_result = subprocess.run(
-                ["keytool", "-printcert", "-file", "-"],
-                input=result.stdout,
+        m = FP_RE.search(result.stdout)
+        if m:
+            return normalize_fp(m.group(0))
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # fallback: extract JAR signature manually
+    for cert_file in ("META-INF/CERT.RSA", "META-INF/CERT.EC"):
+        try:
+            result = subprocess.run(
+                ["unzip", "-p", apk_path, cert_file],
                 capture_output=True,
                 timeout=15,
             )
-            m = FP_RE.search(cert_result.stdout.decode())
-            if m:
-                return normalize_fp(m.group(0))
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
+            if result.returncode == 0 and result.stdout:
+                cert_result = subprocess.run(
+                    ["keytool", "-printcert", "-file", "-"],
+                    input=result.stdout,
+                    capture_output=True,
+                    timeout=15,
+                )
+                m = FP_RE.search(cert_result.stdout.decode())
+                if m:
+                    return normalize_fp(m.group(0))
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+    # last resort: apksigner (requires Android SDK build-tools)
     try:
         result = subprocess.run(
             ["apksigner", "verify", "--print-certs", apk_path],
@@ -86,6 +105,7 @@ def extract_fingerprint(apk_path):
                 return normalize_fp(m.group(0))
     except (subprocess.TimeoutExpired, FileNotFoundError):
         pass
+
     return None
 
 
