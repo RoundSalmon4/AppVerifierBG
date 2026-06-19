@@ -24,6 +24,16 @@ FDROID_REPOS = {
 FP_RE = re.compile(r"[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}")
 
 
+class ExtractionError(Exception):
+    def __init__(self, apksigner_err, keytool_err):
+        parts = []
+        if apksigner_err:
+            parts.append(f"apksigner: {apksigner_err}")
+        if keytool_err:
+            parts.append(f"keytool: {keytool_err}")
+        super().__init__("; ".join(parts) if parts else "all methods failed")
+
+
 def load_data_yml(path):
     with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
@@ -122,6 +132,7 @@ def extract_fingerprint(apk_path):
         return None
 
     apksigner_path = _find_apksigner() or "apksigner"
+    apksigner_err = ""
     try:
         result = subprocess.run(
             [apksigner_path, "verify", "--print-certs", apk_path],
@@ -132,12 +143,12 @@ def extract_fingerprint(apk_path):
         fp = _search_output(result.stdout) or _search_output(result.stderr)
         if fp:
             return fp
-        if result.returncode != 0:
-            print(f"  apksigner exited {result.returncode}: {result.stderr.strip()}", file=sys.stderr)
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
+        apksigner_err = result.stderr.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        apksigner_err = str(e)
 
     # keytool -printcert -jarfile works on JAR-signed APKs (no SDK needed)
+    keytool_err = ""
     try:
         result = subprocess.run(
             ["keytool", "-printcert", "-jarfile", apk_path],
@@ -148,8 +159,9 @@ def extract_fingerprint(apk_path):
         fp = _search_output(result.stdout) or _search_output(result.stderr)
         if fp:
             return fp
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
+        keytool_err = result.stderr.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        keytool_err = str(e)
 
     # fallback: extract JAR signature manually
     for cert_file in ("META-INF/CERT.RSA", "META-INF/CERT.EC"):
@@ -172,7 +184,7 @@ def extract_fingerprint(apk_path):
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
 
-    return None
+    raise ExtractionError(apksigner_err, keytool_err)
 
 
 def fetch_fdroid_index(repo_url):
@@ -206,7 +218,10 @@ def check_apk(url, timeout=60):
             return None, "downloaded file is empty"
         if not _is_valid_apk(apk_path):
             return None, "downloaded file is not a valid APK"
-        fp = extract_fingerprint(apk_path)
+        try:
+            fp = extract_fingerprint(apk_path)
+        except ExtractionError as e:
+            return None, str(e)
         if not fp:
             return None, "could not extract certificate fingerprint"
         return fp, None
