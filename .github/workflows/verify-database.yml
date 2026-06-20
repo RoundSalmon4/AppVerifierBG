@@ -56,7 +56,12 @@ jobs:
           echo "apksigner: $(find "$SDK/build-tools" -name apksigner -print -quit 2>/dev/null || echo 'not found')"
 
       - name: Authenticate with Google Play (gplaydl)
-        run: gplaydl auth
+        run: |
+          for url in "https://dispenser.gplaydl.com/api/auth" "https://auroraoss.com/api/auth"; do
+            echo "Trying dispenser: $url"
+            gplaydl auth -d "$url" && { echo "Auth succeeded with: $url"; break; }
+            echo "Dispenser $url failed, trying next..."
+          done
         continue-on-error: true
 
       - name: Download and verify database
