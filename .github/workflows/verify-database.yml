@@ -12,6 +12,7 @@ on:
           - all
           - direct
           - fdroid
+          - gplay
       percent:
         description: "Random sample percentage (0 = all packages)"
         required: false
@@ -37,7 +38,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: pip install pyyaml
+        run: pip install pyyaml gplaydl
 
       - name: Set up JDK 17
         uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5
@@ -53,6 +54,10 @@ jobs:
           SDK=$ANDROID_SDK_ROOT
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0" 2>&1
           echo "apksigner: $(find "$SDK/build-tools" -name apksigner -print -quit 2>/dev/null || echo 'not found')"
+
+      - name: Authenticate with Google Play (gplaydl)
+        run: gplaydl auth
+        continue-on-error: true
 
       - name: Download and verify database
         env:
@@ -93,6 +98,7 @@ jobs:
         id: verify
         env:
           GH_TOKEN: ${{ github.token }}
+          DISPENSER_URL: ${{ secrets.DISPENSER_URL }}
           MODE: ${{ inputs.mode || 'all' }}
           PERCENT: ${{ inputs.percent || '5' }}
           PACKAGES: ${{ inputs.packages || '' }}

@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,7 @@ import yaml
 
 DIRECT_SOURCE = "Direct APK Link"
 FDROID_SOURCES = {"F-Droid", "F-Droid (IzzyOnDroid)"}
+GOOGLE_PLAY_SOURCE = "Google Play"
 FDROID_OFFICIAL = "https://f-droid.org/repo"
 IZZY_URL = "https://apt.izzysoft.de/fdroid/repo"
 FDROID_REPOS = {
@@ -266,6 +268,42 @@ def check_fdroid_source(package, repo_url):
     return check_apk(apk_url)
 
 
+def check_google_play(package, timeout=120):
+    workdir = tempfile.mkdtemp()
+    try:
+        cmd = ["gplaydl", "download", package, "-o", workdir,
+               "--no-splits", "--no-extras"]
+        dispenser = os.environ.get("DISPENSER_URL", "")
+        if dispenser:
+            cmd.extend(["-d", dispenser])
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                timeout=timeout)
+        if result.returncode != 0:
+            return None, (result.stderr.strip() or
+                          f"gplaydl exit code {result.returncode}")
+
+        apk_files = [f for f in os.listdir(workdir) if f.endswith(".apk")]
+        if not apk_files:
+            return None, "no APK files downloaded"
+        apk_path = os.path.join(workdir, apk_files[0])
+        try:
+            fp = extract_fingerprint(apk_path)
+        except ExtractionError as e:
+            return None, str(e)
+        if not fp:
+            return None, "could not extract certificate fingerprint"
+        return fp, None
+    except subprocess.TimeoutExpired:
+        return None, "gplaydl timed out"
+    except FileNotFoundError:
+        return None, "gplaydl not installed"
+    finally:
+        try:
+            shutil.rmtree(workdir)
+        except OSError:
+            pass
+
+
 def verify_package(app, source_filter, results, stats):
     pkg = app.get("package", "")
     for sig in app.get("signature", []):
@@ -304,6 +342,10 @@ def verify_package(app, source_filter, results, stats):
                     actual, err = check_fdroid_source(pkg, repo)
                     result["actual"] = actual
                     result["error"] = err
+            elif name == GOOGLE_PLAY_SOURCE:
+                actual, err = check_google_play(pkg)
+                result["actual"] = actual
+                result["error"] = err
             else:
                 result["error"] = f"unsupported source type: {name}"
             if result["error"]:
@@ -347,7 +389,7 @@ def main():
     parser.add_argument("--data-yml", required=True, help="Path to data.yml")
     parser.add_argument(
         "--mode",
-        choices=["direct", "fdroid", "all"],
+        choices=["direct", "fdroid", "gplay", "all"],
         default="all",
     )
     parser.add_argument("--packages", help="Comma-separated package list")
@@ -374,8 +416,10 @@ def main():
         source_filter = {DIRECT_SOURCE}
     elif args.mode == "fdroid":
         source_filter = FDROID_SOURCES | custom_fdroid
+    elif args.mode == "gplay":
+        source_filter = {GOOGLE_PLAY_SOURCE}
     else:
-        source_filter = {DIRECT_SOURCE} | FDROID_SOURCES | custom_fdroid
+        source_filter = {DIRECT_SOURCE} | FDROID_SOURCES | {GOOGLE_PLAY_SOURCE} | custom_fdroid
 
     stats = {"match": 0, "mismatch": 0, "error": 0}
     results = []
