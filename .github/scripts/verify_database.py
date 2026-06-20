@@ -22,7 +22,7 @@ FDROID_REPOS = {
 }
 
 FP_RE = re.compile(r"[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}")
-RAW_HEX_RE = re.compile(r"[0-9A-Fa-f]{64}")
+RAW_HEX_RE = re.compile(r"certificate (?:SHA-256|SHA256) digest:\s*([0-9A-Fa-f]{64})")
 
 
 class ExtractionError(Exception):
@@ -129,7 +129,7 @@ def _search_output(output):
         return normalize_fp(m.group(0))
     m = RAW_HEX_RE.search(output)
     if m:
-        return normalize_fp(m.group(0))
+        return normalize_fp(m.group(1))
     return None
 
 
