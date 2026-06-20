@@ -57,13 +57,13 @@ jobs:
 
       - name: Authenticate with Google Play (gplaydl)
         run: |
+          ok=false
           for url in "https://dispenser.gplaydl.com/api/auth" "https://auroraoss.com/api/auth"; do
             echo "Trying dispenser: $url"
-            gplaydl auth -d "$url" && { echo "Auth succeeded with: $url"; break; }
+            gplaydl auth -d "$url" && { ok=true; echo "Auth succeeded with: $url"; break; }
             echo "Dispenser $url failed, trying next..."
           done
-        continue-on-error: true
-
+          $ok || { echo "All dispensers failed" >&2; exit 1; }
       - name: Download and verify database
         env:
           GH_TOKEN: ${{ github.token }}
