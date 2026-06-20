@@ -38,7 +38,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: pip install pyyaml gplaydl
+        run: pip install pyyaml ak-gpapi
 
       - name: Set up JDK 17
         uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5
@@ -55,15 +55,6 @@ jobs:
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0" 2>&1
           echo "apksigner: $(find "$SDK/build-tools" -name apksigner -print -quit 2>/dev/null || echo 'not found')"
 
-      - name: Authenticate with Google Play (gplaydl)
-        run: |
-          ok=false
-          for url in "https://dispenser.gplaydl.com/api/auth" "https://auroraoss.com/api/auth"; do
-            echo "Trying dispenser: $url"
-            gplaydl auth -d "$url" && { ok=true; echo "Auth succeeded with: $url"; break; }
-            echo "Dispenser $url failed, trying next..."
-          done
-          $ok || { echo "All dispensers failed" >&2; exit 1; }
       - name: Download and verify database
         env:
           GH_TOKEN: ${{ github.token }}
@@ -103,7 +94,8 @@ jobs:
         id: verify
         env:
           GH_TOKEN: ${{ github.token }}
-          DISPENSER_URL: ${{ secrets.DISPENSER_URL }}
+          GOOGLE_PLAY_EMAIL: ${{ secrets.GOOGLE_PLAY_EMAIL }}
+          GOOGLE_PLAY_PASSWORD: ${{ secrets.GOOGLE_PLAY_PASSWORD }}
           MODE: ${{ inputs.mode || 'all' }}
           PERCENT: ${{ inputs.percent || '5' }}
           PACKAGES: ${{ inputs.packages || '' }}

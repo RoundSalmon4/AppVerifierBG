@@ -269,23 +269,39 @@ def check_fdroid_source(package, repo_url):
 
 
 def check_google_play(package, timeout=120):
+    email = os.environ.get("GOOGLE_PLAY_EMAIL", "")
+    password = os.environ.get("GOOGLE_PLAY_PASSWORD", "")
+    if not email or not password:
+        return None, "GOOGLE_PLAY_EMAIL/PASSWORD not set"
+
+    try:
+        from gpapi.googleplay import GooglePlayAPI, LoginError, RequestError
+    except ImportError:
+        return None, "ak-gpapi not installed (pip install ak-gpapi)"
+
+    try:
+        api = GooglePlayAPI(locale="en_US", timezone="UTC",
+                            device_codename="bacon")
+        api.login(email=email, password=password)
+    except LoginError as e:
+        return None, f"Google Play login failed: {e}"
+
     workdir = tempfile.mkdtemp()
     try:
-        cmd = ["gplaydl", "download", package, "-o", workdir,
-               "--no-splits", "--no-extras"]
-        dispenser = os.environ.get("DISPENSER_URL", "")
-        if dispenser:
-            cmd.extend(["-d", dispenser])
-        result = subprocess.run(cmd, capture_output=True, text=True,
-                                timeout=timeout)
-        if result.returncode != 0:
-            return None, (result.stderr.strip() or
-                          f"gplaydl exit code {result.returncode}")
+        result = api.download(package)
+        apk_data = result.get("file")
+        if not apk_data:
+            return None, "no APK data returned from Google Play"
 
-        apk_files = [f for f in os.listdir(workdir) if f.endswith(".apk")]
-        if not apk_files:
-            return None, "no APK files downloaded"
-        apk_path = os.path.join(workdir, apk_files[0])
+        apk_path = os.path.join(workdir, f"{package}.apk")
+        with open(apk_path, "wb") as f:
+            for chunk in apk_data["data"]:
+                if chunk:
+                    f.write(chunk)
+
+        if not os.path.getsize(apk_path):
+            return None, "downloaded APK is empty"
+
         try:
             fp = extract_fingerprint(apk_path)
         except ExtractionError as e:
@@ -293,10 +309,10 @@ def check_google_play(package, timeout=120):
         if not fp:
             return None, "could not extract certificate fingerprint"
         return fp, None
-    except subprocess.TimeoutExpired:
-        return None, "gplaydl timed out"
-    except FileNotFoundError:
-        return None, "gplaydl not installed"
+    except RequestError as e:
+        return None, f"Google Play request failed: {e}"
+    except Exception as e:
+        return None, f"Google Play download error: {e}"
     finally:
         try:
             shutil.rmtree(workdir)
