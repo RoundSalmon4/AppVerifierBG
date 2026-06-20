@@ -25,13 +25,15 @@ FP_RE = re.compile(r"[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}")
 
 
 class ExtractionError(Exception):
-    def __init__(self, apksigner_err, keytool_err):
+    def __init__(self, apksigner_out, apksigner_err, apksigner_rc,
+                 keytool_out, keytool_err):
         parts = []
-        if apksigner_err:
-            parts.append(f"apksigner: {apksigner_err}")
+        detail = (apksigner_out + "\n" + apksigner_err).strip()
+        if detail:
+            parts.append(f"apksigner rc={apksigner_rc}: {detail[:400]}")
         if keytool_err:
-            parts.append(f"keytool: {keytool_err}")
-        super().__init__("; ".join(parts) if parts else "all methods failed")
+            parts.append(f"keytool: {keytool_err[:200]}")
+        super().__init__("; ".join(parts) if parts else "no signing block found")
 
 
 def load_data_yml(path):
@@ -132,7 +134,9 @@ def extract_fingerprint(apk_path):
         return None
 
     apksigner_path = _find_apksigner() or "apksigner"
+    apksigner_out = ""
     apksigner_err = ""
+    apksigner_rc = -1
     try:
         result = subprocess.run(
             [apksigner_path, "verify", "--print-certs", apk_path],
@@ -140,14 +144,16 @@ def extract_fingerprint(apk_path):
             text=True,
             timeout=15,
         )
-        fp = _search_output(result.stdout) or _search_output(result.stderr)
+        apksigner_out = result.stdout.strip()
+        apksigner_err = result.stderr.strip()
+        apksigner_rc = result.returncode
+        fp = _search_output(apksigner_out) or _search_output(apksigner_err)
         if fp:
             return fp
-        apksigner_err = result.stderr.strip()
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         apksigner_err = str(e)
 
-    # keytool -printcert -jarfile works on JAR-signed APKs (no SDK needed)
+    keytool_out = ""
     keytool_err = ""
     try:
         result = subprocess.run(
@@ -156,10 +162,11 @@ def extract_fingerprint(apk_path):
             text=True,
             timeout=15,
         )
-        fp = _search_output(result.stdout) or _search_output(result.stderr)
+        keytool_out = result.stdout.strip()
+        keytool_err = result.stderr.strip()
+        fp = _search_output(keytool_out) or _search_output(keytool_err)
         if fp:
             return fp
-        keytool_err = result.stderr.strip()
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         keytool_err = str(e)
 
@@ -184,7 +191,8 @@ def extract_fingerprint(apk_path):
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
 
-    raise ExtractionError(apksigner_err, keytool_err)
+    raise ExtractionError(apksigner_out, apksigner_err, apksigner_rc,
+                          keytool_out, keytool_err)
 
 
 def fetch_fdroid_index(repo_url):
