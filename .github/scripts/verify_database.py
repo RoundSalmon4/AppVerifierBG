@@ -22,6 +22,7 @@ FDROID_REPOS = {
 }
 
 FP_RE = re.compile(r"[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}")
+RAW_HEX_RE = re.compile(r"[0-9A-Fa-f]{64}")
 
 
 class ExtractionError(Exception):
@@ -124,6 +125,9 @@ def _find_apksigner():
 
 def _search_output(output):
     m = FP_RE.search(output)
+    if m:
+        return normalize_fp(m.group(0))
+    m = RAW_HEX_RE.search(output)
     if m:
         return normalize_fp(m.group(0))
     return None
