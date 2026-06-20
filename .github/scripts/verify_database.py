@@ -244,6 +244,17 @@ def check_apk(url, timeout=60):
             pass
 
 
+def _custom_fdroid_names(packages):
+    names = set()
+    for app in packages:
+        for sig in app.get("signature", []):
+            for src in sig.get("sources", []):
+                name = src.get("name", "")
+                if name.startswith("F-Droid (") and name not in FDROID_REPOS:
+                    names.add(name)
+    return names
+
+
 def check_fdroid_source(package, repo_url):
     index = fetch_fdroid_index(repo_url)
     if not index:
@@ -285,6 +296,14 @@ def verify_package(app, source_filter, results, stats):
                 actual, err = check_fdroid_source(pkg, FDROID_REPOS[name])
                 result["actual"] = actual
                 result["error"] = err
+            elif name.startswith("F-Droid ("):
+                repo = (src.get("apk") or {}).get("repo", "")
+                if not repo:
+                    result["error"] = "no repo URL in custom F-Droid source"
+                else:
+                    actual, err = check_fdroid_source(pkg, repo)
+                    result["actual"] = actual
+                    result["error"] = err
             else:
                 result["error"] = f"unsupported source type: {name}"
             if result["error"]:
@@ -350,12 +369,13 @@ def main():
         count = max(1, int(len(packages) * args.percent / 100))
         packages = packages[:count]
 
+    custom_fdroid = _custom_fdroid_names(packages) if args.mode != "direct" else set()
     if args.mode == "direct":
         source_filter = {DIRECT_SOURCE}
     elif args.mode == "fdroid":
-        source_filter = FDROID_SOURCES
+        source_filter = FDROID_SOURCES | custom_fdroid
     else:
-        source_filter = {DIRECT_SOURCE} | FDROID_SOURCES
+        source_filter = {DIRECT_SOURCE} | FDROID_SOURCES | custom_fdroid
 
     stats = {"match": 0, "mismatch": 0, "error": 0}
     results = []
