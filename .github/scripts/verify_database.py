@@ -270,32 +270,29 @@ def check_fdroid_source(package, repo_url):
 
 def check_google_play(package, timeout=120):
     email = os.environ.get("GOOGLE_PLAY_EMAIL", "")
-    password = os.environ.get("GOOGLE_PLAY_PASSWORD", "")
-    if not email or not password:
-        return None, "GOOGLE_PLAY_EMAIL/PASSWORD not set"
+    aas_token = os.environ.get("GOOGLE_PLAY_AAS_TOKEN", "")
+    if not email or not aas_token:
+        return None, "GOOGLE_PLAY_EMAIL/AAS_TOKEN not set"
 
     try:
-        from gpapi.googleplay import GooglePlayAPI, LoginError, RequestError
+        from googleplay import GooglePlayClient, GooglePlayError, TermsOfServiceError
     except ImportError:
-        return None, "ak-gpapi not installed (pip install ak-gpapi)"
+        return None, "googleplay-python not installed (pip install googleplay-python)"
 
     try:
-        api = GooglePlayAPI(locale="en_US", timezone="UTC",
-                            device_codename="bacon")
-        api.login(email=email, password=password)
-    except LoginError as e:
+        api = GooglePlayClient(email=email, aas_token=aas_token)
+        api.login()
+    except TermsOfServiceError as e:
+        return None, f"Google Play ToS error: {e}"
+    except GooglePlayError as e:
         return None, f"Google Play login failed: {e}"
 
     workdir = tempfile.mkdtemp()
     try:
-        result = api.download(package)
-        apk_data = result.get("file")
-        if not apk_data:
-            return None, "no APK data returned from Google Play"
-
+        delivery = api.download(package)
         apk_path = os.path.join(workdir, f"{package}.apk")
         with open(apk_path, "wb") as f:
-            for chunk in apk_data["data"]:
+            for chunk in delivery["file"].iter_content(api.session):
                 if chunk:
                     f.write(chunk)
 
@@ -309,8 +306,8 @@ def check_google_play(package, timeout=120):
         if not fp:
             return None, "could not extract certificate fingerprint"
         return fp, None
-    except RequestError as e:
-        return None, f"Google Play request failed: {e}"
+    except GooglePlayError as e:
+        return None, f"Google Play download error: {e}"
     except Exception as e:
         return None, f"Google Play download error: {e}"
     finally:

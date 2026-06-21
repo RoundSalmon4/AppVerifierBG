@@ -38,7 +38,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: pip install pyyaml ak-gpapi
+        run: pip install pyyaml googleplay-python
 
       - name: Set up JDK 17
         uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5
@@ -95,7 +95,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GOOGLE_PLAY_EMAIL: ${{ secrets.GOOGLE_PLAY_EMAIL }}
-          GOOGLE_PLAY_PASSWORD: ${{ secrets.GOOGLE_PLAY_PASSWORD }}
+          GOOGLE_PLAY_AAS_TOKEN: ${{ secrets.GOOGLE_PLAY_AAS_TOKEN }}
           MODE: ${{ inputs.mode || 'all' }}
           PERCENT: ${{ inputs.percent || '5' }}
           PACKAGES: ${{ inputs.packages || '' }}
