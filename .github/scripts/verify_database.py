@@ -51,6 +51,17 @@ def normalize_fp(fp):
     fp = fp.strip().upper().replace(" ", "").replace(":", "")
     return ":".join(fp[i : i + 2] for i in range(0, len(fp), 2))
 
+def split_fingerprints(fp):
+    """Split a concatenated multi-signer fingerprint into individual 32-byte chunks."""
+    clean = fp.replace(":", "").replace(" ", "")
+    chunk_len = 64  # 32 bytes = 64 hex chars
+    chunks = []
+    for i in range(0, len(clean), chunk_len):
+        chunk = clean[i : i + chunk_len]
+        if len(chunk) == chunk_len:
+            chunks.append(":".join(chunk[j : j + 2] for j in range(0, chunk_len, 2)))
+    return chunks
+
 
 def _gh_token():
     for var in ("GH_TOKEN", "GITHUB_TOKEN"):
@@ -307,8 +318,14 @@ def check_google_play(package, timeout=120):
             return None, "could not extract certificate fingerprint"
         return fp, None
     except GooglePlayError as e:
+        msg = str(e)
+        if "400" in msg and "purchase" in msg:
+            return None, "PAID APP — requires purchase (HTTP 400 on purchase endpoint)"
         return None, f"Google Play download error: {e}"
     except Exception as e:
+        msg = str(e)
+        if "400" in msg and "purchase" in msg:
+            return None, "PAID APP — requires purchase (HTTP 400 on purchase endpoint)"
         return None, f"Google Play download error: {e}"
     finally:
         try:
@@ -320,9 +337,12 @@ def check_google_play(package, timeout=120):
 def verify_package(app, source_filter, results, stats):
     pkg = app.get("package", "")
     for sig in app.get("signature", []):
-        recorded = normalize_fp(sig.get("fingerprint", ""))
+        raw_fp = sig.get("fingerprint", "")
+        recorded = normalize_fp(raw_fp)
         if not recorded:
             continue
+        recorded_chunks = split_fingerprints(raw_fp)
+        is_multi = len(recorded_chunks) > 1
         for src in sig.get("sources", []):
             name = src.get("name", "")
             if source_filter and name not in source_filter:
@@ -334,6 +354,7 @@ def verify_package(app, source_filter, results, stats):
                 "actual": None,
                 "status": "error",
                 "error": None,
+                "multi_signer": is_multi,
             }
             if name == DIRECT_SOURCE:
                 link = src.get("apk", {}).get("link", "")
@@ -363,12 +384,20 @@ def verify_package(app, source_filter, results, stats):
                 result["error"] = f"unsupported source type: {name}"
             if result["error"]:
                 result["status"] = "error"
+            elif recorded_chunks and actual in recorded_chunks:
+                result["status"] = "match"
             elif actual == recorded:
                 result["status"] = "match"
             else:
                 result["status"] = "mismatch"
             stats[result["status"]] += 1
             results.append(result)
+
+
+def _short_fp(fp):
+    if not fp:
+        return "N/A"
+    return fp[:23] + "..." + fp[-5:] if len(fp) > 29 else fp
 
 
 def print_summary(results, stats):
@@ -385,14 +414,21 @@ def print_summary(results, stats):
         print("\n  MISMATCHES:")
         for r in results:
             if r["status"] == "mismatch":
-                print(f"    {r['package']} ({r['source']})")
-                print(f"      recorded: {r['recorded']}")
-                print(f"      actual:   {r['actual']}")
+                label = " (multi-signer)" if r.get("multi_signer") else ""
+                print(f"    {r['package']} ({r['source']}){label}")
+                print(f"      recorded: {_short_fp(r['recorded'])}")
+                print(f"      actual:   {_short_fp(r['actual'])}")
     if stats["error"] > 0:
         print("\n  ERRORS:")
         for r in results:
             if r["status"] == "error":
                 print(f"    {r['package']} ({r['source']}): {r['error']}")
+    if stats["match"] > 0:
+        print("\n  MATCHES:")
+        for r in results:
+            if r["status"] == "match":
+                label = " (multi-signer)" if r.get("multi_signer") else ""
+                print(f"    {r['package']} ({r['source']}){label}")
 
 
 def main():
