@@ -48,12 +48,12 @@ def load_data_yml(path):
 
 
 def normalize_fp(fp):
-    fp = fp.strip().upper().replace(" ", "").replace(":", "")
+    fp = re.sub(r"\s+", "", fp).upper().replace(":", "")
     return ":".join(fp[i : i + 2] for i in range(0, len(fp), 2))
 
 def split_fingerprints(fp):
     """Split a concatenated multi-signer fingerprint into individual 32-byte chunks."""
-    clean = fp.replace(":", "").replace(" ", "")
+    clean = re.sub(r"\s+", "", fp).replace(":", "")
     chunk_len = 64  # 32 bytes = 64 hex chars
     chunks = []
     for i in range(0, len(clean), chunk_len):
@@ -386,6 +386,7 @@ def verify_package(app, source_filter, results, stats):
                 result["status"] = "error"
             elif recorded_chunks and actual in recorded_chunks:
                 result["status"] = "match"
+                result["matched_chunk"] = recorded_chunks.index(actual)
             elif actual == recorded:
                 result["status"] = "match"
             else:

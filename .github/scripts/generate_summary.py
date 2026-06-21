@@ -1,9 +1,12 @@
 import json
 import sys
+from collections import defaultdict
 
 with open(sys.argv[1]) as f:
     data = json.load(f)
 s = data['stats']
+results = data['results']
+
 print('### Database Verification Results')
 print('')
 print('| Result | Count |')
@@ -12,32 +15,60 @@ print(f'| Matches | {s["match"]} |')
 print(f'| Mismatches | {s["mismatch"]} |')
 print(f'| Errors | {s["error"]} |')
 print('')
-if s['match'] > 0:
-    multi = [r for r in data['results'] if r['status'] == 'match' and r.get('multi_signer')]
-    if multi:
-        print(f'**{len(multi)} matches are multi-signer apps (matches one of several recorded fingerprints).**')
-        print('')
+
+# group by package for cross-source analysis
+by_pkg = defaultdict(list)
+for r in results:
+    by_pkg[r['package']].append(r)
+
+# partial-source matches: package with multiple sources where only some matched
+partial = []
+for pkg, rows in by_pkg.items():
+    matched = [r for r in rows if r['status'] == 'match']
+    other = [r for r in rows if r['status'] != 'match']
+    if matched and other:
+        partial.append((pkg, matched))
+
+if partial:
+    print(f'**{len(partial)} packages matched on only some sources (not all sources could be verified).**')
+    print('')
+    for pkg, matched in partial:
+        sources = ', '.join(r['source'] for r in matched)
+        print(f'- {pkg}: matched via {sources}')
+    print('')
+
+# multi-signer details
+multi = [r for r in results if r['status'] == 'match' and r.get('multi_signer')]
+if multi:
+    print(f'**{len(multi)} matches are multi-signer (app signed by one of several recorded certificates).**')
+    print('')
+    for r in multi:
+        chunk = r.get('matched_chunk')
+        label = f' signer #{chunk + 1}' if chunk is not None else ''
+        print(f'- {r["package"]} ({r["source"]}): matched{label}')
+    print('')
+
 if s['mismatch'] > 0:
     print('### Mismatches')
     print('')
     print('| Package | Source | Recorded | Actual |')
     print('|---|---|---|---|')
-    for res in data['results']:
-        if res['status'] == 'mismatch':
-            rfp = res['recorded'][:23] + '...' + res['recorded'][-5:]
-            afp = (res['actual'] or 'N/A')[:23] + '...' + (res['actual'] or '')[-5:]
-            label = ' (multi-signer)' if res.get('multi_signer') else ''
-            print(f'| {res["package"]}{label} | {res["source"]} | {rfp} | {afp} |')
+    for r in results:
+        if r['status'] == 'mismatch':
+            rfp = r['recorded'][:23] + '...' + r['recorded'][-5:]
+            afp = (r['actual'] or 'N/A')[:23] + '...' + (r['actual'] or '')[-5:]
+            print(f'| {r["package"]} | {r["source"]} | {rfp} | {afp} |')
+
 if s['error'] > 0:
-    paid = [r for r in data['results'] if r['status'] == 'error' and 'PAID APP' in (r.get('error') or '')]
-    other_errors = [r for r in data['results'] if r['status'] == 'error' and 'PAID APP' not in (r.get('error') or '')]
+    paid = [r for r in results if r['status'] == 'error' and 'PAID APP' in (r.get('error') or '')]
+    other_errors = [r for r in results if r['status'] == 'error' and 'PAID APP' not in (r.get('error') or '')]
     if paid:
         print('### Paid Apps (skipped — require purchase)')
         print('')
-        for res in paid:
-            print(f'- {res["package"]} ({res["source"]})')
+        for r in paid:
+            print(f'- {r["package"]} ({r["source"]})')
     if other_errors:
         print('### Errors')
         print('')
-        for res in other_errors:
-            print(f'- **{res["package"]}** ({res["source"]}): {res["error"]}')
+        for r in other_errors:
+            print(f'- **{r["package"]}** ({r["source"]}): {r["error"]}')
