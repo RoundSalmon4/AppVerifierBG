@@ -132,7 +132,7 @@ jobs:
           fi
 
       - name: File issue on mismatch
-        if: always() && (github.event_name == 'schedule' || github.event.inputs.dry_run == 'true')
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
