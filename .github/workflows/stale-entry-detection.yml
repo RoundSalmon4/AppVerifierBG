@@ -77,12 +77,13 @@ jobs:
           stale="$first"
           body=$(echo "$output" | tail -n +2)
           title="Database spot-check: ${stale} stale entry(ies)"
+          echo "Title: $title"
+          echo "Labels: database, stale-entries"
+          echo "Body:"
+          echo "$body"
+          echo "$body" >> "$GITHUB_STEP_SUMMARY"
           if [ "$DRY_RUN" = "true" ]; then
-            echo "=== DRY RUN — would create issue ==="
-            echo "Title: $title"
-            echo "Labels: database, stale-entries"
-            echo "Body:"
-            echo "$body"
+            echo "=== DRY RUN — issue not created ==="
           else
             for lbl in database stale-entries; do
               gh label create "$lbl" 2>/dev/null || true
