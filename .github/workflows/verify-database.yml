@@ -85,9 +85,6 @@ jobs:
             exit 1
           fi
 
-      - name: Extract current database packages (for stale-entry detection)
-        run: python3 .github/scripts/extract_db_packages.py
-
       - name: Download release data (fallback if main attestation failed)
         if: always() && steps.verify_db.outcome == 'failure'
         env:
@@ -136,9 +133,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          CURRENT_DATA: ${{ runner.temp }}/data.yml
-          DB_PACKAGES: ${{ runner.temp }}/pg_packages.txt
-          DB_FINGERPRINTS: ${{ runner.temp }}/pg_fingerprints.json
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
           set -euo pipefail
@@ -149,17 +143,15 @@ jobs:
           output=$(python3 .github/scripts/file_issue.py)
           skip=$(echo "$output" | head -1)
           if [ "$skip" = "skip" ]; then
-            echo "No mismatches, real errors, or stale entries; skipping issue."
+            echo "No mismatches or real errors; skipping issue."
             exit 0
           fi
           mis=$(echo "$output" | sed -n '1p')
           real=$(echo "$output" | sed -n '2p')
-          stale=$(echo "$output" | sed -n '3p')
-          body=$(echo "$output" | sed -n '4,$p')
+          body=$(echo "$output" | sed -n '3,$p')
           parts=()
           [ "$mis" -gt 0 ] && parts+=("${mis} mismatch(es)")
           [ "$real" -gt 0 ] && parts+=("${real} error(s)")
-          [ "$stale" -gt 0 ] && parts+=("${stale} stale entry(ies)")
           IFS=', '
           title="Database spot-check: ${parts[*]}"
           unset IFS

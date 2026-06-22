@@ -1,51 +1,8 @@
-import json, os, yaml
+import json, os
 from collections import defaultdict
 
 report = os.environ['RUNNER_TEMP'] + '/report.json'
 run_url = os.environ['RUN_URL']
-curr_data = os.environ.get('CURRENT_DATA', '')
-db_pkgs_file = os.environ.get('DB_PACKAGES', '')
-db_fps_file = os.environ.get('DB_FINGERPRINTS', '')
-
-upstream_pkgs = set()
-upstream_pkg_map = {}
-if curr_data and os.path.isfile(curr_data):
-    with open(curr_data) as f:
-        raw = yaml.safe_load(f)
-    if isinstance(raw, dict):
-        raw = raw.get('packages', [])
-    for p in raw:
-        pkg = p.get('package', '')
-        if pkg:
-            upstream_pkgs.add(pkg)
-            upstream_pkg_map[pkg] = p
-
-def first_issue(pkg_data):
-    for sig in pkg_data.get('signature', []):
-        for src in sig.get('sources', []):
-            issue = src.get('issue', '')
-            if issue:
-                return issue
-    return ''
-
-db_pkgs = set()
-if db_pkgs_file and os.path.isfile(db_pkgs_file):
-    with open(db_pkgs_file) as f:
-        db_pkgs = {line.strip() for line in f if line.strip()}
-
-pkg_fps = {}
-if db_fps_file and os.path.isfile(db_fps_file):
-    with open(db_fps_file) as f:
-        pkg_fps = json.load(f)
-
-def short_fp(fp):
-    return fp[:23] + '...' + fp[-5:] if len(fp) > 30 else fp
-
-if not upstream_pkgs:
-    print('skip')
-    exit(0)
-
-removed = sorted(db_pkgs - upstream_pkgs)
 
 with open(report) as f:
     d = json.load(f)
@@ -73,8 +30,6 @@ for pkg, rows in by_pkg.items():
         partial.append((pkg, matched, failed))
     elif not matched and failed:
         real_fail.append((pkg, failed))
-
-trigger_stale = len(removed)
 
 lines = ['Automated spot-check verification found issues in the database.']
 
@@ -107,23 +62,11 @@ if partial:
             elif r['status'] == 'error' and 'PAID APP' not in (r.get('error') or ''):
                 lines.append(f'- {pkg} ({r["source"]}): {r["error"]} (matched via {ok})')
 
-if removed:
-    lines += ['',
-              '**Packages removed from upstream database (stale entries):**',
-              '']
-    for pkg in removed:
-        entry = upstream_pkg_map.get(pkg)
-        issue = f' ({first_issue(entry)})' if entry and first_issue(entry) else ''
-        fps = pkg_fps.get(pkg, [])
-        fp_display = ', '.join(short_fp(fp) for fp in fps) if fps else ''
-        suffix = f' — {fp_display}' if fp_display else ''
-        lines.append(f'- {pkg}{issue}{suffix}')
-
 paid_count = sum(1 for r in d['results'] if r['status'] == 'error' and 'PAID APP' in (r.get('error') or ''))
 if paid_count:
     lines += ['', f'{paid_count} paid app(s) skipped (require purchase).']
 
-if not trigger_mismatches and not trigger_errors and not trigger_stale:
+if not trigger_mismatches and not trigger_errors:
     print('skip')
     exit(0)
 
@@ -133,5 +76,4 @@ lines += ['',
 
 print(len(trigger_mismatches))
 print(len(trigger_errors))
-print(trigger_stale)
 print('\n'.join(lines))

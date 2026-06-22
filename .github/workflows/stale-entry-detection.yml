@@ -1,0 +1,97 @@
+name: Stale Entry Detection
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print issue body without creating it"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  attestations: read
+  issues: write
+
+jobs:
+  stale-detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Download upstream data
+        id: download
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/data.yml" \
+            "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" \
+            || { echo "Failed to download from main" >&2; exit 1; }
+          if gh attestation verify -R privacyguides/verified-apps \
+            --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
+            "$RUNNER_TEMP/data.yml"; then
+            echo "main" > "$RUNNER_TEMP/data_source.txt"
+          else
+            echo "Main not attested" >&2
+            exit 1
+          fi
+
+      - name: Download release data (fallback)
+        if: always() && steps.download.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download -R privacyguides/verified-apps \
+            -p "data.yml" --dir "$RUNNER_TEMP" --clobber 2>/dev/null \
+            || { echo "No release data available." >&2; exit 1; }
+          echo "release" > "$RUNNER_TEMP/data_source.txt"
+
+      - name: Detect stale entries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_DATA: ${{ runner.temp }}/data.yml
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          set -euo pipefail
+          if [ ! -f "$RUNNER_TEMP/data.yml" ]; then
+            echo "No upstream data available, skipping."
+            exit 0
+          fi
+          output=$(python3 .github/scripts/detect_stale_entries.py)
+          first=$(echo "$output" | head -1)
+          if [ "$first" = "skip" ]; then
+            echo "No stale entries detected, skipping."
+            exit 0
+          fi
+          stale="$first"
+          body=$(echo "$output" | tail -n +2)
+          title="Database spot-check: ${stale} stale entry(ies)"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "=== DRY RUN — would create issue ==="
+            echo "Title: $title"
+            echo "Labels: database, stale-entries"
+            echo "Body:"
+            echo "$body"
+          else
+            for lbl in database stale-entries; do
+              gh label create "$lbl" 2>/dev/null || true
+            done
+            gh issue create \
+              --title "$title" \
+              --label "database,stale-entries" \
+              --body "$body"
+          fi
+
