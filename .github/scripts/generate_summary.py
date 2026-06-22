@@ -21,12 +21,19 @@ by_pkg = defaultdict(list)
 for r in results:
     by_pkg[r['package']].append(r)
 
+def is_real_failure(r):
+    return r['status'] == 'mismatch' or (
+        r['status'] == 'error'
+        and 'PAID APP' not in (r.get('error') or '')
+        and not (r.get('error') or '').startswith('unsupported source type')
+    )
+
 # partial-source matches: package with multiple sources where only some matched
 partial = []
 for pkg, rows in by_pkg.items():
     matched = [r for r in rows if r['status'] == 'match']
-    other = [r for r in rows if r['status'] != 'match']
-    if matched and other:
+    failed = [r for r in rows if is_real_failure(r)]
+    if matched and failed:
         partial.append((pkg, matched))
 
 if partial:

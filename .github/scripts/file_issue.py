@@ -50,12 +50,19 @@ trigger_errors = []
 partial = []
 real_fail = []
 
+def is_real_failure(r):
+    return r['status'] == 'mismatch' or (
+        r['status'] == 'error'
+        and 'PAID APP' not in (r.get('error') or '')
+        and not (r.get('error') or '').startswith('unsupported source type')
+    )
+
 for pkg, rows in by_pkg.items():
     matched = [r for r in rows if r['status'] == 'match']
-    failed = [r for r in rows if r['status'] != 'match']
+    failed = [r for r in rows if is_real_failure(r)]
     if matched and failed:
         partial.append((pkg, matched, failed))
-    elif not matched:
+    elif not matched and failed:
         real_fail.append((pkg, failed))
 
 trigger_stale = len(removed)
