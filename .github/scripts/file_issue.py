@@ -4,7 +4,6 @@ from collections import defaultdict
 report = os.environ['RUNNER_TEMP'] + '/report.json'
 run_url = os.environ['RUN_URL']
 curr_data = os.environ.get('CURRENT_DATA', '')
-rele_data = os.environ.get('RELEASE_DATA', '')
 db_pkgs_file = os.environ.get('DB_PACKAGES', '')
 
 upstream_pkgs = set()
@@ -20,17 +19,6 @@ if curr_data and os.path.isfile(curr_data):
             upstream_pkgs.add(pkg)
             upstream_pkg_map[pkg] = p
 
-release_pkg_map = {}
-if rele_data and os.path.isfile(rele_data):
-    with open(rele_data) as f:
-        raw = yaml.safe_load(f)
-    if isinstance(raw, dict):
-        raw = raw.get('packages', [])
-    for p in raw:
-        pkg = p.get('package', '')
-        if pkg:
-            release_pkg_map[pkg] = p
-
 def first_issue(pkg_data):
     for sig in pkg_data.get('signature', []):
         for src in sig.get('sources', []):
@@ -44,7 +32,11 @@ if db_pkgs_file and os.path.isfile(db_pkgs_file):
     with open(db_pkgs_file) as f:
         db_pkgs = {line.strip() for line in f if line.strip()}
 
-removed = sorted(db_pkgs - upstream_pkgs) if upstream_pkgs else []
+if not upstream_pkgs:
+    print('skip')
+    exit(0)
+
+removed = sorted(db_pkgs - upstream_pkgs)
 
 with open(report) as f:
     d = json.load(f)
@@ -104,7 +96,7 @@ if removed:
               '**Packages removed from upstream database (stale entries):**',
               '']
     for pkg in removed:
-        entry = upstream_pkg_map.get(pkg) or release_pkg_map.get(pkg)
+        entry = upstream_pkg_map.get(pkg)
         issue = f' ({first_issue(entry)})' if entry and first_issue(entry) else ''
         lines.append(f'- {pkg}{issue}')
 
