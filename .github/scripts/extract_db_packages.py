@@ -26,20 +26,7 @@ def extract_balanced(text, start):
 
 def extract_fingerprints(entry_text):
     """Extract all fingerprint strings from Hashes blocks in an entry."""
-    fps = []
-    hashes_marker = 'fingerprints = listOf('
-    idx = 0
-    while True:
-        pos = entry_text.find(hashes_marker, idx)
-        if pos == -1:
-            break
-        start = pos + len(hashes_marker)
-        end = extract_balanced(entry_text, start)
-        chunk = entry_text[start:end - 1]
-        idx = end
-        for m in re.finditer(r'"([^"]+)"', chunk):
-            fps.append(m.group(1))
-    return fps
+    return re.findall(r'"((?:[0-9A-F]{2}:)+[0-9A-F]{2})"', entry_text)
 
 path = 'app/src/main/kotlin/dev/soupslurpr/appverifier/InternalVerificationInfoDatabase.kt'
 with open(path) as f:
