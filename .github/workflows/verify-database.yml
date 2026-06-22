@@ -23,16 +23,9 @@ on:
         description: "Comma-separated package IDs (overrides percent)"
         required: false
         default: ""
-      dry_run:
-        description: "Print issue body without creating it"
-        type: boolean
-        required: false
-        default: false
-
 permissions:
   contents: read
   attestations: read
-  issues: write
 
 jobs:
   verify:
@@ -128,45 +121,3 @@ jobs:
             python .github/scripts/generate_summary.py "$RUNNER_TEMP/report.json" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: File issue on mismatch
-        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-        run: |
-          set -euo pipefail
-          if [ ! -f "$RUNNER_TEMP/report.json" ]; then
-            echo "No report found, skipping."
-            exit 0
-          fi
-          output=$(python3 .github/scripts/file_issue.py)
-          skip=$(echo "$output" | head -1)
-          if [ "$skip" = "skip" ]; then
-            echo "No mismatches or real errors; skipping issue."
-            exit 0
-          fi
-          mis=$(echo "$output" | sed -n '1p')
-          real=$(echo "$output" | sed -n '2p')
-          body=$(echo "$output" | sed -n '3,$p')
-          parts=()
-          [ "$mis" -gt 0 ] && parts+=("${mis} mismatch(es)")
-          [ "$real" -gt 0 ] && parts+=("${real} error(s)")
-          IFS=', '
-          title="Database spot-check: ${parts[*]}"
-          unset IFS
-          if [ "$DRY_RUN" = "true" ]; then
-            echo "=== DRY RUN — would create issue ==="
-            echo "Title: $title"
-            echo "Labels: database, spot-check"
-            echo "Body:"
-            echo "$body"
-          else
-            for lbl in database spot-check; do
-              gh label create "$lbl" 2>/dev/null || true
-            done
-            gh issue create \
-              --title "$title" \
-              --label "database,spot-check" \
-              --body "$body"
-          fi
