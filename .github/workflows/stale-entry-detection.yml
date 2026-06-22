@@ -1,6 +1,8 @@
 name: Stale Entry Detection
 
 on:
+  schedule:
+    - cron: "0 4 * * 1"
   workflow_dispatch:
     inputs:
       dry_run:
