@@ -98,9 +98,9 @@ if not stale:
     exit(0)
 
 body_lines = [
-    'Automated stale-entry check found packages in the database that have been removed from the upstream verified-apps list.',
+    'Automated stale-entry check found packages in the database that may have been removed from the upstream verified-apps list.',
     '',
-    '**Stale entries (no longer in upstream data.yml):**',
+    '**Possible stale entries (no longer in upstream data.yml):**',
     '',
 ]
 for pkg in stale:
