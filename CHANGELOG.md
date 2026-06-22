@@ -4,8 +4,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 ## 2026-06-22
 
-- All prior GitHub release assets lost due to user error. Previous stable
-  versions remain available on F-Droid.
+- All prior GitHub release assets lost due to user error. Previous stable versions remain available on F-Droid.
 
 ## 2026-06-19
 
