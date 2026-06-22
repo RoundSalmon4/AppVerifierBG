@@ -84,13 +84,39 @@ jobs:
           echo "$body" >> "$GITHUB_STEP_SUMMARY"
           if [ "$DRY_RUN" = "true" ]; then
             echo "=== DRY RUN — issue not created ==="
-          else
-            for lbl in database stale-entries; do
-              gh label create "$lbl" 2>/dev/null || true
-            done
-            gh issue create \
-              --title "$title" \
-              --label "database,stale-entries" \
-              --body "$body"
+            exit 0
           fi
+          for lbl in database stale-entries; do
+            gh label create "$lbl" 2>/dev/null || true
+          done
+          existing=$(gh issue list --label "stale-entries" --state open --json number --jq '.[].number' 2>/dev/null || true)
+          if [ -n "$existing" ]; then
+            already=$(gh issue view "$existing" --json body --jq '.body' 2>/dev/null | grep '^- ' | sed 's/^- \([^ ]*\).*/\1/')
+            new_body=""
+            new_count=0
+            while IFS= read -r line; do
+              pkg=$(echo "$line" | sed 's/^- \([^ ]*\).*/\1/')
+              case "$line" in
+                -*)
+                  if echo "$already" | grep -q -F "$pkg" 2>/dev/null; then
+                    continue
+                  fi
+                  new_count=$((new_count + 1))
+                  ;;
+              esac
+              new_body="${new_body}${line}"$'\n'
+            done <<< "$body"
+            if [ "$new_count" -eq 0 ]; then
+              echo "All packages already reported in #$existing, skipping."
+              exit 0
+            fi
+            echo "$new_count new packages not in #$existing"
+            body="$new_body"
+            stale="$new_count"
+            title="Database spot-check: ${stale} possible stale entries"
+          fi
+          gh issue create \
+            --title "$title" \
+            --label "database,stale-entries" \
+            --body "$body"
 
