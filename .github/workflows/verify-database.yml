@@ -138,6 +138,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CURRENT_DATA: ${{ runner.temp }}/data.yml
           DB_PACKAGES: ${{ runner.temp }}/pg_packages.txt
+          DB_FINGERPRINTS: ${{ runner.temp }}/pg_fingerprints.json
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
           set -euo pipefail

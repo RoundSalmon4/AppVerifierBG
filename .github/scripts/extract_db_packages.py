@@ -1,4 +1,4 @@
-import os, re
+import json, os, re
 
 def extract_balanced(text, start):
     depth = 1
@@ -24,11 +24,29 @@ def extract_balanced(text, start):
         i += 1
     return len(text)
 
+def extract_fingerprints(entry_text):
+    """Extract all fingerprint strings from Hashes blocks in an entry."""
+    fps = []
+    hashes_marker = 'fingerprints = listOf('
+    idx = 0
+    while True:
+        pos = entry_text.find(hashes_marker, idx)
+        if pos == -1:
+            break
+        start = pos + len(hashes_marker)
+        end = extract_balanced(entry_text, start)
+        chunk = entry_text[start:end - 1]
+        idx = end
+        for m in re.finditer(r'"([^"]+)"', chunk):
+            fps.append(m.group(1))
+    return fps
+
 path = 'app/src/main/kotlin/dev/soupslurpr/appverifier/InternalVerificationInfoDatabase.kt'
 with open(path) as f:
     text = f.read()
 
 pkgs_all = []
+fp_map = {}
 idx = 0
 marker = 'InternalDatabaseVerificationInfo('
 while True:
@@ -47,6 +65,8 @@ while True:
 
     has_pg = bool(re.search(r'Source\.(?!APPVERIFIER)\b', entry_text))
     pkgs_all.append((pkg, has_pg))
+    if has_pg:
+        fp_map[pkg] = extract_fingerprints(entry_text)
 
 runner_temp = os.environ['RUNNER_TEMP']
 with open(runner_temp + '/db_packages.txt', 'w') as out:
@@ -56,6 +76,8 @@ with open(runner_temp + '/pg_packages.txt', 'w') as out:
     for p, has_pg in sorted(pkgs_all):
         if has_pg:
             out.write(p + '\n')
+with open(runner_temp + '/pg_fingerprints.json', 'w') as out:
+    json.dump(fp_map, out, indent=2)
 total = len(pkgs_all)
 pg_count = sum(1 for _, h in pkgs_all if h)
 print(f'{total} packages ({pg_count} with PG sources)')

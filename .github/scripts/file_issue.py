@@ -5,6 +5,7 @@ report = os.environ['RUNNER_TEMP'] + '/report.json'
 run_url = os.environ['RUN_URL']
 curr_data = os.environ.get('CURRENT_DATA', '')
 db_pkgs_file = os.environ.get('DB_PACKAGES', '')
+db_fps_file = os.environ.get('DB_FINGERPRINTS', '')
 
 upstream_pkgs = set()
 upstream_pkg_map = {}
@@ -31,6 +32,14 @@ db_pkgs = set()
 if db_pkgs_file and os.path.isfile(db_pkgs_file):
     with open(db_pkgs_file) as f:
         db_pkgs = {line.strip() for line in f if line.strip()}
+
+pkg_fps = {}
+if db_fps_file and os.path.isfile(db_fps_file):
+    with open(db_fps_file) as f:
+        pkg_fps = json.load(f)
+
+def short_fp(fp):
+    return fp[:23] + '...' + fp[-5:] if len(fp) > 30 else fp
 
 if not upstream_pkgs:
     print('skip')
@@ -105,7 +114,10 @@ if removed:
     for pkg in removed:
         entry = upstream_pkg_map.get(pkg)
         issue = f' ({first_issue(entry)})' if entry and first_issue(entry) else ''
-        lines.append(f'- {pkg}{issue}')
+        fps = pkg_fps.get(pkg, [])
+        fp_display = ', '.join(short_fp(fp) for fp in fps) if fps else ''
+        suffix = f' — {fp_display}' if fp_display else ''
+        lines.append(f'- {pkg}{issue}{suffix}')
 
 paid_count = sum(1 for r in d['results'] if r['status'] == 'error' and 'PAID APP' in (r.get('error') or ''))
 if paid_count:
