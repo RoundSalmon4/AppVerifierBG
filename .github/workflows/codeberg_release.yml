@@ -40,6 +40,9 @@ jobs:
           echo "Latest release tag: ${tag_name}"
           echo "tag_name=${tag_name}" >> "$GITHUB_ENV"
 
+          echo "${latest_release}" | jq -r '.name // empty' > /tmp/release_name.txt
+          echo "${latest_release}" | jq -r '.body // empty' > /tmp/release_body.txt
+
           echo "${latest_release}" | jq -r '.assets[] | "\(.name) \(.browser_download_url)"' > assets.txt || true
 
           if [ ! -s assets.txt ]; then
@@ -99,13 +102,16 @@ jobs:
             release_id=$(echo "${release}" | jq -r '.id')
           else
             echo "Creating new release for tag ${tag_name}."
-            release_data=$(jq -n --arg tag "${tag_name}" \
-              '{ tag_name: $tag, name: ("AppVerifierBG " + $tag), body: ("Release for tag " + $tag) }')
+            NAME=$(cat /tmp/release_name.txt)
+            [ -z "${NAME}" ] && NAME="AppVerifierBG ${tag_name}"
+            BODY=$(cat /tmp/release_body.txt)
+            jq -n --arg tag "${tag_name}" --arg name "${NAME}" --arg body "${BODY}" \
+              '{ tag_name: $tag, target_commitish: "feature/all-enhancements", name: $name, body: $body }' > /tmp/release_data.json
 
             release_response=$(curl -s -X POST \
               -H "Authorization: token ${CODEBERG_TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "${release_data}" \
+              -d @/tmp/release_data.json \
               "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases")
 
             echo "Release creation response: ${release_response}"
