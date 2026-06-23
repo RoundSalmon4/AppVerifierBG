@@ -1,10 +1,14 @@
 # Changelog
 
 Dates are based on UTC (releases typically around 2am UTC).
+## 2026-06-23
+
+- Fixed Verify APK File navigation race condition. ([#48](https://github.com/RoundSalmon4/AppVerifierBG/issues/48))
 
 ## 2026-06-22
 
-- All prior GitHub release assets lost due to user error. Previous stable versions remain available on F-Droid.
+- All prior GitHub release assets lost due to user error. Previous stable
+  versions remain available on F-Droid.
 
 ## 2026-06-19
 
