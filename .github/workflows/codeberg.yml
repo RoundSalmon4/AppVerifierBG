@@ -76,5 +76,6 @@ jobs:
             echo "No codeberg/${TARGET} branch found; skipping merge."
           fi
 
-          echo "Pushing HEAD to codeberg ${TARGET}"
+          echo "Pushing HEAD and tags to codeberg ${TARGET}"
           git push codeberg "HEAD:${TARGET}"
+          git push codeberg --tags
