@@ -218,7 +218,7 @@ jobs:
           ./curl_json.sh "https://api.github.com/repos/${{ github.repository }}/releases" \
             -H "Authorization: token ${GH_TOKEN}" > all_releases.json
 
-          jq -r '.[] | select(.prerelease == false) | .tag_name' all_releases.json > releases.txt || true
+          jq -r '.[] | .tag_name' all_releases.json > releases.txt || true
           TOTAL=$(wc -l < releases.txt | tr -d ' ')
           echo "total=${TOTAL}" >> "$GITHUB_OUTPUT"
 
