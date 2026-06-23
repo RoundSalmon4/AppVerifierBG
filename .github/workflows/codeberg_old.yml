@@ -1,0 +1,488 @@
+name: Sync Old Releases to Codeberg
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Specific GitHub release tag to process (optional)"
+        required: false
+        type: string
+      offset:
+        description: "Line offset (0-based) in non-prerelease tags list (used when 'tag' not provided). One tag per run."
+        required: false
+        type: number
+        default: 0
+      delay_ms:
+        description: "Delay between API calls (ms) to reduce timeouts / rate limits"
+        required: false
+        type: number
+        default: 750
+      check_only:
+        description: "Create/update release name/body only (no downloads/uploads)"
+        required: false
+        type: boolean
+        default: false
+      light_test:
+        description: "If NO_SIDE_EFFECTS=true, also skip downloads for fast dry-runs"
+        required: false
+        type: boolean
+        default: false
+      auto_continue:
+        description: "Automatically re-dispatch self for the next tag (offset+1)"
+        required: false
+        type: boolean
+        default: false
+      update_existing_only:
+        description: "Patch name/body of existing Codeberg releases to match GitHub (skips creation and assets)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+  deployments: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DELAY_MS: ${{ inputs.delay_ms }}
+      CURL_MAX_TIME: "120"
+      CURL_RETRIES: "5"
+      CURL_RETRY_DELAY: "2"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Show run configuration
+        shell: bash
+        run: |
+          echo "NO_SIDE_EFFECTS=${{ vars.NO_SIDE_EFFECTS }}"
+          echo "INPUT update_existing_only='${{ inputs.update_existing_only }}'"
+          echo "INPUT tag='${{ inputs.tag }}'"
+          echo "INPUT offset='${{ inputs.offset }}'"
+          echo "INPUT delay_ms='${{ inputs.delay_ms }}'"
+          echo "INPUT check_only='${{ inputs.check_only }}'"
+          echo "INPUT light_test='${{ inputs.light_test }}'"
+          echo "INPUT auto_continue='${{ inputs.auto_continue }}'"
+
+      - name: Clean previous downloads
+        if: ${{ (vars.NO_SIDE_EFFECTS != 'true' || !inputs.light_test) && inputs.update_existing_only != true }}
+        shell: bash
+        run: |
+          rm -f *.apk *.txt assets.txt releases.txt all_releases.json || true
+
+      - name: Define helpers
+        id: helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > curl_json.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          URL="$1"; shift || true
+          curl -sS \
+            --retry "${CURL_RETRIES:-5}" \
+            --retry-delay "${CURL_RETRY_DELAY:-2}" \
+            --retry-all-errors \
+            --max-time "${CURL_MAX_TIME:-120}" \
+            "$@" "$URL"
+          EOF
+          chmod +x curl_json.sh
+
+          cat > curl_json_code.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          METHOD="$1"; shift
+          URL="$1"; shift
+          curl -sS -X "${METHOD}" \
+            --retry "${CURL_RETRIES:-5}" \
+            --retry-delay "${CURL_RETRY_DELAY:-2}" \
+            --retry-all-errors \
+            --max-time "${CURL_MAX_TIME:-120}" \
+            "$@" "${URL}" -w "HTTPSTATUS:%{http_code}"
+          EOF
+          chmod +x curl_json_code.sh
+
+          cat > ms_sleep.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          MS="${1:-0}"
+          python3 - <<PY
+          import time, sys
+          ms = int(sys.argv[1]) if len(sys.argv)>1 else 0
+          time.sleep(ms/1000)
+          PY
+          EOF
+          chmod +x ms_sleep.sh
+
+      - name: "[MODE] Update existing Codeberg releases only (no assets)"
+        if: ${{ inputs.update_existing_only == true && vars.NO_SIDE_EFFECTS == 'true' }}
+        run: echo "[TEST] update_existing_only=true & NO_SIDE_EFFECTS=true → Would scan Codeberg and PATCH name/body (no writes)."
+
+      - name: Walk existing Codeberg releases and patch name/body
+        if: ${{ inputs.update_existing_only == true }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          CB=$(./curl_json.sh "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases" \
+               -H "Authorization: token ${CODEBERG_TOKEN}")
+          COUNT=$(echo "${CB}" | jq 'length')
+          echo "Found ${COUNT} Codeberg releases (first page)."
+
+          i=0
+          while true; do
+            TAG=$(echo "${CB}" | jq -r ".[$i].tag_name // empty") || true
+            [ -z "${TAG}" ] && break
+            CURRID=$(echo "${CB}" | jq -r ".[$i].id // empty")
+            CURRNAME=$(echo "${CB}" | jq -r ".[$i].name // empty")
+            echo "→ Codeberg tag=${TAG} (id=${CURRID}) currentName='${CURRNAME}'"
+
+            GH=$(./curl_json.sh "https://api.github.com/repos/${{ github.repository }}/releases/tags/${TAG}" \
+                 -H "Authorization: token ${GH_TOKEN}" || true)
+            GMSG=$(echo "${GH}" | jq -r '.message // empty')
+            GHNAME=$(echo "${GH}" | jq -r '.name // empty')
+            GHBODY=$(echo "${GH}" | jq -r '.body // empty')
+
+            if [ "${GMSG}" = "Not Found" ] || [ -z "${GH}" ] || [ "${GH}" = "null" ]; then
+              echo "  GitHub release for tag ${TAG} not found. Skipping."
+              i=$((i+1)); ./ms_sleep.sh "${DELAY_MS}"; continue
+            fi
+
+            [ -z "${GHNAME}" ] || [ "${GHNAME}" = "null" ] && GHNAME="AppVerifierBG ${TAG}"
+            [ -z "${GHBODY}" ] || [ "${GHBODY}" = "null" ] && GHBODY="Release for tag ${TAG}"
+
+            if [ "${CURRNAME}" = "${GHNAME}" ]; then
+              echo "  Name already matches. (Body compare skipped intentionally.)"
+              i=$((i+1)); ./ms_sleep.sh "${DELAY_MS}"; continue
+            fi
+
+            if [ "${{ vars.NO_SIDE_EFFECTS }}" = "true" ]; then
+              echo "  [TEST] Would PATCH name='${GHNAME}' (len(body)=$(printf '%s' "${GHBODY}" | wc -c))"
+              i=$((i+1)); ./ms_sleep.sh "${DELAY_MS}"; continue
+            fi
+
+            UDATA=$(jq -n --arg name "${GHNAME}" --arg body "${GHBODY}" '{ name: $name, body: $body }')
+            RESP=$(
+              ./curl_json_code.sh PATCH \
+                "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${CURRID}" \
+                -H "Authorization: token ${CODEBERG_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "${UDATA}"
+            )
+            CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
+            BODY=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+            echo "  PATCH response code=${CODE}"
+            if [ "${CODE}" -lt 200 ] || [ "${CODE}" -ge 300 ]; then
+              echo "  PATCH FAILED: ${BODY}"
+              exit 1
+            fi
+
+            echo "  Patched successfully."
+            i=$((i+1)); ./ms_sleep.sh "${DELAY_MS}"
+          done
+
+          echo "Done walking/patching existing Codeberg releases."
+
+      - name: Resolve tag to process (offset mode)
+        id: resolve
+        if: ${{ inputs.update_existing_only != true }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          INPUT_TAG="${{ inputs.tag }}"
+          if [ -n "${INPUT_TAG}" ]; then
+            TAG="${INPUT_TAG}"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+            echo "total=1" >> "$GITHUB_OUTPUT"
+            echo "next_offset=0" >> "$GITHUB_OUTPUT"
+            echo "single=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ./curl_json.sh "https://api.github.com/repos/${{ github.repository }}/releases" \
+            -H "Authorization: token ${GH_TOKEN}" > all_releases.json
+
+          jq -r '.[] | select(.prerelease == false) | .tag_name' all_releases.json > releases.txt || true
+          TOTAL=$(wc -l < releases.txt | tr -d ' ')
+          echo "total=${TOTAL}" >> "$GITHUB_OUTPUT"
+
+          if [ "${TOTAL}" = "0" ]; then
+            echo "No non-prerelease GitHub releases found."
+            exit 1
+          fi
+
+          OFFSET=${{ inputs.offset }}
+          LINE=$((OFFSET + 1))
+          TAG=$(sed -n "${LINE}p" releases.txt || true)
+
+          if [ -z "${TAG}" ]; then
+            echo "Offset ${OFFSET} is beyond the end of list."
+            exit 1
+          fi
+
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "single=false" >> "$GITHUB_OUTPUT"
+          echo "next_offset=$((OFFSET + 1))"
+
+      - name: Fetch GitHub release metadata (name/body)
+        id: gh_meta
+        if: ${{ inputs.update_existing_only != true }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          REL=$(./curl_json.sh "https://api.github.com/repos/${{ github.repository }}/releases/tags/${TAG}" \
+                -H "Authorization: token ${GH_TOKEN}")
+          NAME=$(echo "${REL}" | jq -r '.name // empty')
+          BODY=$(echo "${REL}" | jq -r '.body // empty')
+          [ -z "${NAME}" ] || [ "${NAME}" = "null" ] && NAME="AppVerifierBG ${TAG}"
+          [ -z "${BODY}" ] || [ "${BODY}" = "null" ] && BODY="Release for tag ${TAG}"
+          SAFE_BODY=$(printf "%s" "${BODY}" | sed ':a;N;$!ba;s/\r//g' )
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          printf "body<<EOF\n%s\nEOF\n" "${SAFE_BODY}" >> "$GITHUB_OUTPUT"
+
+      - name: "[TEST] Skipping create/update & uploads (NO_SIDE_EFFECTS=true)"
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS == 'true' }}
+        run: |
+          echo "[TEST] Would ensure Codeberg release exists for tag '${{ steps.resolve.outputs.tag }}'"
+          echo "[TEST] Would set name='${{ steps.gh_meta.outputs.name }}'"
+          echo "[TEST] Would set body length ~= $(echo "${{ steps.gh_meta.outputs.body }}" | wc -c)"
+          if [ "${{ inputs.check_only }}" = "true" ]; then
+            echo "[TEST] check_only=true → would not download or upload assets."
+          else
+            if [ "${{ inputs.light_test }}" = "true" ]; then
+              echo "[TEST] light_test=true → would skip downloads (even if not check_only)."
+            else
+              echo "[TEST] Would download assets and upload to Codeberg."
+            fi
+          fi
+
+      - name: Ensure Codeberg release (create/update name/body)
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS != 'true' }}
+        shell: bash
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          NAME="${{ steps.gh_meta.outputs.name }}"
+          BODY="${{ steps.gh_meta.outputs.body }}"
+
+          CHECK=$(./curl_json.sh "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${TAG}" \
+                  -H "Authorization: token ${CODEBERG_TOKEN}" || true)
+          MSG=$(echo "${CHECK}" | jq -r '.message // empty')
+
+          if [ "${MSG}" = "The target couldn't be found." ] || [ "${MSG}" = "Not Found" ] || [ -z "${CHECK}" ] || [ "${CHECK}" = "null" ]; then
+            DATA=$(jq -n --arg tag "${TAG}" --arg name "${NAME}" --arg body "${BODY}" \
+                    '{ tag_name: $tag, name: $name, body: $body }')
+            RESP=$(./curl_json_code.sh POST \
+              "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases" \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${DATA}")
+            CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
+            BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+            if [ "${CODE}" -ne 201 ]; then
+              echo "Create failed (HTTP ${CODE}): ${BODYRESP}"
+              exit 1
+            fi
+          else
+            RID=$(echo "${CHECK}" | jq -r '.id // empty')
+            [ -z "${RID}" ] && { echo "Release lookup returned no id: ${CHECK}"; exit 1; }
+            UDATA=$(jq -n --arg name "${NAME}" --arg body "${BODY}" '{ name: $name, body: $body }')
+            RESP=$(./curl_json_code.sh PATCH \
+              "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${RID}" \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${UDATA}")
+            CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
+            BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+            if [ "${CODE}" -lt 200 ] || [ "${CODE}" -ge 300 ]; then
+              echo "Patch failed (HTTP ${CODE}): ${BODYRESP}"
+              exit 1
+            fi
+          fi
+
+      - name: "[CHECK ONLY] Skipping asset download/upload"
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS != 'true' && inputs.check_only == true }}
+        run: echo "[CHECK ONLY] Ensured/updated release; skipping downloads & uploads."
+
+      - name: Download assets
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS != 'true' && inputs.check_only != true && !inputs.light_test }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          REL=$(./curl_json.sh "https://api.github.com/repos/${{ github.repository }}/releases/tags/${TAG}" \
+                -H "Authorization: token ${GH_TOKEN}")
+          echo "${REL}" | jq -r '.assets[] | "\(.name) \(.browser_download_url)"' > assets.txt || true
+          if [ ! -s assets.txt ]; then
+            echo "No assets listed for ${TAG}."
+            exit 1
+          fi
+          while IFS= read -r line; do
+            NAME=$(echo "$line" | awk '{print $1}')
+            URL=$(echo "$line" | awk '{print $2}')
+            [ -z "${NAME}" ] || [ -z "${URL}" ] && continue
+            echo "Downloading ${NAME} ..."
+            curl -fSL --retry "${CURL_RETRIES}" --retry-delay "${CURL_RETRY_DELAY}" --retry-all-errors --max-time "${CURL_MAX_TIME}" -o "${NAME}" "${URL}"
+            ./ms_sleep.sh "${DELAY_MS}"
+          done < assets.txt
+
+      - name: Verify downloads
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS != 'true' && inputs.check_only != true && !inputs.light_test }}
+        shell: bash
+        run: |
+          echo "Downloaded files:"
+          ls -al *.apk *.txt || echo "No .apk/.txt matched (check assets)."
+
+      - name: Upload assets to Codeberg
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS != 'true' && inputs.check_only != true && !inputs.light_test }}
+        shell: bash
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          CHECK=$(./curl_json.sh "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${TAG}" \
+                  -H "Authorization: token ${CODEBERG_TOKEN}" || true)
+          RID=$(echo "${CHECK}" | jq -r '.id // empty')
+          [ -z "${RID}" ] && { echo "Cannot determine Codeberg release id for ${TAG}."; exit 1; }
+
+          shopt -s nullglob
+          for NAME in *.apk *.txt; do
+            if [ -f "${NAME}" ]; then
+              echo "Uploading ${NAME} ..."
+              RESP=$(./curl_json_code.sh POST \
+                "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${RID}/assets?name=${NAME}" \
+                -H "Authorization: token ${CODEBERG_TOKEN}" \
+                -H "Content-Type: application/octet-stream" \
+                --data-binary @"${NAME}")
+              CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
+              BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+              if [ "${CODE}" -ne 201 ]; then
+                echo "Upload failed (HTTP ${CODE}): ${BODYRESP}"
+                exit 1
+              fi
+              ./ms_sleep.sh "${DELAY_MS}"
+            fi
+          done
+
+      - name: Get this workflow ID
+        id: wf_id
+        if: ${{ inputs.update_existing_only != true && inputs.auto_continue == true && steps.resolve.outputs.single != 'true' && (fromJson(steps.resolve.outputs.next_offset) < fromJson(steps.resolve.outputs.total)) }}
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const { data } = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const wfFile = '.github/workflows/codeberg_old.yml';
+            let wf = data.workflows.find(w => (w.path === wfFile));
+            if (!wf) wf = data.workflows.find(w => (w.name || '').trim() === 'Sync Old Releases to Codeberg');
+            if (!wf) {
+              core.setFailed(`Could not locate workflow id for ${wfFile}`);
+            } else {
+              core.setOutput('id', String(wf.id));
+            }
+
+      - name: Re-dispatch self (GITHUB_TOKEN)
+        if: ${{ inputs.update_existing_only != true && inputs.auto_continue == true && steps.resolve.outputs.single != 'true' && (fromJson(steps.resolve.outputs.next_offset) < fromJson(steps.resolve.outputs.total)) }}
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            try {
+              const workflow_id = parseInt(`${{ steps.wf_id.outputs.id }}`, 10);
+              const ref = 'feature/all-enhancements';
+              const inputs = {
+                tag: '',
+                offset: `${{ steps.resolve.outputs.next_offset }}`,
+                delay_ms: `${{ inputs.delay_ms }}`,
+                check_only: `${{ inputs.check_only }}`,
+                light_test: `${{ inputs.light_test }}`,
+                auto_continue: 'true',
+                update_existing_only: 'false'
+              };
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id,
+                ref,
+                inputs
+              });
+              core.info(`Re-dispatched with offset=${inputs.offset} (GITHUB_TOKEN)`);
+            } catch (err) {
+              core.warning(`GITHUB_TOKEN dispatch failed: ${err.message}`);
+            }
+
+      - name: Re-dispatch self (PAT fallback)
+        if: ${{ inputs.update_existing_only != true && inputs.auto_continue == true && steps.resolve.outputs.single != 'true' && (fromJson(steps.resolve.outputs.next_offset) < fromJson(steps.resolve.outputs.total)) }}
+        shell: bash
+        env:
+          WF_ID: ${{ steps.wf_id.outputs.id }}
+          REF: feature/all-enhancements
+          NEXT_OFFSET: ${{ steps.resolve.outputs.next_offset }}
+          DELAY_MS: ${{ inputs.delay_ms }}
+          CHECK_ONLY: ${{ inputs.check_only }}
+          LIGHT_TEST: ${{ inputs.light_test }}
+          AUTO_CONTINUE: true
+          UPDATE_EXISTING_ONLY: false
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          TOKEN: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TOKEN:-}" ]; then
+            echo "No WORKFLOW_DISPATCH_TOKEN provided; skipping PAT fallback."
+            exit 0
+          fi
+
+          body=$(jq -n \
+            --arg offset "${NEXT_OFFSET}" \
+            --arg delay_ms "${DELAY_MS}" \
+            --arg check_only "${CHECK_ONLY}" \
+            --arg light_test "${LIGHT_TEST}" \
+            --arg auto_continue "${AUTO_CONTINUE}" \
+            --arg update_existing_only "${UPDATE_EXISTING_ONLY}" \
+            '{
+              ref: "feature/all-enhancements",
+              inputs: {
+                tag: "",
+                offset: $offset,
+                delay_ms: $delay_ms,
+                check_only: $check_only,
+                light_test: $light_test,
+                auto_continue: $auto_continue,
+                update_existing_only: $update_existing_only
+              }
+            }')
+
+          echo "Dispatching next run with offset=${NEXT_OFFSET} (PAT fallback)"
+          curl -sS -X POST \
+            -H "Authorization: token ${TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            --data "${body}" \
+            "https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF_ID}/dispatches"
