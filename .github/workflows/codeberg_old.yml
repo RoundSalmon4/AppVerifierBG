@@ -238,7 +238,7 @@ jobs:
 
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "single=false" >> "$GITHUB_OUTPUT"
-          echo "next_offset=$((OFFSET + 1))"
+          echo "next_offset=$((OFFSET + 1))" >> "$GITHUB_OUTPUT"
 
       - name: Fetch GitHub release metadata (name/body)
         id: gh_meta
