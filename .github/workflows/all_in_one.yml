@@ -18,44 +18,33 @@
 #
 # ---------- RUN MODES ----------
 #
-# MODE A — DRY RUN ONLY (PLAN MODE)
-#   dry_run = true
-#   test_mode = false
-#   → No workflows dispatched.
-#   → Prints "Would dispatch…" messages only.
+# MODE A — PLAN (dry run)
+#   mode: plan
+#   → No workflows dispatched. Prints what would happen only.
 #   → No side effects.
 #
-# MODE B — DRY RUN + INTENTIONAL FAILURE
-#   dry_run = true
-#   test_mode = true
-#   → Same as above, but orchestrator FAILS at the end on purpose.
+# MODE B — PLAN_FAIL (dry run + intentional failure)
+#   mode: plan_fail
+#   → Same as above, but FAILS at the end on purpose.
 #
-# MODE C — FULL TEST RUN (SAFE MODE)  *** MOST IMPORTANT MODE ***
-#   dry_run = false
-#   test_mode = true
-#   NO_SIDE_EFFECTS = true   (repo variable)
-#   → All workflows are actually dispatched.
-#   → All steps run (checkouts, downloads, loops, merges).
-#   → All side-effecting steps are SKIPPED, with visible
-#     "[TEST]" messages.
-#   → Orchestrator FAILS at the end intentionally.
-#   → Zero risk: no pushes, no releases, no notes posted.
+# MODE C — SAFE_TEST (full run, no side effects)
+#   mode: safe_test
+#   NO_SIDE_EFFECTS = true   (repo variable, required)
+#   → All workflows dispatched. All steps run.
+#   → Side-effecting steps are SKIPPED ("[TEST]" messages).
+#   → FAILS at the end intentionally. Zero risk.
 #
-# MODE D — FULL PRODUCTION RUN
-#   dry_run = false
-#   test_mode = false
-#   NO_SIDE_EFFECTS = false
+# MODE D — PRODUCTION (real sync)
+#   mode: production
+#   NO_SIDE_EFFECTS = false  (repo variable, required)
 #   BLOCK_PUSH_TO_MASTER = false (optional)
-#   → Real CI/CD: runs everything and performs all side effects.
-#   → Branch pushed to Codeberg.
-#   → Codeberg release created with assets.
-#   → Release notes synced.
+#   → Real sync: branch pushed, release created, notes synced.
 #   → Final result: SUCCESS.
 #
 # ---------- BEST PRACTICES ----------
-# • For safe end‑to‑end testing, always use MODE C.
-# • For checking orchestrator logic only, use MODE A.
-# • For actual production syncs, use MODE D.
+# • For safe end‑to‑end testing, always use safe_test.
+# • For checking orchestrator logic only, use plan.
+# • For actual production syncs, use production.
 # • Leave BLOCK_PUSH_TO_MASTER=true unless you're sure you
 #   want to write to feature/all-enhancements.
 #
@@ -65,16 +54,16 @@ name: All-in-One Codeberg Sync
 on:
   workflow_dispatch:
     inputs:
-      test_mode:
-        description: "Intentionally fail after everything runs."
-        type: boolean
-        required: false
-        default: false
-      dry_run:
-        description: "Do not dispatch workflows; print what would happen."
-        type: boolean
-        required: false
-        default: true
+      mode:
+        description: "Run mode (see quick start guide above)"
+        required: true
+        default: safe_test
+        type: choice
+        options:
+          - plan
+          - plan_fail
+          - safe_test
+          - production
 
 permissions:
   actions: write
@@ -83,8 +72,9 @@ permissions:
   deployments: write
 
 env:
-  TEST_MODE: ${{ inputs.test_mode }}
-  DRY_RUN: ${{ inputs.dry_run }}
+  MODE: ${{ inputs.mode }}
+  IS_PLAN: ${{ inputs.mode == 'plan' || inputs.mode == 'plan_fail' }}
+  IS_TEST: ${{ inputs.mode == 'plan_fail' || inputs.mode == 'safe_test' }}
   OWNER: RoundSalmon4
   REPO: AppVerifierBG
   REF: feature/all-enhancements
@@ -94,10 +84,11 @@ jobs:
     name: Echo flags
     runs-on: ubuntu-latest
     steps:
-      - name: Echo TEST_MODE and DRY_RUN
+      - name: Echo mode flags
         run: |
-          echo "TEST_MODE=${{ env.TEST_MODE }}"
-          echo "DRY_RUN=${{ env.DRY_RUN }}"
+          echo "MODE=${{ env.MODE }}"
+          echo "IS_PLAN=${{ env.IS_PLAN }}"
+          echo "IS_TEST=${{ env.IS_TEST }}"
           echo "REF=${{ env.REF }}"
 
   validate_files:
@@ -136,11 +127,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate_files
     steps:
-      - name: "[DRY RUN] Would dispatch .github/workflows/codeberg.yml"
-        if: ${{ env.DRY_RUN == 'true' }}
-        run: echo "[DRY RUN] Would dispatch .github/workflows/codeberg.yml on ref ${{ env.REF }}"
+      - name: "[PLAN] Would dispatch .github/workflows/codeberg.yml"
+        if: ${{ env.IS_PLAN == 'true' }}
+        run: echo "[PLAN] Would dispatch .github/workflows/codeberg.yml on ref ${{ env.REF }}"
       - name: Dispatch and wait (codeberg.yml)
-        if: ${{ env.DRY_RUN != 'true' }}
+        if: ${{ env.IS_PLAN != 'true' }}
         uses: actions/github-script@v9
         env:
           WORKFLOW_FILE: .github/workflows/codeberg.yml
@@ -176,11 +167,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: dispatch_codeberg
     steps:
-      - name: "[DRY RUN] Would dispatch .github/workflows/codeberg_release.yml"
-        if: ${{ env.DRY_RUN == 'true' }}
-        run: echo "[DRY RUN] Would dispatch .github/workflows/codeberg_release.yml on ref ${{ env.REF }}"
+      - name: "[PLAN] Would dispatch .github/workflows/codeberg_release.yml"
+        if: ${{ env.IS_PLAN == 'true' }}
+        run: echo "[PLAN] Would dispatch .github/workflows/codeberg_release.yml on ref ${{ env.REF }}"
       - name: Dispatch and wait (codeberg_release.yml)
-        if: ${{ env.DRY_RUN != 'true' }}
+        if: ${{ env.IS_PLAN != 'true' }}
         uses: actions/github-script@v9
         env:
           WORKFLOW_FILE: .github/workflows/codeberg_release.yml
@@ -215,11 +206,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: dispatch_codeberg_release
     steps:
-      - name: "[DRY RUN] Would dispatch .github/workflows/codeberg_notes.yml"
-        if: ${{ env.DRY_RUN == 'true' }}
-        run: echo "[DRY RUN] Would dispatch .github/workflows/codeberg_notes.yml on ref ${{ env.REF }}"
+      - name: "[PLAN] Would dispatch .github/workflows/codeberg_notes.yml"
+        if: ${{ env.IS_PLAN == 'true' }}
+        run: echo "[PLAN] Would dispatch .github/workflows/codeberg_notes.yml on ref ${{ env.REF }}"
       - name: Dispatch and wait (codeberg_notes.yml)
-        if: ${{ env.DRY_RUN != 'true' }}
+        if: ${{ env.IS_PLAN != 'true' }}
         uses: actions/github-script@v9
         env:
           WORKFLOW_FILE: .github/workflows/codeberg_notes.yml
@@ -250,7 +241,7 @@ jobs:
             core.setFailed(`Timed out waiting for ${wf} to complete`);
 
   fail_if_test_mode:
-    name: Fail if TEST_MODE
+    name: Fail if IS_TEST
     runs-on: ubuntu-latest
     needs:
       - dispatch_codeberg
@@ -258,11 +249,11 @@ jobs:
       - dispatch_codeberg_notes
     if: always()
     steps:
-      - name: Check TEST_MODE and optionally fail
+      - name: Check IS_TEST and optionally fail
         shell: bash
         run: |
-          echo "TEST_MODE=${{ env.TEST_MODE }}"
-          if [ "${{ env.TEST_MODE }}" = "true" ]; then
+          echo "IS_TEST=${{ env.IS_TEST }}"
+          if [ "${{ env.IS_TEST }}" = "true" ]; then
             echo "Test mode enabled: intentionally failing."
             exit 1
           else
