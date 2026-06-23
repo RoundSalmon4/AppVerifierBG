@@ -150,8 +150,8 @@ fun AppVerifierApp(
                         uri,
                         context.packageManager,
                     )
+                    pendingNavigation = AppVerifierScreens.VerifyApp.name
                 }
-                pendingNavigation = AppVerifierScreens.VerifyApp.name
             }
         }
 
