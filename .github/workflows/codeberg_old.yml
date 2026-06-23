@@ -108,7 +108,7 @@ jobs:
             --retry-delay "${CURL_RETRY_DELAY:-2}" \
             --retry-all-errors \
             --max-time "${CURL_MAX_TIME:-120}" \
-            "$@" "${URL}" -w "HTTPSTATUS:%{http_code}"
+            "$@" "${URL}" -w "\nHTTPSTATUS:%{http_code}"
           EOF
           chmod +x curl_json_code.sh
 
@@ -182,8 +182,8 @@ jobs:
                 -H "Content-Type: application/json" \
                 -d "${UDATA}"
             )
-            CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
-            BODY=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+            CODE=$(echo "${RESP}" | tail -1 | sed 's/HTTPSTATUS://')
+            BODY=$(echo "${RESP}" | sed '$d')
             echo "  PATCH response code=${CODE}"
             if [ "${CODE}" -lt 200 ] || [ "${CODE}" -ge 300 ]; then
               echo "  PATCH FAILED: ${BODY}"
@@ -259,6 +259,17 @@ jobs:
           echo "name=${NAME}" >> "$GITHUB_OUTPUT"
           printf "%s" "${SAFE_BODY}" > /tmp/release_body.txt
 
+      - name: Push tag to Codeberg
+        if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS != 'true' }}
+        shell: bash
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          git remote add codeberg "https://unwanted9855:${CODEBERG_TOKEN}@codeberg.org/unwanted9855/AppVerifierBG.git"
+          git push codeberg "${TAG}"
+
       - name: "[TEST] Skipping create/update & uploads (NO_SIDE_EFFECTS=true)"
         if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS == 'true' }}
         run: |
@@ -298,8 +309,8 @@ jobs:
               -H "Authorization: token ${CODEBERG_TOKEN}" \
               -H "Content-Type: application/json" \
               -d @/tmp/release_data.json)
-            CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
-            BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+            CODE=$(echo "${RESP}" | tail -1 | sed 's/HTTPSTATUS://')
+            BODYRESP=$(echo "${RESP}" | sed '$d')
             if [ "${CODE}" -ne 201 ]; then
               echo "Create failed (HTTP ${CODE}): ${BODYRESP}"
               exit 1
@@ -314,8 +325,8 @@ jobs:
               -H "Authorization: token ${CODEBERG_TOKEN}" \
               -H "Content-Type: application/json" \
               -d @/tmp/release_update.json)
-            CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
-            BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+            CODE=$(echo "${RESP}" | tail -1 | sed 's/HTTPSTATUS://')
+            BODYRESP=$(echo "${RESP}" | sed '$d')
             if [ "${CODE}" -lt 200 ] || [ "${CODE}" -ge 300 ]; then
               echo "Patch failed (HTTP ${CODE}): ${BODYRESP}"
               exit 1
@@ -379,8 +390,8 @@ jobs:
                 -H "Authorization: token ${CODEBERG_TOKEN}" \
                 -H "Content-Type: application/octet-stream" \
                 --data-binary @"${NAME}")
-              CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
-              BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
+              CODE=$(echo "${RESP}" | tail -1 | sed 's/HTTPSTATUS://')
+              BODYRESP=$(echo "${RESP}" | sed '$d')
               if [ "${CODE}" -ne 201 ]; then
                 echo "Upload failed (HTTP ${CODE}): ${BODYRESP}"
                 exit 1
