@@ -257,14 +257,14 @@ jobs:
           [ -z "${BODY}" ] || [ "${BODY}" = "null" ] && BODY="Release for tag ${TAG}"
           SAFE_BODY=$(printf "%s" "${BODY}" | sed ':a;N;$!ba;s/\r//g' )
           echo "name=${NAME}" >> "$GITHUB_OUTPUT"
-          printf "body<<EOF\n%s\nEOF\n" "${SAFE_BODY}" >> "$GITHUB_OUTPUT"
+          printf "%s" "${SAFE_BODY}" > /tmp/release_body.txt
 
       - name: "[TEST] Skipping create/update & uploads (NO_SIDE_EFFECTS=true)"
         if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS == 'true' }}
         run: |
           echo "[TEST] Would ensure Codeberg release exists for tag '${{ steps.resolve.outputs.tag }}'"
           echo "[TEST] Would set name='${{ steps.gh_meta.outputs.name }}'"
-          echo "[TEST] Would set body length ~= $(echo "${{ steps.gh_meta.outputs.body }}" | wc -c)"
+          echo "[TEST] Would set body length ~= $(wc -c < /tmp/release_body.txt)"
           if [ "${{ inputs.check_only }}" = "true" ]; then
             echo "[TEST] check_only=true → would not download or upload assets."
           else
@@ -284,20 +284,20 @@ jobs:
           set -euo pipefail
           TAG="${{ steps.resolve.outputs.tag }}"
           NAME="${{ steps.gh_meta.outputs.name }}"
-          BODY="${{ steps.gh_meta.outputs.body }}"
+          BODY=$(cat /tmp/release_body.txt)
 
           CHECK=$(./curl_json.sh "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${TAG}" \
                   -H "Authorization: token ${CODEBERG_TOKEN}" || true)
           MSG=$(echo "${CHECK}" | jq -r '.message // empty')
 
           if [ "${MSG}" = "The target couldn't be found." ] || [ "${MSG}" = "Not Found" ] || [ -z "${CHECK}" ] || [ "${CHECK}" = "null" ]; then
-            DATA=$(jq -n --arg tag "${TAG}" --arg name "${NAME}" --arg body "${BODY}" \
-                    '{ tag_name: $tag, name: $name, body: $body }')
+            jq -n --arg tag "${TAG}" --arg name "${NAME}" --arg body "${BODY}" \
+              '{ tag_name: $tag, name: $name, body: $body }' > /tmp/release_data.json
             RESP=$(./curl_json_code.sh POST \
               "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases" \
               -H "Authorization: token ${CODEBERG_TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "${DATA}")
+              -d @/tmp/release_data.json)
             CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
             BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
             if [ "${CODE}" -ne 201 ]; then
@@ -307,12 +307,13 @@ jobs:
           else
             RID=$(echo "${CHECK}" | jq -r '.id // empty')
             [ -z "${RID}" ] && { echo "Release lookup returned no id: ${CHECK}"; exit 1; }
-            UDATA=$(jq -n --arg name "${NAME}" --arg body "${BODY}" '{ name: $name, body: $body }')
+            jq -n --arg name "${NAME}" --arg body "${BODY}" \
+              '{ name: $name, body: $body }' > /tmp/release_update.json
             RESP=$(./curl_json_code.sh PATCH \
               "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${RID}" \
               -H "Authorization: token ${CODEBERG_TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "${UDATA}")
+              -d @/tmp/release_update.json)
             CODE=$(echo "${RESP}" | sed -e 's/.*HTTPSTATUS://')
             BODYRESP=$(echo "${RESP}" | sed -e 's/HTTPSTATUS.*//')
             if [ "${CODE}" -lt 200 ] || [ "${CODE}" -ge 300 ]; then
