@@ -74,9 +74,9 @@ permissions:
   deployments: write
 
 env:
-  MODE: ${{ github.event_name == 'release' && 'production' || inputs.mode }}
-  IS_PLAN: ${{ env.MODE == 'plan' || env.MODE == 'plan_fail' }}
-  IS_TEST: ${{ env.MODE == 'plan_fail' || env.MODE == 'safe_test' }}
+  MODE: ${{ github.event.inputs.mode || (github.event_name == 'release' && 'production') || '' }}
+  IS_PLAN: ${{ github.event.inputs.mode == 'plan' || github.event.inputs.mode == 'plan_fail' }}
+  IS_TEST: ${{ github.event.inputs.mode == 'plan_fail' || github.event.inputs.mode == 'safe_test' }}
   OWNER: RoundSalmon4
   REPO: AppVerifierBG
   REF: feature/all-enhancements
