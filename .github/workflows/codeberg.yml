@@ -1,0 +1,80 @@
+name: Sync to Codeberg
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - feature/all-enhancements
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Nightly Build"]
+    types:
+      - completed
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository with full history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git User
+        run: |
+          git config --global user.email "codebergsync.nzvel@simplelogin.com"
+          git config --global user.name "RoundSalmon4"
+
+      - name: Remove LFS Tracking
+        run: |
+          git lfs uninstall || true
+          git lfs prune || true
+
+      - name: "[TEST] Skipping Codeberg push (NO_SIDE_EFFECTS=true)"
+        if: ${{ vars.NO_SIDE_EFFECTS == 'true' }}
+        run: echo "[TEST] NO_SIDE_EFFECTS=true → Codeberg push step skipped"
+
+      - name: Push to Codeberg (guarded & ref-aware)
+        if: ${{ vars.NO_SIDE_EFFECTS != 'true' }}
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+          BLOCK_PUSH_TO_MASTER: ${{ vars.BLOCK_PUSH_TO_MASTER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET="${TARGET_BRANCH:-${GITHUB_REF_NAME:-${{ github.ref_name }}}}"
+          echo "Resolved TARGET=${TARGET}"
+
+          if [ "${BLOCK_PUSH_TO_MASTER:-true}" = "true" ] && [ "${TARGET}" = "feature/all-enhancements" ]; then
+            echo "BLOCK_PUSH_TO_MASTER=true → refusing to push to 'feature/all-enhancements'."
+            exit 0
+          fi
+
+          if [ "${GITHUB_REF_TYPE:-branch}" = "tag" ]; then
+            echo "Running on a tag ref; skipping Codeberg push."
+            exit 0
+          fi
+
+          git remote remove codeberg 2>/dev/null || true
+          git remote add codeberg "https://codeberg.org/unwanted9855/AppVerifierBG.git"
+          {
+            echo "protocol=https"
+            echo "host=codeberg.org"
+            echo "username=${CODEBERG_TOKEN}"
+            echo "password=${CODEBERG_TOKEN}"
+          } | git credential-store --file /tmp/codeberg-credentials store
+          git config --global credential.helper "store --file /tmp/codeberg-credentials"
+
+          git checkout -B "${TARGET}"
+
+          git fetch codeberg || true
+          if git show-ref --verify --quiet "refs/remotes/codeberg/${TARGET}"; then
+            echo "Merging codeberg/${TARGET} into local ${TARGET} (allow unrelated histories)"
+            git merge "codeberg/${TARGET}" --allow-unrelated-histories || true
+          else
+            echo "No codeberg/${TARGET} branch found; skipping merge."
+          fi
+
+          echo "Pushing HEAD to codeberg ${TARGET}"
+          git push codeberg "HEAD:${TARGET}"

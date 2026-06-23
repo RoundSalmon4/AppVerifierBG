@@ -1,0 +1,146 @@
+name: Sync Releases to Codeberg
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  deployments: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Get Latest Release Info
+        id: get_release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          latest_release=$(curl -s -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/latest")
+
+          tag_name=$(echo "${latest_release}" | jq -r '.tag_name // empty')
+
+          if [ -z "${tag_name}" ]; then
+            echo "No latest release found."
+            exit 1
+          fi
+
+          echo "Latest release tag: ${tag_name}"
+          echo "tag_name=${tag_name}" >> "$GITHUB_ENV"
+
+          echo "${latest_release}" | jq -r '.assets[] | "\(.name) \(.browser_download_url)"' > assets.txt || true
+
+          if [ ! -s assets.txt ]; then
+            echo "No assets found for ${tag_name}. Exiting."
+            exit 1
+          fi
+
+      - name: Download Assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r line; do
+            asset_name=$(echo "$line" | awk '{print $1}')
+            asset_url=$(echo "$line" | awk '{print $2}')
+            if [ -z "${asset_name}" ] || [ -z "${asset_url}" ]; then
+              echo "Skipping malformed asset line: $line"
+              continue
+            fi
+            echo "Downloading asset: ${asset_name} from: ${asset_url}"
+            if curl -fSL -o "${asset_name}" "${asset_url}"; then
+              echo "${asset_name} downloaded successfully."
+            else
+              echo "Failed to download ${asset_name}. Exiting."
+              exit 1
+            fi
+          done < assets.txt
+
+      - name: "[TEST] Skipping Codeberg release creation/upload (NO_SIDE_EFFECTS=true)"
+        if: ${{ vars.NO_SIDE_EFFECTS == 'true' }}
+        run: echo "[TEST] NO_SIDE_EFFECTS=true → Codeberg release creation and asset upload are skipped"
+
+      - name: Upload Assets to Codeberg
+        if: ${{ vars.NO_SIDE_EFFECTS != 'true' }}
+        shell: bash
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CODEBERG_TOKEN:-}" ]; then
+            echo "ERROR: CODEBERG_TOKEN is not set; cannot create/upload release on Codeberg."
+            exit 1
+          fi
+
+          if [ -z "${tag_name:-}" ]; then
+            echo "ERROR: tag_name env is not set."
+            exit 1
+          fi
+
+          echo "Checking for release with tag ${tag_name} on Codeberg."
+          release=$(curl -s -H "Authorization: token ${CODEBERG_TOKEN}" \
+            "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${tag_name}")
+
+          release_id=""
+          if echo "${release}" | jq -e '.id' >/dev/null 2>&1; then
+            echo "Release for tag ${tag_name} found."
+            release_id=$(echo "${release}" | jq -r '.id')
+          else
+            echo "Creating new release for tag ${tag_name}."
+            release_data=$(jq -n --arg tag "${tag_name}" \
+              '{ tag_name: $tag, name: ("AppVerifierBG " + $tag), body: ("Release for tag " + $tag) }')
+
+            release_response=$(curl -s -X POST \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${release_data}" \
+              "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases")
+
+            echo "Release creation response: ${release_response}"
+            release_id=$(echo "${release_response}" | jq -r '.id // empty')
+
+            if [ -z "${release_id}" ] || [ "${release_id}" = "null" ]; then
+              echo "ERROR: Failed to create Codeberg release for ${tag_name}."
+              exit 1
+            fi
+          fi
+
+          for asset_name in *.apk *.txt; do
+            if [ -f "${asset_name}" ]; then
+              upload_url="https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${release_id}/assets?name=${asset_name}"
+              echo "Uploading asset ${asset_name} to release for tag ${tag_name}."
+
+              response=$(curl -s -X POST \
+                -H "Authorization: token ${CODEBERG_TOKEN}" \
+                -H "Content-Type: application/octet-stream" \
+                --data-binary @"${asset_name}" \
+                "${upload_url}" \
+                -w "HTTPSTATUS:%{http_code}")
+
+              http_code=$(echo "${response}" | sed -e 's/.*HTTPSTATUS://')
+
+              echo "Upload response for ${asset_name}: ${response}"
+
+              if [ "${http_code}" -ne 201 ]; then
+                echo "Failed to upload ${asset_name}. HTTP Status: ${http_code}."
+                exit 1
+              fi
+
+              echo "Uploaded ${asset_name} successfully."
+              sleep 2
+            else
+              echo "Asset ${asset_name} does not exist, skipping."
+            fi
+          done

@@ -1,0 +1,101 @@
+name: Sync Releases Notes to Codeberg
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+  actions: read
+
+jobs:
+  sync_release_notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Get Releases from GitHub
+        id: get_releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          all_releases=$(curl -s -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases")
+
+          echo "${all_releases}" | jq -r '.[] | select(.prerelease == false) | .tag_name' > releases.txt
+          echo "${all_releases}" > all_releases.json
+
+      - name: "[TEST] Skipping Codeberg release notes update (NO_SIDE_EFFECTS=true)"
+        if: ${{ vars.NO_SIDE_EFFECTS == 'true' }}
+        run: echo "[TEST] NO_SIDE_EFFECTS=true → Codeberg PATCH calls are skipped"
+
+      - name: Process Releases (update Codeberg notes)
+        if: ${{ vars.NO_SIDE_EFFECTS != 'true' }}
+        shell: bash
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CODEBERG_TOKEN:-}" ]; then
+            echo "ERROR: CODEBERG_TOKEN is not set; cannot update Codeberg release notes."
+            exit 1
+          fi
+
+          if [ ! -s "releases.txt" ]; then
+            echo "No non-prerelease GitHub releases found. Nothing to sync."
+            exit 0
+          fi
+
+          while IFS= read -r tag_name; do
+            if [ -z "${tag_name}" ]; then
+              continue
+            fi
+
+            echo "Checking if release for tag '${tag_name}' exists on Codeberg..."
+            release_check=$(curl -s \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${tag_name}")
+
+            not_found_message=$(echo "${release_check}" | jq -r '.message // empty')
+            if [ "${not_found_message}" = "The target couldn't be found." ] || [ "${not_found_message}" = "Not Found" ]; then
+              echo "Release for tag '${tag_name}' does not exist on Codeberg. Skipping..."
+              continue
+            fi
+
+            echo "Release for tag '${tag_name}' found. Extracting release ID..."
+            release_id=$(echo "${release_check}" | jq -r '.id // empty')
+            if [ -z "${release_id}" ] || [ "${release_id}" = "null" ]; then
+              echo "Error: Could not retrieve Release ID for '${tag_name}'. Skipping..."
+              continue
+            fi
+
+            echo "Extracting GitHub release notes for tag '${tag_name}'..."
+            actual_body=$(jq -r --arg tag_name "${tag_name}" '.[] | select(.tag_name == $tag_name) | (.body // "")' all_releases.json)
+            if [ -z "${actual_body}" ]; then
+              echo "No release notes found for tag '${tag_name}'. Skipping..."
+              continue
+            fi
+
+            update_data=$(jq -n --arg body "${actual_body}" '{ body: $body }')
+
+            echo "Updating Codeberg release (id=${release_id}) for tag '${tag_name}'..."
+            update_response=$(curl -s -X PATCH \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${update_data}" \
+              "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${release_id}")
+
+            echo "Update response for '${tag_name}': ${update_response}"
+            error_message=$(echo "${update_response}" | jq -r '.message // empty')
+            if [ -n "${error_message}" ]; then
+              echo "Error response from Codeberg: ${error_message}"
+            else
+              echo "Successfully updated release notes for '${tag_name}'."
+            fi
+          done < releases.txt

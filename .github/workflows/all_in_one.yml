@@ -1,0 +1,270 @@
+# ============================================================
+# APPVERIFIER BG — CODEBERG SYNC ORCHESTRATOR — QUICK START
+#
+# Dispatches in order:
+#   codeberg.yml → codeberg_release.yml → codeberg_notes.yml
+#
+# ---------- GLOBAL VARIABLES (set once in GitHub) ----------
+# Go to: Settings → Secrets and variables → Actions → Variables
+#
+# 1) NO_SIDE_EFFECTS
+#    - true  = Workflows run, but SKIP pushes / releases / notes sync.
+#    - false = Real syncs happen.
+#
+# 2) BLOCK_PUSH_TO_MASTER
+#    - true  = Prevents any workflow from pushing to
+#              feature/all-enhancements accidentally.
+#    - false = Allows pushes to feature/all-enhancements (production).
+#
+# ---------- RUN MODES ----------
+#
+# MODE A — DRY RUN ONLY (PLAN MODE)
+#   dry_run = true
+#   test_mode = false
+#   → No workflows dispatched.
+#   → Prints "Would dispatch…" messages only.
+#   → No side effects.
+#
+# MODE B — DRY RUN + INTENTIONAL FAILURE
+#   dry_run = true
+#   test_mode = true
+#   → Same as above, but orchestrator FAILS at the end on purpose.
+#
+# MODE C — FULL TEST RUN (SAFE MODE)  *** MOST IMPORTANT MODE ***
+#   dry_run = false
+#   test_mode = true
+#   NO_SIDE_EFFECTS = true   (repo variable)
+#   → All workflows are actually dispatched.
+#   → All steps run (checkouts, downloads, loops, merges).
+#   → All side-effecting steps are SKIPPED, with visible
+#     "[TEST]" messages.
+#   → Orchestrator FAILS at the end intentionally.
+#   → Zero risk: no pushes, no releases, no notes posted.
+#
+# MODE D — FULL PRODUCTION RUN
+#   dry_run = false
+#   test_mode = false
+#   NO_SIDE_EFFECTS = false
+#   BLOCK_PUSH_TO_MASTER = false (optional)
+#   → Real CI/CD: runs everything and performs all side effects.
+#   → Branch pushed to Codeberg.
+#   → Codeberg release created with assets.
+#   → Release notes synced.
+#   → Final result: SUCCESS.
+#
+# ---------- BEST PRACTICES ----------
+# • For safe end‑to‑end testing, always use MODE C.
+# • For checking orchestrator logic only, use MODE A.
+# • For actual production syncs, use MODE D.
+# • Leave BLOCK_PUSH_TO_MASTER=true unless you're sure you
+#   want to write to feature/all-enhancements.
+#
+# ============================================================
+name: All-in-One Codeberg Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: "Intentionally fail after everything runs."
+        type: boolean
+        required: false
+        default: false
+      dry_run:
+        description: "Do not dispatch workflows; print what would happen."
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  actions: write
+  contents: write
+  checks: read
+  deployments: write
+
+env:
+  TEST_MODE: ${{ inputs.test_mode }}
+  DRY_RUN: ${{ inputs.dry_run }}
+  OWNER: RoundSalmon4
+  REPO: AppVerifierBG
+  REF: feature/all-enhancements
+
+jobs:
+  echo_flags:
+    name: Echo flags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo TEST_MODE and DRY_RUN
+        run: |
+          echo "TEST_MODE=${{ env.TEST_MODE }}"
+          echo "DRY_RUN=${{ env.DRY_RUN }}"
+          echo "REF=${{ env.REF }}"
+
+  validate_files:
+    name: Validate workflow files
+    runs-on: ubuntu-latest
+    needs: echo_flags
+    steps:
+      - name: Checkout repo at REF
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.REF }}
+          fetch-depth: 1
+      - name: Check required files
+        shell: bash
+        run: |
+          set -e
+          missing=0
+          for f in \
+            ".github/workflows/codeberg.yml" \
+            ".github/workflows/codeberg_release.yml" \
+            ".github/workflows/codeberg_notes.yml"
+          do
+            if [ -f "$f" ]; then
+              echo "[OK] Found $f"
+            else
+              echo "[MISSING] $f"
+              missing=1
+            fi
+          done
+          if [ $missing -ne 0 ]; then
+            echo "::warning::One or more required workflow files are missing on ref '${{ env.REF }}'."
+          fi
+
+  dispatch_codeberg:
+    name: Branch mirror (codeberg.yml)
+    runs-on: ubuntu-latest
+    needs: validate_files
+    steps:
+      - name: "[DRY RUN] Would dispatch .github/workflows/codeberg.yml"
+        if: ${{ env.DRY_RUN == 'true' }}
+        run: echo "[DRY RUN] Would dispatch .github/workflows/codeberg.yml on ref ${{ env.REF }}"
+      - name: Dispatch and wait (codeberg.yml)
+        if: ${{ env.DRY_RUN != 'true' }}
+        uses: actions/github-script@v9
+        env:
+          WORKFLOW_FILE: .github/workflows/codeberg.yml
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner=process.env.OWNER, repo=process.env.REPO, ref=process.env.REF, wf=process.env.WORKFLOW_FILE;
+            const wfName=wf.split('/').pop();
+            const wait=ms=>new Promise(r=>setTimeout(r,ms));
+            const timeout=30*60*1000, poll=10000, dl=Date.now()+timeout;
+            const startAt=new Date().toISOString();
+            await github.rest.actions.createWorkflowDispatch({ owner, repo, workflow_id: wf, ref, inputs:{} });
+            let runId=null;
+            while(Date.now()<dl && !runId){
+              const runs=await github.paginate(github.rest.actions.listWorkflowRuns,{ owner, repo, workflow_id:wfName, event:'workflow_dispatch', branch:ref, per_page:50 });
+              const c=runs.find(r=>new Date(r.created_at)>=new Date(startAt));
+              if(c){ runId=c.id; core.info(`run=${runId}`); break; }
+              await wait(poll);
+            }
+            if(!runId){ core.setFailed(`Timed out waiting for ${wf} run`); return; }
+            while(Date.now()<dl){
+              const { data: run }=await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
+              if(run.status==='completed'){ if(run.conclusion!=='success') core.setFailed(`${wf} concluded: ${run.conclusion}`); return; }
+              if(run.status==='in_progress' || run.status==='queued' || run.status==='waiting'){ core.info(`run status: ${run.status}`); await wait(poll); continue; }
+              if(run.status==='pending'){ await wait(poll); continue; }
+              core.warning(`Unknown status: ${run.status}, waiting...`);
+              await wait(poll);
+            }
+            core.setFailed(`Timed out waiting for ${wf} to complete`);
+
+  dispatch_codeberg_release:
+    name: Release sync (codeberg_release.yml)
+    runs-on: ubuntu-latest
+    needs: dispatch_codeberg
+    steps:
+      - name: "[DRY RUN] Would dispatch .github/workflows/codeberg_release.yml"
+        if: ${{ env.DRY_RUN == 'true' }}
+        run: echo "[DRY RUN] Would dispatch .github/workflows/codeberg_release.yml on ref ${{ env.REF }}"
+      - name: Dispatch and wait (codeberg_release.yml)
+        if: ${{ env.DRY_RUN != 'true' }}
+        uses: actions/github-script@v9
+        env:
+          WORKFLOW_FILE: .github/workflows/codeberg_release.yml
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner=process.env.OWNER, repo=process.env.REPO, ref=process.env.REF, wf=process.env.WORKFLOW_FILE;
+            const wait=ms=>new Promise(r=>setTimeout(r,ms));
+            const timeout=30*60*1000, poll=10000, dl=Date.now()+timeout;
+            const startAt=new Date().toISOString();
+            await github.rest.actions.createWorkflowDispatch({ owner, repo, workflow_id: wf, ref, inputs:{} });
+            let runId=null;
+            while(Date.now()<dl && !runId){
+              const runs=await github.paginate(github.rest.actions.listWorkflowRuns,{ owner, repo, workflow_id:wf, event:'workflow_dispatch', branch:ref, per_page:50 });
+              const c=runs.find(r=>new Date(r.created_at)>=new Date(startAt));
+              if(c){ runId=c.id; core.info(`run=${runId}`); break; }
+              await wait(poll);
+            }
+            if(!runId){ core.setFailed(`Timed out waiting for ${wf} run`); return; }
+            while(Date.now()<dl){
+              const { data: run }=await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
+              if(run.status==='completed'){ if(run.conclusion!=='success') core.setFailed(`${wf} concluded: ${run.conclusion}`); return; }
+              if(run.status==='in_progress' || run.status==='queued' || run.status==='waiting'){ core.info(`run status: ${run.status}`); await wait(poll); continue; }
+              if(run.status==='pending'){ await wait(poll); continue; }
+              core.warning(`Unknown status: ${run.status}, waiting...`);
+              await wait(poll);
+            }
+            core.setFailed(`Timed out waiting for ${wf} to complete`);
+
+  dispatch_codeberg_notes:
+    name: Notes sync (codeberg_notes.yml)
+    runs-on: ubuntu-latest
+    needs: dispatch_codeberg_release
+    steps:
+      - name: "[DRY RUN] Would dispatch .github/workflows/codeberg_notes.yml"
+        if: ${{ env.DRY_RUN == 'true' }}
+        run: echo "[DRY RUN] Would dispatch .github/workflows/codeberg_notes.yml on ref ${{ env.REF }}"
+      - name: Dispatch and wait (codeberg_notes.yml)
+        if: ${{ env.DRY_RUN != 'true' }}
+        uses: actions/github-script@v9
+        env:
+          WORKFLOW_FILE: .github/workflows/codeberg_notes.yml
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner=process.env.OWNER, repo=process.env.REPO, ref=process.env.REF, wf=process.env.WORKFLOW_FILE;
+            const wait=ms=>new Promise(r=>setTimeout(r,ms));
+            const timeout=30*60*1000, poll=10000, dl=Date.now()+timeout;
+            const startAt=new Date().toISOString();
+            await github.rest.actions.createWorkflowDispatch({ owner, repo, workflow_id: wf, ref, inputs:{} });
+            let runId=null;
+            while(Date.now()<dl && !runId){
+              const runs=await github.paginate(github.rest.actions.listWorkflowRuns,{ owner, repo, workflow_id:wf, event:'workflow_dispatch', branch:ref, per_page:50 });
+              const c=runs.find(r=>new Date(r.created_at)>=new Date(startAt));
+              if(c){ runId=c.id; core.info(`run=${runId}`); break; }
+              await wait(poll);
+            }
+            if(!runId){ core.setFailed(`Timed out waiting for ${wf} run`); return; }
+            while(Date.now()<dl){
+              const { data: run }=await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
+              if(run.status==='completed'){ if(run.conclusion!=='success') core.setFailed(`${wf} concluded: ${run.conclusion}`); return; }
+              if(run.status==='in_progress' || run.status==='queued' || run.status==='waiting'){ core.info(`run status: ${run.status}`); await wait(poll); continue; }
+              if(run.status==='pending'){ await wait(poll); continue; }
+              core.warning(`Unknown status: ${run.status}, waiting...`);
+              await wait(poll);
+            }
+            core.setFailed(`Timed out waiting for ${wf} to complete`);
+
+  fail_if_test_mode:
+    name: Fail if TEST_MODE
+    runs-on: ubuntu-latest
+    needs:
+      - dispatch_codeberg
+      - dispatch_codeberg_release
+      - dispatch_codeberg_notes
+    if: always()
+    steps:
+      - name: Check TEST_MODE and optionally fail
+        shell: bash
+        run: |
+          echo "TEST_MODE=${{ env.TEST_MODE }}"
+          if [ "${{ env.TEST_MODE }}" = "true" ]; then
+            echo "Test mode enabled: intentionally failing."
+            exit 1
+          else
+            echo "Test mode disabled: finishing successfully."
+          fi
