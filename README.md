@@ -82,3 +82,7 @@ Share every installed app's verification info as text from the settings screen.
 ---
 
 For the original README with download, community, and contributing info see https://github.com/soupslurpr/AppVerifier.
+
+---
+
+This repo is mirrored to [Codeberg](https://codeberg.org/unwanted9855/AppVerifierBG). Releases and release assets are synced automatically.
