@@ -269,6 +269,7 @@ jobs:
           TAG="${{ steps.resolve.outputs.tag }}"
           git remote add codeberg "https://unwanted9855:${CODEBERG_TOKEN}@codeberg.org/unwanted9855/AppVerifierBG.git"
           git push codeberg "${TAG}"
+          git push codeberg "feature/all-enhancements"
 
       - name: "[TEST] Skipping create/update & uploads (NO_SIDE_EFFECTS=true)"
         if: ${{ inputs.update_existing_only != true && vars.NO_SIDE_EFFECTS == 'true' }}
@@ -303,7 +304,7 @@ jobs:
 
           if [ "${MSG}" = "The target couldn't be found." ] || [ "${MSG}" = "Not Found" ] || [ -z "${CHECK}" ] || [ "${CHECK}" = "null" ]; then
             jq -n --arg tag "${TAG}" --arg name "${NAME}" --arg body "${BODY}" \
-              '{ tag_name: $tag, name: $name, body: $body }' > /tmp/release_data.json
+              '{ tag_name: $tag, target_commitish: "feature/all-enhancements", name: $name, body: $body }' > /tmp/release_data.json
             RESP=$(./curl_json_code.sh POST \
               "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases" \
               -H "Authorization: token ${CODEBERG_TOKEN}" \
