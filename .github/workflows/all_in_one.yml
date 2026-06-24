@@ -66,6 +66,9 @@ on:
           - production
   release:
     types: [published]
+  workflow_run:
+    workflows: ["Nightly Build"]
+    types: [completed]
 
 permissions:
   actions: write
@@ -74,7 +77,7 @@ permissions:
   deployments: write
 
 env:
-  MODE: ${{ github.event.inputs.mode || (github.event_name == 'release' && 'production') || '' }}
+  MODE: ${{ github.event.inputs.mode || (github.event_name == 'release' && 'production') || (github.event_name == 'workflow_run' && 'production') || '' }}
   IS_PLAN: ${{ github.event.inputs.mode == 'plan' || github.event.inputs.mode == 'plan_fail' }}
   IS_TEST: ${{ github.event.inputs.mode == 'plan_fail' || github.event.inputs.mode == 'safe_test' }}
   OWNER: RoundSalmon4
