@@ -1,4 +1,4 @@
-name: Build APK (debug / unsigned / signed)
+name: Build APK (debug / signed)
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +9,6 @@ on:
         type: choice
         options:
           - debug
-          - unsigned
           - signed
       branch:
         description: 'Branch to build'
@@ -150,12 +149,6 @@ jobs:
         if: github.event.inputs.mode == 'debug'
         run: ./gradlew assembleDebug
 
-      - name: Build unsigned release APK
-        if: github.event.inputs.mode == 'unsigned'
-        run: |
-          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
-          ./gradlew assembleRelease -PversionOverride=${{ steps.version.outputs.version }}
-
       - name: Build signed release APK
         if: github.event.inputs.mode == 'signed'
         run: ./gradlew assembleRelease
@@ -173,11 +166,6 @@ jobs:
           cp "$APK_FILE" /tmp/app.apk
         shell: bash
 
-      - name: Prepare unsigned APK
-        if: github.event.inputs.mode == 'unsigned'
-        run: |
-          mv app/build/outputs/apk/release/*.apk /tmp/app.apk
-
       - name: Prepare signed release APK
         if: github.event.inputs.mode == 'signed'
         run: |
@@ -194,9 +182,7 @@ jobs:
       - name: Set artifact name
         id: artifact
         run: |
-          if [ "${{ github.event.inputs.mode }}" = "unsigned" ]; then
-            echo "name=AppVerifierBG-${{ steps.version.outputs.version }}-unsigned" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.inputs.mode }}" = "signed" ]; then
+          if [ "${{ github.event.inputs.mode }}" = "signed" ]; then
             echo "name=AppVerifierBG-${{ steps.version.outputs.version }}-signed-${{ steps.sanitize.outputs.name }}" >> "$GITHUB_OUTPUT"
           else
             echo "name=app-debug-${{ steps.sanitize.outputs.name }}" >> "$GITHUB_OUTPUT"
