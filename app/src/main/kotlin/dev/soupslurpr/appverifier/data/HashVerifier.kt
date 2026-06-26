@@ -15,9 +15,16 @@ class HashVerifier {
             trimmedText
                 .lines()
                 .filter { it.isNotBlank() }
-                .joinToString("\n") {
-                    it.trim().replace('"', ' ').replace(' ', '\n').trim()
-                } + "\n"
+                .flatMap { line ->
+                    line.trim()
+                        .replace('"', ' ')
+                        .split(' ')
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+                }
+                .filterNot { Regex("^[A-Za-z][A-Za-z0-9-]*:$").matches(it) }
+                .joinToString("\n")
+                .trim() + "\n"
         } else {
             trimmedText
         }
