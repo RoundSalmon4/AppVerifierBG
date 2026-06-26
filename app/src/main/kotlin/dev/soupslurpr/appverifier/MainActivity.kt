@@ -20,6 +20,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
+import dev.soupslurpr.appverifier.ui.AppHashMatch
 import dev.soupslurpr.appverifier.ui.VerifyAppViewModel.VerifyAppViewModelFactory
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
@@ -72,6 +73,8 @@ class MainActivity : ComponentActivity() {
                 (intent.action == Intent.ACTION_VIEW)
 
             var sharedFilteredEntries by remember { mutableStateOf<List<UserDatabaseEntry>?>(null) }
+            var hashMatchCandidates by remember { mutableStateOf<List<AppHashMatch>?>(null) }
+            var hashMatchText by remember { mutableStateOf<String?>(null) }
 
             if (isActionSend) {
                 val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
@@ -102,12 +105,39 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         val verificationInfoText = verifyAppViewModel.getVerificationInfoText(sharedText)
-                        if (verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
-                                verificationInfoText.lines()[0],
+                        val lines = verificationInfoText.lines().filter { it.isNotBlank() }
+                        val firstLine = lines.firstOrNull()
+
+                        if (firstLine != null && verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
+                                firstLine,
                                 packageManager
                             )
                         ) {
                             verifyAppViewModel.verifyFromText(verificationInfoText)
+                        } else if (lines.isNotEmpty() && lines.all { verifyAppViewModel.isValidSha256Hash(it.trim()) }) {
+                            val matches = verifyAppViewModel.findAppsByHash(lines, packageManager)
+                            when (matches.size) {
+                                0 -> {
+                                    if (lines.size > 1) {
+                                        verifyAppViewModel.setMultipleHashesWithoutPackageName(true)
+                                    } else {
+                                        verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                    }
+                                }
+                                1 -> {
+                                    val match = matches[0]
+                                    verifyAppViewModel.setAppVerificationInfo(
+                                        match.name, match.packageName, match.hashes, match.internalDatabaseInfo
+                                    )
+                                    verifyAppViewModel.verifyFromText(verificationInfoText)
+                                }
+                                else -> {
+                                    hashMatchCandidates = matches
+                                    hashMatchText = verificationInfoText
+                                }
+                            }
+                        } else {
+                            verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
                         }
                     }
                 } else if (extraStream != null) {
@@ -140,6 +170,11 @@ class MainActivity : ComponentActivity() {
                     isActionSend = isActionSend,
                     isActionView = isActionView,
                     sharedFilteredEntries = sharedFilteredEntries,
+                    hashMatchData = if (hashMatchCandidates != null && hashMatchText != null) {
+                        HashMatchData(hashMatchCandidates!!, hashMatchText!!)
+                    } else {
+                        null
+                    },
                     newIntentFlow = newIntentFlow,
                 )
             }

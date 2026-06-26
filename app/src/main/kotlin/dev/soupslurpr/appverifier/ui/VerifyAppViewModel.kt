@@ -34,6 +34,13 @@ import java.util.zip.ZipFile
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
+data class AppHashMatch(
+    val packageName: String,
+    val name: String,
+    val hashes: Hashes,
+    val internalDatabaseInfo: InternalDatabaseInfo,
+)
+
 class VerifyAppViewModel(
     application: Application,
     private val hashVerifier: HashVerifier = HashVerifier(),
@@ -62,6 +69,7 @@ class VerifyAppViewModel(
             appNotFoundOrInvalidFormat = false,
             apkFailedToParse = false,
             invalidHashFormat = false,
+            multipleHashesWithoutPackageName = false,
             expectedHashes = emptyList(),
         ) }
     }
@@ -86,6 +94,7 @@ class VerifyAppViewModel(
         if (!allHashesAreValid) {
             _uiState.update { it.copy(
                 invalidHashFormat = true,
+                multipleHashesWithoutPackageName = false,
                 verificationStatus = VerificationStatus.UNKNOWN,
             ) }
             onVerificationResult?.invoke(VerificationStatus.UNKNOWN)
@@ -143,6 +152,41 @@ class VerifyAppViewModel(
         return Hashes(listOf(Source.NONE), signatures, hasMultipleSigners, isDebug)
     }
 
+    fun isValidSha256Hash(hash: String): Boolean = hashVerifier.isValidSha256Hash(hash)
+
+    fun findAppsByHash(lines: List<String>, packageManager: PackageManager): List<AppHashMatch> {
+        val normalizedLines = lines.map { line ->
+            val trimmed = line.trim()
+            if (trimmed.length == 64 && hashVerifier.isValidSha256Hash(trimmed)) {
+                hashVerifier.convertHexHashToColonFormat(trimmed)
+            } else {
+                trimmed.uppercase()
+            }
+        }.toSet()
+
+        if (normalizedLines.isEmpty()) return emptyList()
+
+        val userInstalledPackages = packageManager.getInstalledPackages(PackageManager.GET_SIGNING_CERTIFICATES)
+            .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
+
+        return userInstalledPackages.mapNotNull { packageInfo ->
+            val hashes = getHashesFromPackageInfo(packageInfo)
+            if (normalizedLines.all { it in hashes.hashes }) {
+                val applicationInfo = packageInfo.applicationInfo ?: return@mapNotNull null
+                AppHashMatch(
+                    packageName = packageInfo.packageName,
+                    name = packageManager.getApplicationLabel(applicationInfo).toString(),
+                    hashes = hashes,
+                    internalDatabaseInfo = getInternalDatabaseInfoFromVerificationInfo(
+                        VerificationInfo(packageInfo.packageName, hashes)
+                    ),
+                )
+            } else {
+                null
+            }
+        }
+    }
+
     fun findAndSetAppVerificationInfoFromPackageName(packageName: String, packageManager: PackageManager): Boolean {
         val userInstalledPackages = packageManager.getInstalledPackages(0)
             .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
@@ -174,11 +218,27 @@ class VerifyAppViewModel(
     }
 
     fun setAppNotFoundOrInvalidFormat(b: Boolean) {
-        _uiState.update { it.copy(appNotFoundOrInvalidFormat = b, apkFailedToParse = if (b) false else it.apkFailedToParse) }
+        _uiState.update { it.copy(
+            appNotFoundOrInvalidFormat = b,
+            multipleHashesWithoutPackageName = false,
+            apkFailedToParse = if (b) false else it.apkFailedToParse
+        ) }
+    }
+
+    fun setMultipleHashesWithoutPackageName(b: Boolean) {
+        _uiState.update { it.copy(
+            multipleHashesWithoutPackageName = b,
+            appNotFoundOrInvalidFormat = if (b) false else it.appNotFoundOrInvalidFormat,
+            apkFailedToParse = false,
+        ) }
     }
 
     fun setApkFailedToParse(b: Boolean) {
-        _uiState.update { it.copy(apkFailedToParse = b, appNotFoundOrInvalidFormat = if (b) false else it.appNotFoundOrInvalidFormat) }
+        _uiState.update { it.copy(
+            apkFailedToParse = b,
+            appNotFoundOrInvalidFormat = if (b) false else it.appNotFoundOrInvalidFormat,
+            multipleHashesWithoutPackageName = false,
+        ) }
     }
 
     fun getInternalDatabaseInfoFromVerificationInfo(verificationInfo: VerificationInfo): InternalDatabaseInfo {

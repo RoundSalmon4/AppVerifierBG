@@ -1,6 +1,7 @@
 package dev.soupslurpr.appverifier
 
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,26 +16,38 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
@@ -48,6 +61,8 @@ import dev.soupslurpr.appverifier.data.InternalDatabaseInfo
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.parseUserDatabaseEntriesFromAny
 import dev.soupslurpr.appverifier.preferences.PreferencesViewModel
+import dev.soupslurpr.appverifier.ui.AppHashMatch
+import dev.soupslurpr.appverifier.ui.AppIconCache
 import dev.soupslurpr.appverifier.ui.AppListScreen
 import dev.soupslurpr.appverifier.ui.SortMode
 import dev.soupslurpr.appverifier.ui.CreditsScreen
@@ -57,9 +72,16 @@ import dev.soupslurpr.appverifier.ui.SettingsScreen
 import dev.soupslurpr.appverifier.ui.StartupScreen
 import dev.soupslurpr.appverifier.ui.VerifyAppScreen
 import dev.soupslurpr.appverifier.ui.VerifyAppViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+data class HashMatchData(
+    val candidates: List<AppHashMatch>,
+    val hashText: String,
+)
 
 enum class AppVerifierScreens(@StringRes val title: Int) {
     Start(title = R.string.app_name),
@@ -68,7 +90,8 @@ enum class AppVerifierScreens(@StringRes val title: Int) {
     Settings(title = R.string.settings),
     License(title = R.string.license),
     PrivacyPolicy(title = R.string.privacy_policy),
-    Credits(title = R.string.credits)
+    Credits(title = R.string.credits),
+    HashPicker(title = R.string.verify_app)
 }
 
 @Composable
@@ -79,6 +102,7 @@ fun AppVerifierApp(
     isActionSend: Boolean,
     isActionView: Boolean,
     sharedFilteredEntries: List<UserDatabaseEntry>? = null,
+    hashMatchData: HashMatchData? = null,
     newIntentFlow: Flow<Intent> = emptyFlow(),
 ) {
     val preferencesUiState = preferencesViewModel.uiState.collectAsState()
@@ -94,10 +118,17 @@ fun AppVerifierApp(
     val coroutineScope = rememberCoroutineScope()
 
     var filteredEntries by remember { mutableStateOf(sharedFilteredEntries) }
+    var currentHashMatchData by remember { mutableStateOf(hashMatchData) }
 
     LaunchedEffect(sharedFilteredEntries) {
         if (sharedFilteredEntries != null) {
             filteredEntries = sharedFilteredEntries
+        }
+    }
+
+    LaunchedEffect(hashMatchData) {
+        if (hashMatchData != null) {
+            currentHashMatchData = hashMatchData
         }
     }
 
@@ -166,13 +197,12 @@ fun AppVerifierApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = remember(filteredEntries, isActionSend, isActionView) {
-                if (filteredEntries != null) {
-                    AppVerifierScreens.AppList.name
-                } else if (isActionSend || isActionView) {
-                    AppVerifierScreens.VerifyApp.name
-                } else {
-                    AppVerifierScreens.Start.name
+            startDestination = remember(filteredEntries, currentHashMatchData, isActionSend, isActionView) {
+                when {
+                    filteredEntries != null -> AppVerifierScreens.AppList.name
+                    currentHashMatchData != null -> AppVerifierScreens.HashPicker.name
+                    isActionSend || isActionView -> AppVerifierScreens.VerifyApp.name
+                    else -> AppVerifierScreens.Start.name
                 }
             },
             modifier = modifier.padding(
@@ -215,14 +245,47 @@ fun AppVerifierApp(
                                 }
                             } else {
                                 val verificationInfoText = verifyAppViewModel.getVerificationInfoText(trimmed)
-                                if (verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
-                                        verificationInfoText.lines()[0],
+                                val lines = verificationInfoText.lines().filter { it.isNotBlank() }
+                                val firstLine = lines.firstOrNull()
+
+                                if (firstLine != null && verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
+                                        firstLine,
                                         context.packageManager
                                     )
                                 ) {
                                     verifyAppViewModel.verifyFromText(verificationInfoText)
+                                    navController.navigate(AppVerifierScreens.VerifyApp.name)
+                                } else if (lines.isNotEmpty() && lines.all { verifyAppViewModel.isValidSha256Hash(it.trim()) }) {
+                                    val matches = verifyAppViewModel.findAppsByHash(lines, context.packageManager)
+                                    when (matches.size) {
+                                         0 -> {
+                                            if (lines.size > 1) {
+                                                verifyAppViewModel.setMultipleHashesWithoutPackageName(true)
+                                            } else {
+                                                verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                            }
+                                            navController.navigate(AppVerifierScreens.VerifyApp.name)
+                                        }
+                                        1 -> {
+                                            val match = matches[0]
+                                            verifyAppViewModel.setAppVerificationInfo(
+                                                match.name, match.packageName, match.hashes, match.internalDatabaseInfo
+                                            )
+                                            verifyAppViewModel.verifyFromText(verificationInfoText)
+                                            navController.navigate(AppVerifierScreens.VerifyApp.name)
+                                        }
+                                        else -> {
+                                            currentHashMatchData = HashMatchData(
+                                                candidates = matches,
+                                                hashText = verificationInfoText,
+                                            )
+                                            navController.navigate(AppVerifierScreens.HashPicker.name)
+                                        }
+                                    }
+                                } else {
+                                    verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                    navController.navigate(AppVerifierScreens.VerifyApp.name)
                                 }
-                                navController.navigate(AppVerifierScreens.VerifyApp.name)
                             }
                         } else {
                             snackbarCoroutineScope.launch {
@@ -296,6 +359,65 @@ fun AppVerifierApp(
                     },
                 )
             }
+            composableWithDefaultSlideTransitions(route = AppVerifierScreens.HashPicker) {
+                val data = currentHashMatchData
+                if (data != null) {
+                    LazyColumn {
+                        item {
+                            Text(
+                                "Select the app you want to verify:",
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                        items(data.candidates, key = { it.packageName }) { match ->
+                            ListItem(
+                                modifier = Modifier.clickable {
+                                    val hashText = data.hashText
+                                    currentHashMatchData = null
+                                    if (verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
+                                            match.packageName, context.packageManager
+                                        )
+                                    ) {
+                                        verifyAppViewModel.verifyFromText(hashText)
+                                        navController.navigate(AppVerifierScreens.VerifyApp.name) {
+                                            popUpTo(AppVerifierScreens.HashPicker.name) { inclusive = true }
+                                        }
+                                    }
+                                },
+                                headlineContent = { Text(match.name) },
+                                overlineContent = { Text(match.packageName) },
+                                leadingContent = {
+                                    val icon by produceState<Drawable?>(
+                                        initialValue = AppIconCache.get(match.packageName),
+                                        key1 = match.packageName,
+                                    ) {
+                                        if (value == null) {
+                                            value = withContext(Dispatchers.IO) {
+                                                runCatching {
+                                                    val info = context.packageManager.getPackageInfo(match.packageName, 0)
+                                                    val loaded = context.packageManager.getApplicationIcon(
+                                                        info.applicationInfo ?: ApplicationInfo()
+                                                    )
+                                                    AppIconCache.put(match.packageName, loaded)
+                                                    loaded
+                                                }.getOrNull()
+                                            }
+                                        }
+                                    }
+                                    if (icon != null) {
+                                        Image(
+                                            rememberDrawablePainter(drawable = icon),
+                                            null,
+                                            Modifier.size(50.dp),
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.VerifyApp) {
                 val currentPackageName = verifyAppUiState.value.packageName
                 val currentHashes = verifyAppUiState.value.hashes
@@ -315,6 +437,7 @@ fun AppVerifierApp(
                     verifyAppUiState.value.verificationStatus,
                     verifyAppUiState.value.appNotFoundOrInvalidFormat,
                     verifyAppUiState.value.invalidHashFormat,
+                    verifyAppUiState.value.multipleHashesWithoutPackageName,
                     verifyAppUiState.value.expectedHashes,
                     { verifyAppViewModel.verifyFromText(it) },
                     { navController.navigateUp() },
