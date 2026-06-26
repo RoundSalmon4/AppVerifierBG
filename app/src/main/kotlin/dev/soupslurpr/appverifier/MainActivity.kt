@@ -137,7 +137,32 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         } else {
-                            verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                            val extracted = verifyAppViewModel.extractHashes(trimmed)
+                            if (extracted.isNotEmpty()) {
+                                val hashMatches = verifyAppViewModel.findAppsByHash(extracted, packageManager)
+                                when (hashMatches.size) {
+                                    0 -> {
+                                        if (extracted.size > 1) {
+                                            verifyAppViewModel.setMultipleHashesWithoutPackageName(true)
+                                        } else {
+                                            verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                        }
+                                    }
+                                    1 -> {
+                                        val match = hashMatches[0]
+                                        verifyAppViewModel.setAppVerificationInfo(
+                                            match.name, match.packageName, match.hashes, match.internalDatabaseInfo
+                                        )
+                                        verifyAppViewModel.verifyFromText(extracted.joinToString("\n"))
+                                    }
+                                    else -> {
+                                        hashMatchCandidates = hashMatches
+                                        hashMatchText = extracted.joinToString("\n")
+                                    }
+                                }
+                            } else {
+                                verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                            }
                         }
                     }
                 } else if (extraStream != null) {
