@@ -55,7 +55,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -81,6 +81,7 @@ fun VerifyAppScreen(
     verificationStatus: VerificationStatus,
     appNotFound: Boolean,
     invalidHashFormat: Boolean,
+    multipleHashesWithoutPackageName: Boolean,
     expectedHashes: List<String>,
     onVerifyFromClipboard: (String) -> Unit,
     onLaunchedEffectHashEmpty: () -> Unit,
@@ -93,6 +94,7 @@ fun VerifyAppScreen(
     userDbMatch: Boolean = false,
     onAddToUserDatabase: () -> Unit = {},
     sharedTextHashMatch: Boolean? = null,
+    onDone: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val isSelfVerification = packageName == context.packageName
@@ -156,11 +158,35 @@ fun VerifyAppScreen(
                                 "\nPlease note system apps are not included in the search."
                     )
                     Text(
-                        "Also please make sure the provided text is in the correct format, like the " +
-                                "following:\n\ncom.example" +
+                        "Also please make sure the provided text is in the correct format, like one " +
+                                "of the following:\n\ncom.example" +
                                 ".app\n96:C0:2C:55:75:5C:17:1C:68:13:70:29:3B:37:11:2B:4A:5D:F7:B9:82:C2:C5:58:05:4C:45:51:AD:F5:50:DC" +
-                                "\n\nThere may be multiple hashes, which is normal."
+                                "\n\nOr just a SHA-256 hash on its own."
                     )
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
+                }
+            }
+        } else if (multipleHashesWithoutPackageName) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                    Text("MULTIPLE HASHES WITHOUT A PACKAGE NAME", style = typography.titleMedium)
+                    Text(
+                        "Hashes without package names can only be verified one hash at a time, " +
+                                "share or paste a single hash and try again."
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
                 }
             }
         } else if (invalidHashFormat) {
@@ -178,6 +204,10 @@ fun VerifyAppScreen(
                                 "A valid hash is 64 hexadecimal characters or 95 characters in " +
                                 "XX:XX:XX:... format."
                     )
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
                 }
             }
         } else {

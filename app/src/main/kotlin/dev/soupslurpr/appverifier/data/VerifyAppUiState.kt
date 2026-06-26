@@ -13,6 +13,7 @@ data class VerifyAppUiState(
     val appNotFoundOrInvalidFormat: Boolean = false,
     val apkFailedToParse: Boolean = false,
     val invalidHashFormat: Boolean = false,
+    val multipleHashesWithoutPackageName: Boolean = false,
     val expectedHashes: List<String> = emptyList(),
     val internalDatabaseInfo: InternalDatabaseInfo = InternalDatabaseInfo(
         InternalDatabaseStatus.NOT_FOUND,

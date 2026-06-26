@@ -15,9 +15,16 @@ class HashVerifier {
             trimmedText
                 .lines()
                 .filter { it.isNotBlank() }
-                .joinToString("\n") {
-                    it.trim().replace('"', ' ').replace(' ', '\n').trim()
-                } + "\n"
+                .flatMap { line ->
+                    line.trim()
+                        .replace('"', ' ')
+                        .split(' ')
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+                }
+                .filterNot { Regex("^[A-Za-z][A-Za-z0-9-]*:$").matches(it) }
+                .joinToString("\n")
+                .trim() + "\n"
         } else {
             trimmedText
         }
@@ -55,6 +62,9 @@ class HashVerifier {
         }
 
         if (lines.size == 1 && lines[0].length == 95) {
+            if (lines[0].trim().uppercase() in currentHashes.hashes) {
+                return VerificationStatus.PKG_NOT_GIVEN_BUT_SIG_HASH_MATCH
+            }
             return VerificationStatus.PKG_NOT_GIVEN_AND_SIG_HASH_NOMATCH
         }
 
