@@ -94,6 +94,7 @@ fun VerifyAppScreen(
     userDbMatch: Boolean = false,
     onAddToUserDatabase: () -> Unit = {},
     sharedTextHashMatch: Boolean? = null,
+    onDone: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val isSelfVerification = packageName == context.packageName
@@ -162,6 +163,10 @@ fun VerifyAppScreen(
                                 ".app\n96:C0:2C:55:75:5C:17:1C:68:13:70:29:3B:37:11:2B:4A:5D:F7:B9:82:C2:C5:58:05:4C:45:51:AD:F5:50:DC" +
                                 "\n\nThere may be multiple hashes, which is normal."
                     )
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
                 }
             }
         } else if (multipleHashesWithoutPackageName) {
@@ -178,6 +183,10 @@ fun VerifyAppScreen(
                         "Hashes without package names can only be verified one hash at a time, " +
                                 "share or paste a single hash and try again."
                     )
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
                 }
             }
         } else if (invalidHashFormat) {
@@ -195,6 +204,10 @@ fun VerifyAppScreen(
                                 "A valid hash is 64 hexadecimal characters or 95 characters in " +
                                 "XX:XX:XX:... format."
                     )
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
                 }
             }
         } else {

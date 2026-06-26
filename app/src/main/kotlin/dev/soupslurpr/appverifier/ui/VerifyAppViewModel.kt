@@ -154,8 +154,6 @@ class VerifyAppViewModel(
 
     fun isValidSha256Hash(hash: String): Boolean = hashVerifier.isValidSha256Hash(hash)
 
-    fun extractHashes(text: String): List<String> = hashVerifier.extractHashes(text)
-
     fun findAppsByHash(lines: List<String>, packageManager: PackageManager): List<AppHashMatch> {
         val normalizedLines = lines.map { line ->
             val trimmed = line.trim()

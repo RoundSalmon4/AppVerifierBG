@@ -195,38 +195,8 @@ fun AppVerifierApp(
                             }
                         }
                     } else {
-                        val extracted = verifyAppViewModel.extractHashes(trimmed)
-                        if (extracted.isNotEmpty()) {
-                            val hashMatches = verifyAppViewModel.findAppsByHash(extracted, context.packageManager)
-                            when (hashMatches.size) {
-                                0 -> {
-                                    if (extracted.size > 1) {
-                                        verifyAppViewModel.setMultipleHashesWithoutPackageName(true)
-                                    } else {
-                                        verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
-                                    }
-                                    pendingNavigation = AppVerifierScreens.VerifyApp.name
-                                }
-                                1 -> {
-                                    val match = hashMatches[0]
-                                    verifyAppViewModel.setAppVerificationInfo(
-                                        match.name, match.packageName, match.hashes, match.internalDatabaseInfo
-                                    )
-                                    verifyAppViewModel.verifyFromText(extracted.joinToString("\n"))
-                                    pendingNavigation = AppVerifierScreens.VerifyApp.name
-                                }
-                                else -> {
-                                    currentHashMatchData = HashMatchData(
-                                        candidates = hashMatches,
-                                        hashText = extracted.joinToString("\n"),
-                                    )
-                                    pendingNavigation = AppVerifierScreens.HashPicker.name
-                                }
-                            }
-                        } else {
-                            verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
-                            pendingNavigation = AppVerifierScreens.VerifyApp.name
-                        }
+                        verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                        pendingNavigation = AppVerifierScreens.VerifyApp.name
                     }
                 } else if (extraStream != null) {
                     verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
@@ -360,38 +330,8 @@ fun AppVerifierApp(
                                         }
                                     }
                                 } else {
-                                    val extracted = verifyAppViewModel.extractHashes(trimmed)
-                                    if (extracted.isNotEmpty()) {
-                                        val hashMatches = verifyAppViewModel.findAppsByHash(extracted, context.packageManager)
-                                        when (hashMatches.size) {
-                                            0 -> {
-                                                if (extracted.size > 1) {
-                                                    verifyAppViewModel.setMultipleHashesWithoutPackageName(true)
-                                                } else {
-                                                    verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
-                                                }
-                                                navController.navigate(AppVerifierScreens.VerifyApp.name)
-                                            }
-                                            1 -> {
-                                                val match = hashMatches[0]
-                                                verifyAppViewModel.setAppVerificationInfo(
-                                                    match.name, match.packageName, match.hashes, match.internalDatabaseInfo
-                                                )
-                                                verifyAppViewModel.verifyFromText(extracted.joinToString("\n"))
-                                                navController.navigate(AppVerifierScreens.VerifyApp.name)
-                                            }
-                                            else -> {
-                                                currentHashMatchData = HashMatchData(
-                                                    candidates = hashMatches,
-                                                    hashText = extracted.joinToString("\n"),
-                                                )
-                                                navController.navigate(AppVerifierScreens.HashPicker.name)
-                                            }
-                                        }
-                                    } else {
-                                        verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
-                                        navController.navigate(AppVerifierScreens.VerifyApp.name)
-                                    }
+                                    verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                    navController.navigate(AppVerifierScreens.VerifyApp.name)
                                 }
                             }
                         } else {
@@ -481,7 +421,6 @@ fun AppVerifierApp(
                             ListItem(
                                 modifier = Modifier.clickable {
                                     val hashText = data.hashText
-                                    currentHashMatchData = null
                                     if (verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(
                                             match.packageName, context.packageManager
                                         )
@@ -490,6 +429,7 @@ fun AppVerifierApp(
                                         navController.navigate(AppVerifierScreens.VerifyApp.name) {
                                             popUpTo(AppVerifierScreens.HashPicker.name) { inclusive = true }
                                         }
+                                        currentHashMatchData = null
                                     }
                                 },
                                 headlineContent = { Text(match.name) },
@@ -548,6 +488,7 @@ fun AppVerifierApp(
                     verifyAppUiState.value.expectedHashes,
                     { verifyAppViewModel.verifyFromText(it) },
                     { navController.navigateUp() },
+                    onDone = { navController.navigate(AppVerifierScreens.Start.name) { popUpTo(AppVerifierScreens.Start.name) { inclusive = true } } },
                     verifyAppUiState.value.internalDatabaseInfo,
                     verifyAppUiState.value.apkFailedToParse,
                     preferencesUiState.value.showHasMultipleSigners,
