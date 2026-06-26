@@ -55,7 +55,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -158,10 +158,10 @@ fun VerifyAppScreen(
                                 "\nPlease note system apps are not included in the search."
                     )
                     Text(
-                        "Also please make sure the provided text is in the correct format, like the " +
-                                "following:\n\ncom.example" +
+                        "Also please make sure the provided text is in the correct format, like one " +
+                                "of the following:\n\ncom.example" +
                                 ".app\n96:C0:2C:55:75:5C:17:1C:68:13:70:29:3B:37:11:2B:4A:5D:F7:B9:82:C2:C5:58:05:4C:45:51:AD:F5:50:DC" +
-                                "\n\nThere may be multiple hashes, which is normal."
+                                "\n\nOr just a SHA-256 hash on its own."
                     )
                     Spacer(Modifier.height(12.dp))
                     TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
