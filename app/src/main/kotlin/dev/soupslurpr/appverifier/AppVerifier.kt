@@ -488,7 +488,6 @@ fun AppVerifierApp(
                     verifyAppUiState.value.expectedHashes,
                     { verifyAppViewModel.verifyFromText(it) },
                     { navController.navigateUp() },
-                    onDone = { navController.navigate(AppVerifierScreens.Start.name) { popUpTo(AppVerifierScreens.Start.name) { inclusive = true } } },
                     verifyAppUiState.value.internalDatabaseInfo,
                     verifyAppUiState.value.apkFailedToParse,
                     preferencesUiState.value.showHasMultipleSigners,
@@ -515,6 +514,7 @@ fun AppVerifierApp(
                         }
                     },
                     sharedTextHashMatch = sharedTextHashMatchForVerify,
+                    onDone = { navController.navigate(AppVerifierScreens.Start.name) { popUpTo(AppVerifierScreens.Start.name) { inclusive = true } } },
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.Settings) {
