@@ -166,11 +166,18 @@ class VerifyAppViewModel(
 
         if (normalizedLines.isEmpty()) return emptyList()
 
-        val userInstalledPackages = packageManager.getInstalledPackages(PackageManager.GET_SIGNING_CERTIFICATES)
+        val userInstalledPackages = packageManager.getInstalledPackages(0)
             .filter { (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) == 0 }
 
         return userInstalledPackages.mapNotNull { packageInfo ->
-            val hashes = getHashesFromPackageInfo(packageInfo)
+            val hashes = if (packageInfo.signingInfo != null) {
+                getHashesFromPackageInfo(packageInfo)
+            } else {
+                val fullInfo = runCatching {
+                    packageManager.getPackageInfo(packageInfo.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                }.getOrNull() ?: return@mapNotNull null
+                getHashesFromPackageInfo(fullInfo)
+            }
             if (normalizedLines.all { it in hashes.hashes }) {
                 val applicationInfo = packageInfo.applicationInfo ?: return@mapNotNull null
                 AppHashMatch(
