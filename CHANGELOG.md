@@ -3,7 +3,7 @@
 Dates are based on UTC (releases typically around 2am UTC).
 ## 2026-06-27
 
-- Hash-only verification: paste or share a SHA-256 hash to find matching installed apps. (#53)
+- Hash-only verification: paste or share a SHA-256 hash to find matching installed apps. ([#53](https://github.com/RoundSalmon4/AppVerifierBG/issues/53))
 - HashPicker screen: pick the right app when multiple share the same signing hash.
 - Text shares in newIntentFlow now handle hash-only verification.
 - Error cards now have a Done button to return to the main screen.
