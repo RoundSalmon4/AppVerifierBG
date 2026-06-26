@@ -433,7 +433,6 @@ fun AppVerifierApp(
                                         navController.navigate(AppVerifierScreens.VerifyApp.name) {
                                             popUpTo(AppVerifierScreens.HashPicker.name) { inclusive = true }
                                         }
-                                        currentHashMatchData = null
                                     }
                                 },
                                 headlineContent = { Text(match.name) },
