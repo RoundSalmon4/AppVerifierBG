@@ -150,8 +150,55 @@ fun AppVerifierApp(
     LaunchedEffect(Unit) {
         newIntentFlow.collect { newIntent ->
             if (newIntent.action == Intent.ACTION_SEND) {
+                val extraText = newIntent.getStringExtra(Intent.EXTRA_TEXT)
                 val extraStream = newIntent.getParcelableExtra<Uri?>(Intent.EXTRA_STREAM)
-                if (extraStream != null) {
+
+                val sharedText = when {
+                    extraText != null -> extraText
+                    extraStream != null && newIntent.type?.startsWith("text/") == true -> {
+                        context.contentResolver.openInputStream(extraStream)?.bufferedReader()?.use { it.readText() }
+                    }
+                    else -> null
+                }
+
+                if (sharedText != null) {
+                    val trimmed = sharedText.trim()
+                    val verificationInfoText = verifyAppViewModel.getVerificationInfoText(trimmed)
+                    val lines = verificationInfoText.lines().filter { it.isNotBlank() }
+                    val firstLine = lines.firstOrNull()
+
+                    if (firstLine != null && verifyAppViewModel.findAndSetAppVerificationInfoFromPackageName(firstLine, context.packageManager)) {
+                        verifyAppViewModel.verifyFromText(verificationInfoText)
+                        pendingNavigation = AppVerifierScreens.VerifyApp.name
+                    } else if (lines.isNotEmpty() && lines.all { verifyAppViewModel.isValidSha256Hash(it.trim()) }) {
+                        val matches = verifyAppViewModel.findAppsByHash(lines, context.packageManager)
+                        when (matches.size) {
+                            0 -> {
+                                if (lines.size > 1) {
+                                    verifyAppViewModel.setMultipleHashesWithoutPackageName(true)
+                                } else {
+                                    verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                }
+                                pendingNavigation = AppVerifierScreens.VerifyApp.name
+                            }
+                            1 -> {
+                                val match = matches[0]
+                                verifyAppViewModel.setAppVerificationInfo(
+                                    match.name, match.packageName, match.hashes, match.internalDatabaseInfo
+                                )
+                                verifyAppViewModel.verifyFromText(verificationInfoText)
+                                pendingNavigation = AppVerifierScreens.VerifyApp.name
+                            }
+                            else -> {
+                                verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                                pendingNavigation = AppVerifierScreens.VerifyApp.name
+                            }
+                        }
+                    } else {
+                        verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
+                        pendingNavigation = AppVerifierScreens.VerifyApp.name
+                    }
+                } else if (extraStream != null) {
                     verifyAppViewModel.setApkVerificationInfoAndInternalDatabaseStatusFromUri(
                         context.contentResolver,
                         extraStream,

@@ -11,7 +11,7 @@ class HashVerifier {
     fun getVerificationInfoText(text: String): String {
         val trimmedText = text.trim().trim('"').lines().joinToString("") { it.trim().plus('\n') }
 
-        return if (trimmedText.contains('"') || trimmedText.contains(' ')) {
+        val tokens = if (trimmedText.contains('"') || trimmedText.contains(' ')) {
             trimmedText
                 .lines()
                 .filter { it.isNotBlank() }
@@ -22,6 +22,27 @@ class HashVerifier {
                         .map { it.trim() }
                         .filter { it.isNotBlank() }
                 }
+        } else {
+            listOf(trimmedText.trim())
+        }
+
+        val hashTokens = tokens.filter { isValidSha256Hash(it) }
+        if (hashTokens.isNotEmpty()) {
+            return hashTokens.joinToString("\n").uppercase().trim() + "\n"
+        }
+
+        val hexHashPattern = Regex("[0-9A-Fa-f]{64}")
+        val colonHashPattern = Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}")
+        val hexMatches = hexHashPattern.findAll(trimmedText).toList()
+        val colonMatches = colonHashPattern.findAll(trimmedText).toList()
+        if (hexMatches.isNotEmpty() || colonMatches.isNotEmpty()) {
+            return (hexMatches.map { convertHexHashToColonFormat(it.value) } +
+                    colonMatches.map { it.value.uppercase() })
+                .joinToString("\n") + "\n"
+        }
+
+        return if (trimmedText.contains('"') || trimmedText.contains(' ')) {
+            tokens
                 .filterNot { Regex("^[A-Za-z][A-Za-z0-9-]*:$").matches(it) }
                 .joinToString("\n")
                 .trim() + "\n"
