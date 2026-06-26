@@ -19,6 +19,7 @@ on:
         options:
           - feature/all-enhancements
           - dev/test
+          - test/hash-only-verification
 
 permissions:
   contents: write
