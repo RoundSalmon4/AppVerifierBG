@@ -190,8 +190,11 @@ fun AppVerifierApp(
                                 pendingNavigation = AppVerifierScreens.VerifyApp.name
                             }
                             else -> {
-                                verifyAppViewModel.setAppNotFoundOrInvalidFormat(true)
-                                pendingNavigation = AppVerifierScreens.VerifyApp.name
+                                currentHashMatchData = HashMatchData(
+                                    candidates = matches,
+                                    hashText = verificationInfoText,
+                                )
+                                pendingNavigation = AppVerifierScreens.HashPicker.name
                             }
                         }
                     } else {
@@ -244,10 +247,11 @@ fun AppVerifierApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = remember(filteredEntries, currentHashMatchData, isActionSend, isActionView) {
+            val initialHashMatchData = remember { currentHashMatchData }
+            startDestination = remember(filteredEntries, initialHashMatchData, isActionSend, isActionView) {
                 when {
                     filteredEntries != null -> AppVerifierScreens.AppList.name
-                    currentHashMatchData != null -> AppVerifierScreens.HashPicker.name
+                    initialHashMatchData != null -> AppVerifierScreens.HashPicker.name
                     isActionSend || isActionView -> AppVerifierScreens.VerifyApp.name
                     else -> AppVerifierScreens.Start.name
                 }
