@@ -35,7 +35,7 @@ class HashVerifier {
         val colonHashPattern = Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){31}")
         val hexMatches = hexHashPattern.findAll(text).map { convertHexHashToColonFormat(it.value) }
         val colonMatches = colonHashPattern.findAll(text).map { it.value.uppercase() }
-        return (hexMatches + colonMatches).distinct()
+        return (hexMatches + colonMatches).distinct().toList()
     }
 
     fun parseTextToVerificationStatus(
