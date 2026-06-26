@@ -245,9 +245,9 @@ fun AppVerifierApp(
             )
         },
     ) { innerPadding ->
+        val initialHashMatchData = remember { currentHashMatchData }
         NavHost(
             navController = navController,
-            val initialHashMatchData = remember { currentHashMatchData }
             startDestination = remember(filteredEntries, initialHashMatchData, isActionSend, isActionView) {
                 when {
                     filteredEntries != null -> AppVerifierScreens.AppList.name
