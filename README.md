@@ -32,6 +32,10 @@ Share verification info for several apps at once. Multiple entries separated by 
 
 Verify from clipboard with a single button on the startup screen. Successful clipboard verifications add a blue checkmark in the app list. The checkmark can be toggled on or off in settings and cleared separately. Individual checkmarks can be removed by long-pressing the app in the list.
 
+## Hash-Only Verification
+
+Paste or share a SHA-256 hash on its own and AppVerifier BG will find every installed app signed with that certificate. Handy when someone shares just a hash without a package name — no need to hunt down which app it belongs to. If multiple installed apps share the same signing key (common when a developer uses one certificate for all their apps), a picker lets you choose which one to verify. Works the same way from the clipboard, shared text, or an intent from another app.
+
 ## User Database
 
 Save an app's verification info so you can check it later without needing the shared text. Add entries one at a time from the verification screen or bulk-add from a shared text filtered list. Supports import and export in JSON, text, and YAML formats (auto-detected on import, choose on export). Import lets you combine with existing entries or replace them, and shows a summary of what changed. Entries can be removed individually by long-pressing the app in the list, or removed in batch from selection mode.
