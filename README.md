@@ -34,7 +34,7 @@ Verify from clipboard with a single button on the startup screen. Successful cli
 
 ## Hash-Only Verification
 
-Paste or share a SHA-256 hash on its own and AppVerifier BG will find every installed app signed with that certificate. Handy when someone shares just a hash without a package name — no need to hunt down which app it belongs to. If multiple installed apps share the same signing key (common when a developer uses one certificate for all their apps), a picker lets you choose which one to verify. Works the same way from the clipboard, shared text, or an intent from another app.
+Paste or share a SHA-256 hash on its own and AppVerifier BG will find every installed app signed with that certificate. Handy when someone shares just a hash without a package name. If multiple installed apps share the same signing key — common when a developer uses one certificate for all their apps — a picker lets you choose the right one. Only verify the app you actually got the hash for; a matching certificate doesn't mean every app from that developer is safe to trust. Works from the clipboard, shared text, or an intent from another app.
 
 ## User Database
 
