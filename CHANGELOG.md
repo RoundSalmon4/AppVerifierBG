@@ -1,6 +1,14 @@
 # Changelog
 
 Dates are based on UTC (releases typically around 2am UTC).
+## 2026-06-30
+
+- No browser fallback when tapping "View source code" in Settings. (v0.6.1)
+
+## 2026-06-30
+
+- Fixed crash when tapping "View source code" in Settings on a device with no browser installed.
+
 ## 2026-06-27
 
 - Hash-only verification: paste or share a SHA-256 hash to find matching installed apps. ([#53](https://github.com/RoundSalmon4/AppVerifierBG/issues/53))
