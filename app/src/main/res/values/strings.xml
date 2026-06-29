@@ -78,4 +78,5 @@
     <string name="startup_settings_description">Configure app preferences and manage databases</string>
     <string name="remove_from_user_database">Remove from user database</string>
     <string name="remove_clipboard_verification">Remove clipboard verification</string>
+    <string name="no_browser_available">No browser available to open link</string>
 </resources>

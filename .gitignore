@@ -17,3 +17,4 @@
 .cxx
 local.properties
 __pycache__/
+*.git-credentials*

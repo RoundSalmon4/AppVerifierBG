@@ -1,9 +1,11 @@
 package dev.soupslurpr.appverifier.ui
 
 import android.app.ActivityOptions
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -383,7 +385,11 @@ fun SettingsScreen(
                 description = stringResource(id = R.string.view_source_code_setting_description),
                 hasIcon = true,
                 onClickIconSetting = {
-                    localUriHandler.openUri("https://github.com/RoundSalmon4/AppVerifierBG")
+                    runCatching {
+                        localUriHandler.openUri("https://github.com/RoundSalmon4/AppVerifierBG")
+                    }.onFailure { _ ->
+                        Toast.makeText(context, R.string.no_browser_available, Toast.LENGTH_SHORT).show()
+                    }
                 },
                 icon = {
                     Icon(
