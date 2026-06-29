@@ -1,7 +1,6 @@
 package dev.soupslurpr.appverifier.ui
 
 import android.app.ActivityOptions
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
