@@ -1,12 +1,10 @@
 # Changelog
 
 Dates are based on UTC (releases typically around 2am UTC).
-## 2026-06-30
-
-- No browser fallback when tapping "View source code" in Settings. (v0.6.1)
 
 ## 2026-06-30
 
+- No browser fallback when tapping "View source code" in Settings.
 - Fixed crash when tapping "View source code" in Settings on a device with no browser installed.
 
 ## 2026-06-27
