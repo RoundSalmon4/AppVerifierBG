@@ -260,7 +260,7 @@ jobs:
 
           ---
 
-          This build is signed with the release key. Compare the SHA-256 fingerprint against the output of \`keytool -printcert -jarfile AppVerifierBG-${{ steps.version.outputs.version }}.apk\` to confirm the APK hasn't been tampered with.
+          This build is signed with the release key. Compare the SHA-256 fingerprint against the output of \`apksigner verify --print-certs AppVerifierBG-${{ steps.version.outputs.version }}.apk\` to confirm the APK hasn't been tampered with.
 
           This build includes data from the [Privacy Guides Verified Apps](https://github.com/privacyguides/verified-apps) database (CC BY 4.0). See each entry's issue link in the data file for details on how it was verified.
 
