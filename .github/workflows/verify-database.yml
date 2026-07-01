@@ -164,6 +164,30 @@ jobs:
             for lbl in database spot-check; do
               gh label create "$lbl" 2>/dev/null || true
             done
+            existing=$(gh issue list --label "spot-check" --state all --json number --jq '.[].number' 2>/dev/null || true)
+            if [ -n "$existing" ]; then
+              already_keys=$(echo "$existing" | while read -r num; do gh issue view "$num" --json body --jq '.body' 2>/dev/null; done | grep '^- ' | sed 's/^- *\*\*//;s/^- *//;s/[ *].*//' | sort -u)
+              new_body=""
+              new_count=0
+              while IFS= read -r line; do
+                case "$line" in
+                  -*)
+                    key=$(echo "$line" | sed 's/^- *\*\*//;s/^- *//;s/[ *].*//')
+                    if echo "$already_keys" | grep -q -F "$key" 2>/dev/null; then
+                      continue
+                    fi
+                    new_count=$((new_count + 1))
+                    ;;
+                esac
+                new_body="${new_body}${line}"$'\n'
+              done <<< "$body"
+              if [ "$new_count" -eq 0 ]; then
+                echo "All packages already reported, skipping."
+                exit 0
+              fi
+              echo "$new_count new packages not yet reported"
+              body="$new_body"
+            fi
             gh issue create \
               --title "$title" \
               --label "database,spot-check" \
