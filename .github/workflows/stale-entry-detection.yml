@@ -93,26 +93,26 @@ jobs:
           done
           existing=$(gh issue list --label "stale-entries" --state all --json number --jq '.[].number' 2>/dev/null || true)
           if [ -n "$existing" ]; then
-            already_keys=$(echo "$existing" | while read -r num; do gh issue view "$num" --json body --jq '.body' 2>/dev/null; done | grep '^- ' | sed 's/^- //')
+            already_keys=$(echo "$existing" | while read -r num; do gh issue view "$num" --json body --jq '.body' 2>/dev/null; done | grep '^- ' | sed 's/^- *\*\*//;s/^- *//;s/[ *].*//' | sort -u)
             new_body=""
             new_count=0
             while IFS= read -r line; do
               case "$line" in
                 -*)
-                  key=$(echo "$line" | sed 's/^- //')
-                  if echo "$already_keys" | grep -q -F "$key" 2>/dev/null; then
-                    continue
-                  fi
-                  new_count=$((new_count + 1))
-                  ;;
-              esac
-              new_body="${new_body}${line}"$'\n'
-            done <<< "$body"
+                    key=$(echo "$line" | sed 's/^- *\*\*//;s/^- *//;s/[ *].*//')
+                    if echo "$already_keys" | grep -q -F "$key" 2>/dev/null; then
+                      continue
+                    fi
+                    new_count=$((new_count + 1))
+                    ;;
+                esac
+                new_body="${new_body}${line}"$'\n'
+              done <<< "$body"
             if [ "$new_count" -eq 0 ]; then
-              echo "All packages already reported in #$existing, skipping."
+              echo "All packages already reported, skipping."
               exit 0
             fi
-            echo "$new_count new packages not in #$existing"
+            echo "$new_count new packages not yet reported"
             body="$new_body"
             stale="$new_count"
             title="Database spot-check: ${stale} possible stale entries"
