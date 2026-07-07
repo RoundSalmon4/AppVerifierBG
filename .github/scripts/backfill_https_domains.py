@@ -344,6 +344,7 @@ def main():
         # Skip if all packages for this domain are already verified
         if all(pkg in already_verified for pkg in pkg_list):
             skipped_domains += 1
+            print(f"  [{i}/{total_domains}] skip {domain}: {len(pkg_list)} pkg(s) already done", file=sys.stderr)
             time.sleep(REQUEST_DELAY)
             continue
 
