@@ -13,6 +13,7 @@ Operates directly on the Kotlin file, independent of generate_internal_db.py.
 
 import argparse
 import json
+import os
 import re
 import ssl
 import sys
@@ -295,9 +296,21 @@ def main():
         default=DEFAULT_KOTLIN,
         help=f"Path to InternalVerificationInfoDatabase.kt (default: {DEFAULT_KOTLIN})",
     )
+    parser.add_argument(
+        "--verified-json",
+        metavar="PATH",
+        default="app/verified_domains.json",
+        help="Path to verified_domains.json from previous run (default: app/verified_domains.json)",
+    )
     args = parser.parse_args()
 
     entries = load_data_yaml(args.data_yml)
+
+    # Load previously verified packages so we can skip re-checking them
+    already_verified = set()
+    if os.path.exists(args.verified_json):
+        with open(args.verified_json, "r", encoding="utf-8") as f:
+            already_verified = set(json.load(f))
 
     # Collect packages and derive domains (fingerprints not needed)
     pkgs = []
@@ -313,18 +326,26 @@ def main():
             domain_to_pkgs[d].append(pkg)
 
     total_domains = len(domain_to_pkgs)
-    print(f"Packages in data.yml:   {len(pkgs)}", file=sys.stderr)
-    print(f"Derived unique domains: {total_domains}", file=sys.stderr)
+    print(f"Packages in data.yml:       {len(pkgs)}", file=sys.stderr)
+    print(f"Derived unique domains:     {total_domains}", file=sys.stderr)
+    print(f"Previously verified pkgs:   {len(already_verified)}", file=sys.stderr)
 
     # Check assetlinks for each domain and collect package-name matches
     matches = []
     serving_domains = 0
+    skipped_domains = 0
 
     for i, (domain, pkg_list) in enumerate(
         sorted(domain_to_pkgs.items(), key=lambda x: x[0].lower()), 1
     ):
         if i % 20 == 0:
             print(f"  Progress: {i}/{total_domains}...", file=sys.stderr)
+
+        # Skip if all packages for this domain are already verified
+        if all(pkg in already_verified for pkg in pkg_list):
+            skipped_domains += 1
+            time.sleep(REQUEST_DELAY)
+            continue
 
         assetlinks_pkgs = check_assetlinks_packages(domain)
         if assetlinks_pkgs is None:
@@ -334,30 +355,28 @@ def main():
         serving_domains += 1
 
         for pkg in pkg_list:
-            if pkg in assetlinks_pkgs:
+            if pkg in assetlinks_pkgs and pkg not in already_verified:
                 matches.append(pkg)
 
         time.sleep(REQUEST_DELAY)
 
     deduplicated = list(dict.fromkeys(matches))
     total_matched = len(deduplicated)
-    print(f"\nDomains serving assetlinks:     {serving_domains}", file=sys.stderr)
+    print(f"\nDomains skipped (all done):     {skipped_domains}", file=sys.stderr)
+    print(f"Domains serving assetlinks:     {serving_domains}", file=sys.stderr)
     print(f"Matching apps found:           {total_matched}", file=sys.stderr)
 
     with open(args.kotlin, "r", encoding="utf-8") as f:
         kotlin_text = f.read()
 
-    already_had = 0
     modified = 0
     for pkg in sorted(deduplicated):
         new_text = add_https_source_to_all_hashes(kotlin_text, pkg)
-        if new_text is kotlin_text:
-            already_had += 1
-        else:
+        if new_text is not kotlin_text:
             kotlin_text = new_text
             modified += 1
 
-    print(f"  Already had VERIFIED_DOMAIN_HTTPS: {already_had}", file=sys.stderr)
+    print(f"  Already had VERIFIED_DOMAIN_HTTPS: {len(already_verified)}", file=sys.stderr)
     print(f"  New sources added:               {modified}", file=sys.stderr)
     print(f"\nModified {modified} entries", file=sys.stderr)
 
