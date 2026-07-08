@@ -105,6 +105,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Sync upstream database and backfill HTTPS Verified Domain sources"
+            git pull --rebase origin feature/all-enhancements
             git remote set-url origin https://RoundSalmon4:${{ secrets.PAT }}@github.com/RoundSalmon4/AppVerifierBG.git
             git push origin feature/all-enhancements
             git remote set-url origin https://github.com/RoundSalmon4/AppVerifierBG.git

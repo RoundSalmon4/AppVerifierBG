@@ -312,6 +312,23 @@ def main():
         with open(args.verified_json, "r", encoding="utf-8") as f:
             already_verified = set(json.load(f))
 
+    # Re-apply previously verified sources immediately.
+    # generate_internal_db.py wipes VERIFIED_DOMAIN_HTTPS for upstream packages
+    # on every run, so we restore them now.  This lets the domain-skip logic
+    # below safely skip domains without losing the source from the Kotlin file.
+    re_modified = 0
+    with open(args.kotlin, "r", encoding="utf-8") as f:
+        kotlin_text = f.read()
+    for pkg in sorted(already_verified):
+        new_text = add_https_source_to_all_hashes(kotlin_text, pkg)
+        if new_text is not kotlin_text:
+            kotlin_text = new_text
+            re_modified += 1
+    if re_modified:
+        with open(args.kotlin, "w", encoding="utf-8", newline="") as f:
+            f.write(kotlin_text)
+    print(f"Re-applied previously verified: {re_modified}", file=sys.stderr)
+
     # Collect packages and derive domains (fingerprints not needed)
     pkgs = []
     for app in entries:
@@ -377,7 +394,6 @@ def main():
             kotlin_text = new_text
             modified += 1
 
-    print(f"  Already had VERIFIED_DOMAIN_HTTPS: {len(already_verified)}", file=sys.stderr)
     print(f"  New sources added:               {modified}", file=sys.stderr)
     print(f"\nModified {modified} entries", file=sys.stderr)
 
