@@ -169,6 +169,7 @@ def parse_entries(kotlin_text):
 
     entries = {}
     search_pos = 0
+    last_block_end = 0
     while search_pos < len(rest):
         while search_pos < len(rest) and rest[search_pos] in " \t\r\n+":
             search_pos += 1
@@ -196,8 +197,9 @@ def parse_entries(kotlin_text):
                 entries[pkg] = entry_text
             idx = entry_end
         search_pos = block_end
+        last_block_end = block_end
 
-    footer = rest[search_pos:]
+    footer = rest[last_block_end:]
     return entries, header, footer
 
 
