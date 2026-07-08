@@ -158,26 +158,31 @@ def extract_balanced(text, start):
 
 
 def parse_entries(kotlin_text):
-    marker = "val internalVerificationInfoDatabase ="
-    header_end = kotlin_text.find(marker)
-    if header_end == -1:
+    marker = "val internalVerificationInfoDatabase"
+    marker_pos = kotlin_text.find(marker)
+    if marker_pos == -1:
         return {}, kotlin_text, ""
-    header_end += len(marker)
 
-    header = kotlin_text[:header_end]
-    rest = kotlin_text[header_end:]
+    pf_marker = "\nprivate fun __db_c"
+    pf_pos = kotlin_text.find(pf_marker)
+    true_prefix_end = pf_pos if pf_pos != -1 and pf_pos < marker_pos else marker_pos
+    prefix = kotlin_text[:true_prefix_end]
+
+    map_marker = "val internalVerificationInfoDatabaseMap"
+    map_pos = kotlin_text.find(map_marker)
+    footer = kotlin_text[map_pos:] if map_pos != -1 else ""
 
     entries = {}
     search_pos = 0
-    last_block_end = 0
-    while search_pos < len(rest):
-        while search_pos < len(rest) and rest[search_pos] in " \t\r\n+":
-            search_pos += 1
-        if not rest.startswith("setOf(", search_pos):
+    while True:
+        pos = kotlin_text.find(
+            "setOf(\n    InternalDatabaseVerificationInfo(", search_pos
+        )
+        if pos == -1:
             break
-        content_start = search_pos + len("setOf(")
-        block_end = extract_balanced(rest, content_start)
-        body = rest[content_start:block_end]
+        content_start = pos + 6
+        block_end = extract_balanced(kotlin_text, content_start)
+        body = kotlin_text[content_start:block_end]
 
         idx = 0
         entry_marker = "InternalDatabaseVerificationInfo("
@@ -197,10 +202,8 @@ def parse_entries(kotlin_text):
                 entries[pkg] = entry_text
             idx = entry_end
         search_pos = block_end
-        last_block_end = block_end
 
-    footer = rest[last_block_end:]
-    return entries, header, footer
+    return entries, prefix, footer
 
 
 def extract_package_name(text):
@@ -341,7 +344,7 @@ def insert_preserved_hashes(new_entry_text, preserved_blocks):
 _CHUNK_SIZE = 200
 
 
-def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map=None):
+def generate_kotlin(existing_entries, privacyguides_data, prefix, footer, extra_map=None):
     updated = {}
 
     pg_packages = set()
@@ -385,15 +388,24 @@ def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_
         for i in range(0, len(sorted_entries), _CHUNK_SIZE)
     ]
 
-    lines = [header]
+    lines = [prefix.rstrip()]
+    lines.append("")
     for ci, chunk in enumerate(chunks):
-        if ci > 0:
-            lines[-1] = "    ) + setOf("
-        else:
-            lines.append("    setOf(")
+        lines.append(
+            f"private fun __db_c{ci}(): Set<InternalDatabaseVerificationInfo> ="
+        )
+        lines.append("    setOf(")
         for _, entry in chunk:
             lines.append(entry.rstrip() + ",")
         lines.append("    )")
+        lines.append("")
+
+    chunk_refs = " + ".join(f"__db_c{i}()" for i in range(len(chunks)))
+    lines.append(
+        "val internalVerificationInfoDatabase =\n"
+        f"    {chunk_refs}"
+    )
+    lines.append("")
     lines.append(footer)
     return "\n".join(lines)
 
@@ -440,17 +452,17 @@ def main():
         encoding = "utf-8"
     kotlin_text = raw.decode(encoding).lstrip("\ufeff")
 
-    existing_entries, header, footer = parse_entries(kotlin_text)
+    existing_entries, prefix, footer = parse_entries(kotlin_text)
 
     unknown = find_unknown_sources(privacyguides_data)
     if unknown:
-        header, extra_map = insert_source_enum_values(header, unknown)
+        prefix, extra_map = insert_source_enum_values(prefix, unknown)
         if extra_map:
             SOURCE_MAP.update(extra_map)
     else:
         extra_map = None
 
-    existing_enum_vals = set(re.findall(r'^\s+(\w+)\(', header, re.MULTILINE))
+    existing_enum_vals = set(re.findall(r'^\s+(\w+)\(', prefix, re.MULTILINE))
     missing_enum_vals = [
         (name, enum_val) for name, enum_val in SOURCE_MAP.items()
         if enum_val not in existing_enum_vals
@@ -461,14 +473,14 @@ def main():
                 body += f"    {enum_val}(\"{kotlin_string_escape(name)}\"),\n"
         enum_match = re.search(
             r"^(enum class Source\(.*?\)\s*\{)(.*?)(\})",
-            header, re.MULTILINE | re.DOTALL,
+            prefix, re.MULTILINE | re.DOTALL,
         )
         if enum_match:
             existing_body = enum_match.group(2).rstrip().rstrip(",")
             new_body = existing_body + ",\n" + body
-            header = header[:enum_match.start(2)] + new_body + header[enum_match.end(2):]
+            prefix = prefix[:enum_match.start(2)] + new_body + prefix[enum_match.end(2):]
 
-    new_kotlin = generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map)
+    new_kotlin = generate_kotlin(existing_entries, privacyguides_data, prefix, footer, extra_map)
 
     with open(KOTLIN_SOURCE_FILE, "w", encoding="utf-8", newline="") as f:
         f.write(new_kotlin)
