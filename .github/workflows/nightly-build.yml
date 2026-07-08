@@ -172,6 +172,30 @@ jobs:
         run: |
           mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apk"
 
+      - name: Build app bundle
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+          ./gradlew bundleRelease -PversionSuffix=-nightly-${{ steps.date.outputs.date }}
+
+      - name: Download bundletool
+        run: |
+          BUNDLETOOL_VERSION="1.18.3"
+          curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" \
+            "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-$BUNDLETOOL_VERSION.jar"
+
+      - name: Generate APK set from bundle
+        run: |
+          AAB="app/build/outputs/bundle/release/app-release.aab"
+          APKSET_DIR="app/build/outputs/apkset/release"
+          mkdir -p "$APKSET_DIR"
+          java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
+            --bundle="$AAB" \
+            --output="$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apks" \
+            --ks="$RELEASE_KEYSTORE_PATH" \
+            --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
+            --ks-key-alias="$RELEASE_KEY_ALIAS" \
+            --key-pass="pass:$RELEASE_KEY_PASSWORD"
+
       - name: Rename community hashes file
         if: hashFiles('grapheneos-forum-hashes.txt') != ''
         run: mv grapheneos-forum-hashes.txt grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
@@ -256,5 +280,6 @@ jobs:
           body_path: ${{ steps.body.outputs.path }}
           files: |
             app/build/outputs/apk/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apk
+            app/build/outputs/apkset/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apks
             grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
           make_latest: false

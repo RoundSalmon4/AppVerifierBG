@@ -50,16 +50,14 @@ android {
                 storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: error("RELEASE_KEYSTORE_PASSWORD not set")
                 keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: error("RELEASE_KEY_ALIAS not set")
                 keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: error("RELEASE_KEY_PASSWORD not set")
-            } else {
-                val keystoreFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
-                if (keystoreFile.exists()) {
-                    storeFile = keystoreFile
-                    storePassword = "android"
-                    keyAlias = "androiddebugkey"
-                    keyPassword = "android"
-                }
-                enableV3Signing = true
             }
+            enableV3Signing = true
+        }
+        create("debugLocal") {
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
     buildTypes {
@@ -75,13 +73,13 @@ android {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            signingConfig = signingConfigs.getByName("fromKeystore")
+            signingConfig = signingConfigs.getByName("debugLocal")
         }
         create("staging") {
             initWith(getByName("release"))
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            signingConfig = signingConfigs.getByName("fromKeystore")
+            signingConfig = signingConfigs.getByName("debugLocal")
         }
     }
     dependenciesInfo {

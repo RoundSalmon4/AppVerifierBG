@@ -1,35 +1,19 @@
-name: Build APK (debug / signed)
+name: Build Accrescent APK Set
+
 on:
   workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Build mode'
-        required: true
-        default: debug
-        type: choice
-        options:
-          - debug
-          - signed
-      branch:
-        description: 'Branch to build'
-        required: true
-        default: feature/all-enhancements
-        type: choice
-        options:
-          - feature/all-enhancements
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
   attestations: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: feature/all-enhancements
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
@@ -42,7 +26,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: '3.x'
 
@@ -50,7 +34,7 @@ jobs:
         run: pip install pyyaml
 
       - name: Pull latest
-        run: git pull --rebase origin ${{ github.event.inputs.branch }}
+        run: git pull --rebase origin feature/all-enhancements
 
       - name: Download and verify database
         env:
@@ -68,8 +52,6 @@ jobs:
             tag=$(gh release view -R privacyguides/verified-apps --json tagName -q .tagName)
             gh release verify-asset -R privacyguides/verified-apps "$tag" "$file"
           }
-          # Try main tip first (freshest data). Attestations will exist once
-          # upstream resumes signing submission commits.
           curl -fsSL -o "$RUNNER_TEMP/data.yml" \
             "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" \
             || { echo "Failed to download from main" >&2; exit 1; }
@@ -99,127 +81,68 @@ jobs:
           python .github/scripts/merge_https_domains.py
 
       - name: Set up JDK 17
-        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a
         with:
           java-version: 17
           distribution: temurin
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
         with:
           validate-wrappers: true
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
-      - name: Set up debug keystore
-        env:
-          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
-        run: |
-          mkdir -p "$HOME/.android"
-          printf '%s' "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android 2>&1
-
       - name: Set up release keystore
-        if: github.event.inputs.mode == 'signed'
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          printf '%s' "$RELEASE_KEYSTORE" | base64 -d > "$HOME/release.jks"
-          echo "RELEASE_KEYSTORE_PATH=$HOME/release.jks" >> "$GITHUB_ENV"
+          printf '%s' "$RELEASE_KEYSTORE" | base64 -d > release.keystore
+          echo "RELEASE_KEYSTORE_PATH=$PWD/release.keystore" >> "$GITHUB_ENV"
           echo "RELEASE_KEYSTORE_PASSWORD=$RELEASE_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
           echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
           echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
-          keytool -list -keystore "$HOME/release.jks" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -keypass "$RELEASE_KEY_PASSWORD" 2>&1
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
-
-      - name: Run lint
-        continue-on-error: true
-        run: ./gradlew lint
-
-      - name: Build debug APK
-        if: github.event.inputs.mode == 'debug'
-        run: ./gradlew assembleDebug
-
-      - name: Build signed release APK
-        if: github.event.inputs.mode == 'signed'
-        run: ./gradlew assembleRelease
+          keytool -list -keystore release.keystore \
+            -storepass "$RELEASE_KEYSTORE_PASSWORD" \
+            -alias "$RELEASE_KEY_ALIAS" \
+            -keypass "$RELEASE_KEY_PASSWORD" 2>&1
 
       - name: Build app bundle
-        if: github.event.inputs.mode == 'signed'
         run: |
           SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
-          ./gradlew bundleRelease
+          ./gradlew bundleRelease -PversionOverride=${{ steps.version.outputs.version }}
 
       - name: Download bundletool
-        if: github.event.inputs.mode == 'signed'
         run: |
           BUNDLETOOL_VERSION="1.18.3"
           curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" \
             "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-$BUNDLETOOL_VERSION.jar"
+          echo "BUNDLETOOL_JAR=$RUNNER_TEMP/bundletool.jar" >> "$GITHUB_ENV"
 
       - name: Generate APK set from bundle
-        if: github.event.inputs.mode == 'signed'
         run: |
           AAB="app/build/outputs/bundle/release/app-release.aab"
           APKSET_DIR="app/build/outputs/apkset/release"
           mkdir -p "$APKSET_DIR"
-          java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
+          APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.apks"
+          java -jar "$BUNDLETOOL_JAR" build-apks \
             --bundle="$AAB" \
-            --output="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks" \
+            --output="$APKSET" \
             --ks="$RELEASE_KEYSTORE_PATH" \
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
             --key-pass="pass:$RELEASE_KEY_PASSWORD"
+          echo "apkset=$APKSET" >> "$GITHUB_ENV"
 
-      - name: Prepare debug APK
-        if: github.event.inputs.mode == 'debug'
-        run: |
-          APK_FILE=$(find app/build/outputs/apk/debug -name '*.apk' -print -quit 2>/dev/null || true)
-          if [ -z "$APK_FILE" ]; then
-            echo "No APK found in app/build/outputs/apk/debug/"
-            ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "Directory does not exist"
-            exit 1
-          fi
-          echo "Found APK: $APK_FILE"
-          cp "$APK_FILE" /tmp/app.apk
-        shell: bash
-
-      - name: Prepare signed release APK
-        if: github.event.inputs.mode == 'signed'
-        run: |
-          mv app/build/outputs/apk/release/*.apk /tmp/app.apk
-          cp app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks /tmp/
-
-      - name: Sanitize branch name for artifact
-        id: sanitize
-        run: |
-          BRANCH="${{ github.event.inputs.branch }}"
-          SANITIZED="${BRANCH//\//-}"
-          echo "name=$SANITIZED" >> "$GITHUB_OUTPUT"
-        shell: bash
-
-      - name: Set artifact name
-        id: artifact
-        run: |
-          if [ "${{ github.event.inputs.mode }}" = "signed" ]; then
-            echo "name=AppVerifierBG-${{ steps.version.outputs.version }}-signed-${{ steps.sanitize.outputs.name }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=app-debug-${{ steps.sanitize.outputs.name }}" >> "$GITHUB_OUTPUT"
-          fi
-        shell: bash
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Upload APK set artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ${{ steps.artifact.outputs.name }}
-          path: |
-            /tmp/app.apk
-            /tmp/*.apks
+          name: AppVerifierBG-${{ steps.version.outputs.version }}-accrescent
+          path: ${{ env.apkset }}
