@@ -63,7 +63,8 @@ data class InternalDatabaseVerificationInfo(
 /**
  * The internal verification info database.
  */
-val internalVerificationInfoDatabase =
+
+private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
     setOf(
     InternalDatabaseVerificationInfo(
         "air.com.parkerstech.day",
@@ -3403,7 +3404,10 @@ val internalVerificationInfoDatabase =
             )
         )
     ),
-    ) + setOf(
+    )
+
+private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.demizo.daily_you",
         listOf(
@@ -7036,7 +7040,10 @@ val internalVerificationInfoDatabase =
             )
         )
     ),
-    ) + setOf(
+    )
+
+private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.lonelycatgames.Xplore",
         listOf(
@@ -10245,7 +10252,10 @@ val internalVerificationInfoDatabase =
             )
         )
     ),
-    ) + setOf(
+    )
+
+private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.termux.api",
         listOf(
@@ -13676,7 +13686,10 @@ val internalVerificationInfoDatabase =
             )
         )
     ),
-    ) + setOf(
+    )
+
+private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "fr.fan.wallet",
         listOf(
@@ -17610,7 +17623,10 @@ val internalVerificationInfoDatabase =
             )
         )
     ),
-    ) + setOf(
+    )
+
+private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "org.woheller69.whobird",
         listOf(
@@ -18623,44 +18639,8 @@ val internalVerificationInfoDatabase =
     ),
     )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+val internalVerificationInfoDatabase =
+    __db_c0() + __db_c1() + __db_c2() + __db_c3() + __db_c4() + __db_c5()
 
 val internalVerificationInfoDatabaseMap: Map<String, InternalDatabaseVerificationInfo> by lazy {
     internalVerificationInfoDatabase.associateBy { it.packageName }
