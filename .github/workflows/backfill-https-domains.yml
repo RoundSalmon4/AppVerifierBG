@@ -1,7 +1,7 @@
 name: Backfill HTTPS Verified Domains
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 5 * * *"
   workflow_dispatch:
 
 permissions:
