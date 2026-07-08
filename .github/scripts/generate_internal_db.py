@@ -388,8 +388,9 @@ def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_
     lines = [header]
     for ci, chunk in enumerate(chunks):
         if ci > 0:
-            lines.append("    +")
-        lines.append("    setOf(")
+            lines[-1] = "    ) + setOf("
+        else:
+            lines.append("    setOf(")
         for _, entry in chunk:
             lines.append(entry.rstrip() + ",")
         lines.append("    )")
