@@ -158,38 +158,46 @@ def extract_balanced(text, start):
 
 
 def parse_entries(kotlin_text):
-    marker = "val internalVerificationInfoDatabase = setOf("
+    marker = "val internalVerificationInfoDatabase ="
     header_end = kotlin_text.find(marker)
     if header_end == -1:
         return {}, kotlin_text, ""
-
     header_end += len(marker)
-    setof_end = extract_balanced(kotlin_text, header_end)
 
     header = kotlin_text[:header_end]
-    body = kotlin_text[header_end:setof_end]
-    footer = kotlin_text[setof_end:]
+    rest = kotlin_text[header_end:]
 
     entries = {}
-    idx = 0
-    entry_marker = "InternalDatabaseVerificationInfo("
-    while idx < len(body):
-        entry_start = body.find(entry_marker, idx)
-        if entry_start == -1:
+    search_pos = 0
+    while search_pos < len(rest):
+        while search_pos < len(rest) and rest[search_pos] in " \t\r\n+":
+            search_pos += 1
+        if not rest.startswith("setOf(", search_pos):
             break
-        content_start = entry_start + len(entry_marker)
-        entry_end = extract_balanced(body, content_start)
-        if entry_end <= content_start:
-            break
-        line_start = body.rfind("\n", 0, entry_start)
-        line_start = 0 if line_start == -1 else line_start + 1
-        entry_text = body[line_start:entry_end]
-        idx = entry_end
+        content_start = search_pos + len("setOf(")
+        block_end = extract_balanced(rest, content_start)
+        body = rest[content_start:block_end]
 
-        pkg = extract_package_name(entry_text)
-        if pkg:
-            entries[pkg] = entry_text
+        idx = 0
+        entry_marker = "InternalDatabaseVerificationInfo("
+        while idx < len(body):
+            entry_start = body.find(entry_marker, idx)
+            if entry_start == -1:
+                break
+            cs2 = entry_start + len(entry_marker)
+            entry_end = extract_balanced(body, cs2)
+            if entry_end <= cs2:
+                break
+            line_start = body.rfind("\n", 0, entry_start)
+            line_start = 0 if line_start == -1 else line_start + 1
+            entry_text = body[line_start:entry_end]
+            pkg = extract_package_name(entry_text)
+            if pkg:
+                entries[pkg] = entry_text
+            idx = entry_end
+        search_pos = block_end
 
+    footer = rest[search_pos:]
     return entries, header, footer
 
 
@@ -326,6 +334,11 @@ def insert_preserved_hashes(new_entry_text, preserved_blocks):
     return new_entry_text[:pos] + ",\n" + preserved_text + new_entry_text[pos:]
 
 
+# Split into chunks of 200 entries to keep each <clinit> method
+# well under the JVM 64KB bytecode limit.
+_CHUNK_SIZE = 200
+
+
 def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_map=None):
     updated = {}
 
@@ -365,18 +378,21 @@ def generate_kotlin(existing_entries, privacyguides_data, header, footer, extra_
 
     sorted_entries = sorted(updated.items(), key=lambda x: x[0].lower())
 
-    body_lines = []
-    for i, (_, entry) in enumerate(sorted_entries):
-        text = entry.rstrip()
-        if i < len(sorted_entries) - 1:
-            text += ","
-        body_lines.append(text)
+    chunks = [
+        sorted_entries[i : i + _CHUNK_SIZE]
+        for i in range(0, len(sorted_entries), _CHUNK_SIZE)
+    ]
 
-    all_lines = [header]
-    all_lines.extend(body_lines)
-    all_lines.append(")")
-    all_lines.append(footer)
-    return "\n".join(all_lines)
+    lines = [header]
+    for ci, chunk in enumerate(chunks):
+        if ci > 0:
+            lines.append("    +")
+        lines.append("    setOf(")
+        for _, entry in chunk:
+            lines.append(entry.rstrip() + ",")
+        lines.append("    )")
+    lines.append(footer)
+    return "\n".join(lines)
 
 
 SUPPORTED_SCHEMA_VERSIONS = {2, 3, 4}
