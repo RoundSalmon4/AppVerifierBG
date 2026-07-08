@@ -63,7 +63,8 @@ data class InternalDatabaseVerificationInfo(
 /**
  * The internal verification info database.
  */
-val internalVerificationInfoDatabase = setOf(
+val internalVerificationInfoDatabase =
+    setOf(
     InternalDatabaseVerificationInfo(
         "air.com.parkerstech.day",
         listOf(
@@ -3402,6 +3403,7 @@ val internalVerificationInfoDatabase = setOf(
             )
         )
     ),
+    ) + setOf(
     InternalDatabaseVerificationInfo(
         "com.demizo.daily_you",
         listOf(
@@ -3971,7 +3973,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "57:3D:6C:04:CE:97:96:CE:41:19:6A:81:87:96:DF:1E:C0:46:F3:26:6B:35:46:91:E1:2D:E6:C8:32:0B:DB:9E"
@@ -5965,7 +5968,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "5B:C8:66:6B:B7:85:52:97:A0:1F:C1:EF:62:F1:E8:B3:54:7F:C5:5E:4F:B6:1E:85:8A:A5:00:86:AA:1B:35:6D"
@@ -6235,7 +6239,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "63:B7:7B:DC:EC:15:67:5F:E0:15:15:6D:82:0F:04:02:1A:BD:A7:1C:3E:67:EC:00:F2:56:29:20:6B:21:0F:72"
@@ -7007,7 +7012,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "82:BF:3A:1C:64:98:D9:3A:22:C4:FE:6A:B8:F2:72:D5:A8:49:50:93:A8:E0:4A:66:B0:B1:C9:2C:DC:D1:2E:BB"
@@ -7030,6 +7036,7 @@ val internalVerificationInfoDatabase = setOf(
             )
         )
     ),
+    ) + setOf(
     InternalDatabaseVerificationInfo(
         "com.lonelycatgames.Xplore",
         listOf(
@@ -7764,7 +7771,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "28:0B:F0:0D:98:7A:64:F2:35:EA:34:F9:F4:D3:BB:2F:95:D4:8F:B3:04:E5:EE:8A:2B:1D:1E:5F:3D:19:CF:D0",
@@ -7775,7 +7783,8 @@ val internalVerificationInfoDatabase = setOf(
             ),
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "28:0B:F0:0D:98:7A:64:F2:35:EA:34:F9:F4:D3:BB:2F:95:D4:8F:B3:04:E5:EE:8A:2B:1D:1E:5F:3D:19:CF:D0",
@@ -9981,7 +9990,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "46:9F:63:0D:7C:10:09:4F:53:AF:CF:CD:79:1C:0F:C4:E8:14:E7:4A:25:79:90:76:C4:45:25:02:0E:3D:33:0C"
@@ -10235,6 +10245,7 @@ val internalVerificationInfoDatabase = setOf(
             )
         )
     ),
+    ) + setOf(
     InternalDatabaseVerificationInfo(
         "com.termux.api",
         listOf(
@@ -10854,7 +10865,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "18:6B:F3:89:70:3E:CD:05:60:20:08:3D:97:DC:F0:89:06:1B:58:19:6E:D7:20:8F:D9:C4:AC:F9:60:BD:19:FB"
@@ -13664,6 +13676,7 @@ val internalVerificationInfoDatabase = setOf(
             )
         )
     ),
+    ) + setOf(
     InternalDatabaseVerificationInfo(
         "fr.fan.wallet",
         listOf(
@@ -13725,7 +13738,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "A0:6A:61:7E:8C:14:A1:EA:65:F6:4D:6E:79:30:39:9B:45:1A:00:1C:A8:87:C1:4C:A4:09:D1:87:8E:1B:2E:5B"
@@ -16535,7 +16549,8 @@ val internalVerificationInfoDatabase = setOf(
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "88:E4:71:74:32:47:56:E9:EF:2A:7A:80:4E:E1:B4:2C:0B:7E:79:54:FB:41:57:72:B1:3A:72:F7:6B:6F:4C:2D"
@@ -17595,6 +17610,7 @@ val internalVerificationInfoDatabase = setOf(
             )
         )
     ),
+    ) + setOf(
     InternalDatabaseVerificationInfo(
         "org.woheller69.whobird",
         listOf(
@@ -18604,8 +18620,9 @@ val internalVerificationInfoDatabase = setOf(
                 false
             )
         )
+    ),
     )
-)
+
 
 
 
