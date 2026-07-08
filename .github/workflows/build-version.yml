@@ -220,7 +220,7 @@ jobs:
         run: |
           BUNDLETOOL_VERSION="1.18.3"
           curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" \
-            "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-$BUNDLETOOL_VERSION.jar"
+            "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-all-$BUNDLETOOL_VERSION.jar"
 
       - name: Generate APK set from bundle
         if: github.event.inputs.mode != 'verify'
