@@ -12,7 +12,7 @@ val appVersionPatch: Int by extra
 
 android {
     namespace = "dev.soupslurpr.appverifier"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.roundsalmon4.appverifier"
