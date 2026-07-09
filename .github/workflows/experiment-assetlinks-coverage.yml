@@ -24,7 +24,7 @@ jobs:
         run: python experiment/check_assetlinks_coverage.py 2>&1 | tee coverage_output.txt
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: assetlinks-coverage-report
           path: |
