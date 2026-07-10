@@ -68,14 +68,6 @@ jobs:
 
           git checkout -B "${TARGET}"
 
-          git fetch codeberg || true
-          if git show-ref --verify --quiet "refs/remotes/codeberg/${TARGET}"; then
-            echo "Merging codeberg/${TARGET} into local ${TARGET} (allow unrelated histories)"
-            git merge "codeberg/${TARGET}" --allow-unrelated-histories || true
-          else
-            echo "No codeberg/${TARGET} branch found; skipping merge."
-          fi
-
-          echo "Pushing HEAD and tags to codeberg ${TARGET}"
-          git push codeberg "HEAD:${TARGET}"
-          git push codeberg --tags
+          echo "Force-pushing HEAD and tags to codeberg ${TARGET}"
+          git push codeberg "HEAD:${TARGET}" --force
+          git push codeberg --tags --force
