@@ -144,7 +144,9 @@ jobs:
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
             --key-pass="pass:$RELEASE_KEY_PASSWORD"
-          mv "$APKSET" "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip"
+          mkdir -p "$APKSET_DIR/apks"
+          unzip -j "$APKSET" '*.apk' -d "$APKSET_DIR/apks"
+          cd "$APKSET_DIR/apks" && zip -j "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip" *.apk
           echo "apkset=$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip" >> "$GITHUB_ENV"
 
       - name: Upload APK artifact
