@@ -106,6 +106,15 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin" &&
+            requested.name == "compose-group-mapping") {
+            useVersion(libs.versions.kotlin.get())
+        }
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
