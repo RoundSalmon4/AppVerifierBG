@@ -209,39 +209,39 @@ jobs:
         run: |
           mv app/build/outputs/apk/release/*.apk "app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk"
 
-      - name: Build app bundle
-        if: github.event.inputs.mode != 'verify'
-        run: |
-          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
-          ./gradlew bundleRelease -PversionOverride=${{ steps.version.outputs.version }}
+      # - name: Build app bundle
+      #   if: github.event.inputs.mode != 'verify'
+      #   run: |
+      #     SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+      #     ./gradlew bundleRelease -PversionOverride=${{ steps.version.outputs.version }}
 
-      - name: Download bundletool
-        if: github.event.inputs.mode != 'verify'
-        run: |
-          BUNDLETOOL_VERSION="1.18.3"
-          curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" \
-            "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-all-$BUNDLETOOL_VERSION.jar"
+      # - name: Download bundletool
+      #   if: github.event.inputs.mode != 'verify'
+      #   run: |
+      #     BUNDLETOOL_VERSION="1.18.3"
+      #     curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" \
+      #       "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-all-$BUNDLETOOL_VERSION.jar"
 
-      - name: Generate APK set from bundle
-        if: github.event.inputs.mode != 'verify'
-        run: |
-          AAB="app/build/outputs/bundle/release/app-release.aab"
-          APKSET_DIR="app/build/outputs/apkset/release"
-          mkdir -p "$APKSET_DIR"
-          APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.apks"
-          java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
-            --bundle="$AAB" \
-            --output="$APKSET" \
-            --ks="$RELEASE_KEYSTORE_PATH" \
-            --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
-            --ks-key-alias="$RELEASE_KEY_ALIAS" \
-            --key-pass="pass:$RELEASE_KEY_PASSWORD" \
-            --mode=universal
-          mkdir -p "$APKSET_DIR/apks"
-          unzip -j "$APKSET" '*.apk' -d "$APKSET_DIR/apks"
-          APK_FILE=$(find "$APKSET_DIR/apks" -name '*.apk' -print -quit)
-          mv "$APK_FILE" "$APKSET_DIR/apks/base.apk"
-          cd "$APKSET_DIR/apks" && zip -j "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip" base.apk
+      # - name: Generate APK set from bundle
+      #   if: github.event.inputs.mode != 'verify'
+      #   run: |
+      #     AAB="app/build/outputs/bundle/release/app-release.aab"
+      #     APKSET_DIR="app/build/outputs/apkset/release"
+      #     mkdir -p "$APKSET_DIR"
+      #     APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.apks"
+      #     java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
+      #       --bundle="$AAB" \
+      #       --output="$APKSET" \
+      #       --ks="$RELEASE_KEYSTORE_PATH" \
+      #       --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
+      #       --ks-key-alias="$RELEASE_KEY_ALIAS" \
+      #       --key-pass="pass:$RELEASE_KEY_PASSWORD" \
+      #       --mode=universal
+      #     mkdir -p "$APKSET_DIR/apks"
+      #     unzip -j "$APKSET" '*.apk' -d "$APKSET_DIR/apks"
+      #     APK_FILE=$(find "$APKSET_DIR/apks" -name '*.apk' -print -quit)
+      #     mv "$APK_FILE" "$APKSET_DIR/apks/base.apk"
+      #     cd "$APKSET_DIR/apks" && zip -j "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip" base.apk
 
       - name: Count privacyguides database entries
         id: pgcount
@@ -318,12 +318,12 @@ jobs:
           name: AppVerifierBG-${{ steps.version.outputs.version }}
           path: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
 
-      - name: Upload split APKs artifact
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: AppVerifierBG-${{ steps.version.outputs.version }}-split-apks
-          path: app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.zip
+      # - name: Upload split APKs artifact
+      #   if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
+      #   uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      #   with:
+      #     name: AppVerifierBG-${{ steps.version.outputs.version }}-split-apks
+      #     path: app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.zip
 
       - name: Create git tag
         if: github.event.inputs.mode == 'publish'
@@ -347,5 +347,4 @@ jobs:
           body_path: ${{ steps.body.outputs.path }}
           files: |
             app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
-            app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.zip
           make_latest: true

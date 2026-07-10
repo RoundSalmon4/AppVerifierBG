@@ -4,6 +4,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 ## 2026-07-11
 
+- Removed .apks file from release assets for the time being.
 - Fixed Verify APK File description to accurately reflect supported formats.
 
 ## 2026-06-30
