@@ -1,20 +1,21 @@
 # Roadmap
 
-## ✅ .apks split APK support
+## ✅ ZIP file APK verification
 
 The file picker and shared APK handling assume a single `.apk` file, but
-split APKs (`.apks`) are common for large apps (e.g., from APKMirror,
-Aurora Store backups). Should handle the container format, extract the base
-APK, and verify signatures.
+ZIP files containing a base APK are common for large apps (e.g., from
+APKMirror, Aurora Store backups). Should handle the ZIP format, extract
+the base APK, and verify signatures.
 
 Ref: [#227](https://github.com/soupslurpr/AppVerifier/issues/227)
 
 **Status: Completed.** The file picker and intent filters accept `application/zip`
-MIME to allow selecting `.apks` files. On selection, the container is opened as a
-ZIP, `base.apk` is extracted to a temporary file, and its signing certificates are
-verified using the same pipeline as regular APKs. Both container and extracted
-APK are deleted after processing. Non-`.apks` ZIPs fall through gracefully to the
+MIME to allow selecting ZIP files. On selection, the ZIP is opened,
+`base.apk` is extracted to a temporary file, and its signing certificates are
+verified using the same pipeline as regular APKs. Both ZIP and extracted
+APK are deleted after processing. Non-APK ZIPs fall through gracefully to the
 existing error handling.
+Updated July 10, 2026.
 
 ## ✅ Submit to F-Droid
 
