@@ -26,10 +26,10 @@ discarded.
 
 ## APK files
 
-If you provide an APK or .apks file to this app, it is temporarily stored
+If you provide an APK or ZIP file to this app, it is temporarily stored
 in this app's cache directory and deleted once the needed signature
-information has been processed. For .apks containers, the base APK is
-extracted and also deleted after processing.
+information has been processed. For ZIP files containing a base APK,
+the base APK is extracted and also deleted after processing.
 
 ## User database
 
@@ -72,4 +72,4 @@ at: https://github.com/RoundSalmon4/AppVerifierBG
 This privacy policy may be updated from time to time. When it does, you
 will be prompted to accept the new policy upon opening the app.
 
-*Last updated: June 8, 2026.*
+*Last updated: July 10, 2026.*

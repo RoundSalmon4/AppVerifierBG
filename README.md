@@ -17,7 +17,7 @@ Verify installed apps against shared signature hashes, the internal database, or
 
 ## Verification
 
-Pasted hashes are checked for valid SHA-256 format and show a clear error if something's wrong. When verification fails, hashes are labeled "Expected" (what you pasted) and "Found" (on-device fingerprint) so you can tell which is which. Apps signed with debug certificates are flagged as insecure. Verification results use chip-based status indicators. The expected vs. found hash comparison has a collapsible toggle. `.apks` split APK container files are also accepted — the base APK is extracted and verified the same way as a regular APK.
+Pasted hashes are checked for valid SHA-256 format and show a clear error if something's wrong. When verification fails, hashes are labeled "Expected" (what you pasted) and "Found" (on-device fingerprint) so you can tell which is which. Apps signed with debug certificates are flagged as insecure. Verification results use chip-based status indicators. The expected vs. found hash comparison has a collapsible toggle. ZIP files containing a base APK are also accepted — the base APK is extracted and verified the same way as a regular APK.
 
 ## App List
 

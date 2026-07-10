@@ -1,4 +1,4 @@
-AppVerifier BG verifies that installed Android apps match their expected signing certificate fingerprints. Compare an app's signing hash against shared text, an internal database synced from Privacy Guides, or your own user database. Hashes are checked for valid SHA-256 format — when verification fails, they're labeled "Expected" vs "Found" so you can tell which is which. Apps signed with debug certificates are flagged as insecure. .apks split APK containers are also accepted.
+AppVerifier BG verifies that installed Android apps match their expected signing certificate fingerprints. Compare an app's signing hash against shared text, an internal database synced from Privacy Guides, or your own user database. Hashes are checked for valid SHA-256 format — when verification fails, they're labeled "Expected" vs "Found" so you can tell which is which. Apps signed with debug certificates are flagged as insecure. ZIP files containing a base APK are also accepted.
 
 <b>App List</b>
 
