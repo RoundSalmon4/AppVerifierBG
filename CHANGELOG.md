@@ -2,6 +2,10 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-07-11
+
+- Fixed Verify APK File description to accurately reflect supported formats.
+
 ## 2026-06-30
 
 - No browser fallback when tapping "View source code" in Settings.
