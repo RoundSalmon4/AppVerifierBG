@@ -174,7 +174,7 @@ jobs:
           mkdir -p "$APKSET_DIR"
           java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
             --bundle="$AAB" \
-            --output="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks" \
+            --output="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.zip" \
             --ks="$RELEASE_KEYSTORE_PATH" \
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
@@ -197,7 +197,7 @@ jobs:
         if: github.event.inputs.mode == 'signed'
         run: |
           mv app/build/outputs/apk/release/*.apk /tmp/app.apk
-          cp app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks /tmp/
+          cp app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}-signed.zip /tmp/
 
       - name: Sanitize branch name for artifact
         id: sanitize
@@ -217,9 +217,15 @@ jobs:
           fi
         shell: bash
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.artifact.outputs.name }}
-          path: |
-            /tmp/app.apk
-            /tmp/*.apks
+          path: /tmp/app.apk
+
+      - name: Upload split APKs artifact
+        if: github.event.inputs.mode == 'signed'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.artifact.outputs.name }}-split-apks
+          path: /tmp/*.zip

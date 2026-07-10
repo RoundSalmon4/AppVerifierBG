@@ -228,7 +228,7 @@ jobs:
           AAB="app/build/outputs/bundle/release/app-release.aab"
           APKSET_DIR="app/build/outputs/apkset/release"
           mkdir -p "$APKSET_DIR"
-          APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.apks"
+          APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip"
           java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
             --bundle="$AAB" \
             --output="$APKSET" \
@@ -310,9 +310,14 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: AppVerifierBG-${{ steps.version.outputs.version }}
-          path: |
-            app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
-            app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.apks
+          path: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
+
+      - name: Upload split APKs artifact
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AppVerifierBG-${{ steps.version.outputs.version }}-split-apks
+          path: app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.zip
 
       - name: Create git tag
         if: github.event.inputs.mode == 'publish'
@@ -336,5 +341,5 @@ jobs:
           body_path: ${{ steps.body.outputs.path }}
           files: |
             app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
-            app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.apks
+            app/build/outputs/apkset/release/AppVerifierBG-${{ steps.version.outputs.version }}.zip
           make_latest: true

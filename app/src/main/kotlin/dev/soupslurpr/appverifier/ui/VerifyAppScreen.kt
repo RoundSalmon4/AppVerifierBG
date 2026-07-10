@@ -116,7 +116,7 @@ fun VerifyAppScreen(
     var showHashComparison by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (hashes.hashes.isEmpty()) {
+        if (hashes.hashes.isEmpty() && !apkFailedToParse) {
             onLaunchedEffectHashEmpty()
         }
     }

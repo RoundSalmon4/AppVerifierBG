@@ -190,7 +190,7 @@ jobs:
           mkdir -p "$APKSET_DIR"
           java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
             --bundle="$AAB" \
-            --output="$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apks" \
+            --output="$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.zip" \
             --ks="$RELEASE_KEYSTORE_PATH" \
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
@@ -280,6 +280,6 @@ jobs:
           body_path: ${{ steps.body.outputs.path }}
           files: |
             app/build/outputs/apk/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apk
-            app/build/outputs/apkset/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apks
+            app/build/outputs/apkset/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.zip
             grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
           make_latest: false
