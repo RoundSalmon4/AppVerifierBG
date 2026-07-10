@@ -174,11 +174,13 @@ jobs:
           mkdir -p "$APKSET_DIR"
           java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
             --bundle="$AAB" \
-            --output="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.zip" \
+            --output="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks" \
             --ks="$RELEASE_KEYSTORE_PATH" \
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
             --key-pass="pass:$RELEASE_KEY_PASSWORD"
+          mv "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks" \
+            "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.zip"
 
       - name: Prepare debug APK
         if: github.event.inputs.mode == 'debug'

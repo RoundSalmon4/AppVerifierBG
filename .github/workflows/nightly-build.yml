@@ -190,11 +190,13 @@ jobs:
           mkdir -p "$APKSET_DIR"
           java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
             --bundle="$AAB" \
-            --output="$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.zip" \
+            --output="$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apks" \
             --ks="$RELEASE_KEYSTORE_PATH" \
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
             --key-pass="pass:$RELEASE_KEY_PASSWORD"
+          mv "$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apks" \
+            "$APKSET_DIR/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.zip"
 
       - name: Rename community hashes file
         if: hashFiles('grapheneos-forum-hashes.txt') != ''

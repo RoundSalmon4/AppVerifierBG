@@ -136,7 +136,7 @@ jobs:
           AAB="app/build/outputs/bundle/release/app-release.aab"
           APKSET_DIR="app/build/outputs/apkset/release"
           mkdir -p "$APKSET_DIR"
-          APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip"
+          APKSET="$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.apks"
           java -jar "$BUNDLETOOL_JAR" build-apks \
             --bundle="$AAB" \
             --output="$APKSET" \
@@ -144,7 +144,8 @@ jobs:
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
             --key-pass="pass:$RELEASE_KEY_PASSWORD"
-          echo "apkset=$APKSET" >> "$GITHUB_ENV"
+          mv "$APKSET" "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip"
+          echo "apkset=$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}.zip" >> "$GITHUB_ENV"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
