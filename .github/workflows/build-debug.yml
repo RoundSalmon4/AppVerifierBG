@@ -178,10 +178,13 @@ jobs:
             --ks="$RELEASE_KEYSTORE_PATH" \
             --ks-pass="pass:$RELEASE_KEYSTORE_PASSWORD" \
             --ks-key-alias="$RELEASE_KEY_ALIAS" \
-            --key-pass="pass:$RELEASE_KEY_PASSWORD"
+            --key-pass="pass:$RELEASE_KEY_PASSWORD" \
+            --mode=universal
           mkdir -p "$APKSET_DIR/apks"
           unzip -j "$APKSET_DIR/AppVerifierBG-${{ steps.version.outputs.version }}-signed.apks" '*.apk' -d "$APKSET_DIR/apks"
-          cd "$APKSET_DIR/apks" && zip -j "../AppVerifierBG-${{ steps.version.outputs.version }}-signed.zip" *.apk
+          APK_FILE=$(find "$APKSET_DIR/apks" -name '*.apk' -print -quit)
+          mv "$APK_FILE" "$APKSET_DIR/apks/base.apk"
+          cd "$APKSET_DIR/apks" && zip -j "../AppVerifierBG-${{ steps.version.outputs.version }}-signed.zip" base.apk
 
       - name: Prepare debug APK
         if: github.event.inputs.mode == 'debug'
