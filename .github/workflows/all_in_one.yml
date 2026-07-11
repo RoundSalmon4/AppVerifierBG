@@ -2,7 +2,7 @@
 # APPVERIFIER BG — CODEBERG SYNC ORCHESTRATOR — QUICK START
 #
 # Dispatches in order:
-#   codeberg.yml → codeberg_release.yml → codeberg_notes.yml
+#   codeberg.yml → (release only) codeberg_release.yml → codeberg_notes.yml
 #
 # ---------- GLOBAL VARIABLES (set once in GitHub) ----------
 # Go to: Settings → Secrets and variables → Actions → Variables
@@ -171,6 +171,7 @@ jobs:
     name: Release sync (codeberg_release.yml)
     runs-on: ubuntu-latest
     needs: dispatch_codeberg
+    if: ${{ github.event_name == 'release' }}
     steps:
       - name: "[PLAN] Would dispatch .github/workflows/codeberg_release.yml"
         if: ${{ env.IS_PLAN == 'true' }}
@@ -210,6 +211,7 @@ jobs:
     name: Notes sync (codeberg_notes.yml)
     runs-on: ubuntu-latest
     needs: dispatch_codeberg_release
+    if: ${{ always() && github.event_name == 'release' && needs.dispatch_codeberg_release.result != 'failure' }}
     steps:
       - name: "[PLAN] Would dispatch .github/workflows/codeberg_notes.yml"
         if: ${{ env.IS_PLAN == 'true' }}
@@ -258,9 +260,12 @@ jobs:
         shell: bash
         run: |
           echo "IS_TEST=${{ env.IS_TEST }}"
+          echo "dispatch_codeberg_release result=${{ needs.dispatch_codeberg_release.result }}"
           if [ "${{ env.IS_TEST }}" = "true" ]; then
             echo "Test mode enabled: intentionally failing."
             exit 1
+          elif [ "${{ needs.dispatch_codeberg_release.result }}" = "skipped" ] && [ "${{ github.event_name }}" != "release" ]; then
+            echo "Release sync was skipped (not a release event). Only branch mirror ran."
           else
             echo "Test mode disabled: finishing successfully."
           fi
