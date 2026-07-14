@@ -88,6 +88,7 @@ fun SettingsScreen(
 
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var pendingExportFormat by remember { mutableStateOf<ExportFormat?>(null) }
+    val exportSuccessMessage = context.getString(R.string.export_success)
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("*/*")
@@ -103,7 +104,7 @@ fun SettingsScreen(
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     out.write(data.toByteArray())
                 }
-                snackbarHostState.showSnackbar(context.getString(R.string.export_success))
+                snackbarHostState.showSnackbar(exportSuccessMessage)
             }
         }
     }
