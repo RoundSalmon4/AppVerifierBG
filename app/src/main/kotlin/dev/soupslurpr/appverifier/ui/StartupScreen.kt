@@ -79,6 +79,7 @@ fun StartupScreen(
     val packageManager = context.packageManager
     val icon = remember { packageManager.getApplicationIcon(context.packageName) }
     val coroutineScope = rememberCoroutineScope()
+    val userDatabaseEntries by preferencesViewModel.userDatabaseEntries.collectAsState()
 
     var installedPackages by remember { mutableStateOf(emptySet<String>()) }
     LaunchedEffect(Unit) {
@@ -218,6 +219,7 @@ fun StartupScreen(
     when (val state = importDialogState) {
         is ImportDialogState.Idle -> {}
         is ImportDialogState.CombineOrReplace -> {
+            val hasExistingEntries = userDatabaseEntries.isNotEmpty()
             AlertDialog(
                 onDismissRequest = { importDialogState = ImportDialogState.Idle },
                 title = { Text(stringResource(R.string.import_title)) },
@@ -235,15 +237,17 @@ fun StartupScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                val summary = preferencesViewModel.importUserDatabase(state.json, replace = true, installedPackages)
-                                importDialogState = ImportDialogState.Summary(summary)
+                    if (hasExistingEntries) {
+                        TextButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    val summary = preferencesViewModel.importUserDatabase(state.json, replace = true, installedPackages)
+                                    importDialogState = ImportDialogState.Summary(summary)
+                                }
                             }
+                        ) {
+                            Text(stringResource(R.string.import_replace))
                         }
-                    ) {
-                        Text(stringResource(R.string.import_replace))
                     }
                 }
             )
@@ -265,22 +269,15 @@ fun StartupScreen(
                 onDismissRequest = { importDialogState = ImportDialogState.Idle },
                 title = { Text(stringResource(R.string.import_complete)) },
                 text = {
-                    val couldNotBeRead = stringResource(R.string.could_not_be_read, state.summary.skippedLines.size)
                     val msg = buildString {
                         if (state.summary.totalEntries == 0) {
                             append(stringResource(R.string.format_not_recognized))
                         } else {
-                            append("${state.summary.totalEntries} entries imported.")
-                            val parts = mutableListOf<String>()
-                            if (state.summary.verifiedCount > 0) parts.add("${state.summary.verifiedCount} apps verified")
-                            if (state.summary.updatedCount > 0) parts.add("${state.summary.updatedCount} apps updated")
-                            if (parts.isNotEmpty()) {
-                                append(" ${parts.joinToString(", ")}.")
-                            }
+                            append(stringResource(R.string.import_summary_entries, state.summary.totalEntries, state.summary.verifiedCount, state.summary.updatedCount))
                         }
                         if (state.summary.skippedLines.isNotEmpty()) {
                             append("\n\n")
-                            append(couldNotBeRead)
+                            append(stringResource(R.string.import_summary_skipped, state.summary.skippedLines.size))
                         }
                     }
                     Text(msg)

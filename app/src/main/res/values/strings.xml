@@ -79,4 +79,11 @@
     <string name="remove_from_user_database">Remove from user database</string>
     <string name="remove_clipboard_verification">Remove clipboard verification</string>
     <string name="no_browser_available">No browser available to open link</string>
+    <string name="clear_database_confirm_title">Clear user database?</string>
+    <string name="clear_database_confirm_message">This will remove all %d entries from your user database. This cannot be undone.</string>
+    <string name="export_success">Database exported successfully</string>
+    <string name="app_count">%d apps</string>
+    <string name="mismatches_only_chip">Mismatches only (%d)</string>
+    <string name="import_summary_entries">%d entries imported. %d verified, %d updated.</string>
+    <string name="import_summary_skipped">%d entries could not be read.</string>
 </resources>

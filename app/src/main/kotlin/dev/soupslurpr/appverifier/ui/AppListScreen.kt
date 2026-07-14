@@ -330,6 +330,10 @@ fun AppListScreen(
     val showInternalDbIcon = databaseStatusDisplayMode == DatabaseStatusDisplayMode.BOTH ||
             databaseStatusDisplayMode == DatabaseStatusDisplayMode.INTERNAL_ONLY
 
+    val mismatchCount = remember(packageStatuses) {
+        packageStatuses.values.count { it.internalDbStatus == InternalDatabaseStatus.NOMATCH }
+    }
+
     val existingPackageNames = userDatabaseEntries.map { it.packageName }.toSet()
     val verifiedEntries = remember(sharedFilteredEntries, packageHashes, existingPackageNames) {
         if (sharedFilteredEntries != null) {
@@ -388,7 +392,10 @@ fun AppListScreen(
                                 FilterChip(
                                     selected = filterMode == FilterMode.FAILURES_ONLY,
                                     onClick = { filterMode = if (filterMode == FilterMode.FAILURES_ONLY) FilterMode.ALL else FilterMode.FAILURES_ONLY },
-                                    label = { Text("Mismatches only") },
+                                    label = { Text(
+                                        if (mismatchCount > 0) stringResource(R.string.mismatches_only_chip, mismatchCount)
+                                        else "Mismatches only"
+                                    ) },
                                 )
                             }
                         }
@@ -436,6 +443,14 @@ fun AppListScreen(
                                 Text(if (isSelecting) "Cancel" else "Select")
                             }
                         }
+                    }
+                    if (!isSelecting) {
+                        Text(
+                            text = stringResource(R.string.app_count, displayPackages.size),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                        )
                     }
                     if (isSelecting) {
                         Row(

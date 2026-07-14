@@ -46,10 +46,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.startActivity
 import dev.soupslurpr.appverifier.R
@@ -78,8 +81,10 @@ fun SettingsScreen(
     val userDatabaseEntries by preferencesViewModel.userDatabaseEntries.collectAsState()
     val clipboardVerifiedPackages by preferencesViewModel.clipboardVerifiedPackages.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showClearedDialog by remember { mutableStateOf(false) }
+    var showClearConfirmDialog by remember { mutableStateOf(false) }
 
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var pendingExportFormat by remember { mutableStateOf<ExportFormat?>(null) }
@@ -98,12 +103,17 @@ fun SettingsScreen(
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     out.write(data.toByteArray())
                 }
+                snackbarHostState.showSnackbar(context.getString(R.string.export_success))
             }
         }
     }
 
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    ) {
     Column(
         modifier = Modifier
+            .padding(it)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -264,7 +274,7 @@ fun SettingsScreen(
                     showExportFormatDialog = true
                 },
                 icon = {
-                    Icon(Icons.Filled.FileUpload, null)
+                    Icon(Icons.Filled.FileDownload, null)
                 }
             )
             if (showExportFormatDialog) {
@@ -315,15 +325,37 @@ fun SettingsScreen(
                 description = stringResource(id = R.string.clear_user_database_description),
                 hasIcon = true,
                 onClickIconSetting = {
-                    coroutineScope.launch {
-                        preferencesViewModel.clearUserDatabase()
-                        showClearedDialog = true
-                    }
+                    showClearConfirmDialog = true
                 },
                 icon = {
                     Icon(Icons.Filled.Delete, null)
                 }
             )
+            if (showClearConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = { showClearConfirmDialog = false },
+                    title = { Text(stringResource(R.string.clear_database_confirm_title)) },
+                    text = { Text(stringResource(R.string.clear_database_confirm_message, userDatabaseEntries.size)) },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showClearConfirmDialog = false
+                                coroutineScope.launch {
+                                    preferencesViewModel.clearUserDatabase()
+                                    showClearedDialog = true
+                                }
+                            }
+                        ) {
+                            Text(stringResource(R.string.clear_user_database))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showClearConfirmDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    },
+                )
+            }
             if (showClearedDialog) {
                 AlertDialog(
                     onDismissRequest = { showClearedDialog = false },
@@ -379,6 +411,23 @@ fun SettingsScreen(
 
         Column {
             SettingsCategoryText(category = stringResource(id = R.string.about))
+            val versionName = remember {
+                try {
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
+                } catch (_: Exception) { "" }
+            }
+            SettingsItem(
+                name = stringResource(id = R.string.about),
+                description = "v$versionName",
+                hasIcon = true,
+                onClickIconSetting = {},
+                icon = {
+                    Icon(
+                        imageVector = Icons.Filled.Info,
+                        contentDescription = null
+                    )
+                }
+            )
             SettingsItem(
                 name = stringResource(id = R.string.view_source_code_setting_name),
                 description = stringResource(id = R.string.view_source_code_setting_description),
@@ -423,26 +472,8 @@ fun SettingsScreen(
             )
         }
 
-        val versionName = remember {
-            try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
-            } catch (_: Exception) { "" }
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.BottomEnd
-        ) {
-            Text(
-                text = "v$versionName",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-        }
-
         Spacer(Modifier.padding(WindowInsets.navigationBars.asPaddingValues()))
+    }
     }
 }
 
