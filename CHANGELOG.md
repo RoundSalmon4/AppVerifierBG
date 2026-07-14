@@ -2,6 +2,15 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-07-15
+
+- Confirmation dialog before clearing user database to prevent accidental data loss.
+- Snackbar feedback after successful database export.
+- App count shown below the search bar in the app list.
+- Mismatches chip now shows the count of mismatched apps.
+- Import dialog hides "Replace existing" when user database is empty.
+- Import summary uses localized strings for consistent formatting.
+
 ## 2026-07-11
 
 - Removed .apks file from release assets for the time being.
