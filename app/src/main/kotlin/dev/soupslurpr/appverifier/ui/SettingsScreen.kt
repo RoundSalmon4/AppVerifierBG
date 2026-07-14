@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -275,7 +275,7 @@ fun SettingsScreen(
                     showExportFormatDialog = true
                 },
                 icon = {
-                    Icon(Icons.Filled.FileDownload, null)
+                    Icon(Icons.Filled.FileUpload, null)
                 }
             )
             if (showExportFormatDialog) {
@@ -412,23 +412,6 @@ fun SettingsScreen(
 
         Column {
             SettingsCategoryText(category = stringResource(id = R.string.about))
-            val versionName = remember {
-                try {
-                    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
-                } catch (_: Exception) { "" }
-            }
-            SettingsItem(
-                name = stringResource(id = R.string.about),
-                description = "v$versionName",
-                hasIcon = true,
-                onClickIconSetting = {},
-                icon = {
-                    Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = null
-                    )
-                }
-            )
             SettingsItem(
                 name = stringResource(id = R.string.view_source_code_setting_name),
                 description = stringResource(id = R.string.view_source_code_setting_description),
@@ -470,6 +453,25 @@ fun SettingsScreen(
                         contentDescription = null
                     )
                 }
+            )
+        }
+
+        val versionName = remember {
+            try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
+            } catch (_: Exception) { "" }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Text(
+                text = "v$versionName",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         }
 
