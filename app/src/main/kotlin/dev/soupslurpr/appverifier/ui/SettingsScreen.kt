@@ -88,7 +88,7 @@ fun SettingsScreen(
 
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var pendingExportFormat by remember { mutableStateOf<ExportFormat?>(null) }
-    val exportSuccessMessage = context.getString(R.string.export_success)
+    val exportSuccessMessage = stringResource(R.string.export_success)
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("*/*")
