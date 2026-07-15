@@ -306,7 +306,7 @@ class VerifyAppViewModel(
                 return@withContext
             }
 
-            val supportedExtensions = setOf("apk", "apks", "apkm", "xapk")
+            val supportedExtensions = setOf("apk", "apks", "apkm", "xapk", "zip")
             val fileName = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
@@ -314,7 +314,7 @@ class VerifyAppViewModel(
                 } else null
             }
             val fileExtension = fileName?.substringAfterLast('.', "")?.lowercase()
-            if (fileExtension != null && fileExtension !in supportedExtensions) {
+            if (!fileExtension.isNullOrEmpty() && fileExtension !in supportedExtensions) {
                 inputStream.close()
                 _uiState.update { it.copy(unsupportedFileType = true) }
                 return@withContext
