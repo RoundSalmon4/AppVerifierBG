@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
 import dev.soupslurpr.appverifier.data.Hashes
@@ -95,6 +96,8 @@ fun VerifyAppScreen(
     onAddToUserDatabase: () -> Unit = {},
     sharedTextHashMatch: Boolean? = null,
     onDone: () -> Unit = {},
+    extractedFromSplitBundle: Boolean = false,
+    unsupportedFileType: Boolean = false,
 ) {
     val context = LocalContext.current
     val isSelfVerification = packageName == context.packageName
@@ -130,7 +133,24 @@ fun VerifyAppScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (apkFailedToParse) {
+        if (unsupportedFileType) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                    Text("UNSUPPORTED FILE TYPE", style = typography.titleMedium)
+                    Text(stringResource(R.string.unsupported_file_type_message))
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDone, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
+                }
+            }
+        } else if (apkFailedToParse) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -331,6 +351,14 @@ fun VerifyAppScreen(
                     }
                     Text(name, style = typography.titleLarge)
                     Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (extractedFromSplitBundle) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.split_bundle_notice),
+                            style = typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     if (expectedHashes.isNotEmpty() && (verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.FAILURE || verificationStatus.simpleVerificationStatus == SimpleVerificationStatus.WARNING)) {
                         Spacer(Modifier.height(8.dp))
                         SuggestionChip(

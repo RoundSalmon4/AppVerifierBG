@@ -71,7 +71,7 @@
     <string name="startup_paste_title">Paste from clipboard</string>
     <string name="startup_paste_description">Verify an app from clipboard text</string>
     <string name="startup_verify_apk_title">Verify APK File</string>
-    <string name="startup_verify_apk_description">Select and verify an APK file</string>
+    <string name="startup_verify_apk_description">Verify an APK or split APK bundle file</string>
     <string name="startup_privacy_policy_title">Privacy policy</string>
     <string name="startup_privacy_policy_description">View AppVerifier BG\'s privacy policy (Last updated July 10, 2026)</string>
     <string name="startup_app_list_description">Browse installed apps and verify their signatures</string>
@@ -86,4 +86,6 @@
     <string name="mismatches_only_chip">Mismatches only (%d)</string>
     <string name="import_summary_entries">%d entries imported. %d verified, %d updated.</string>
     <string name="import_summary_skipped">%d entries could not be read.</string>
+    <string name="split_bundle_notice">Extracted base APK from split bundle</string>
+    <string name="unsupported_file_type_message">Please select an APK, APKS, APKM, or XAPK file.</string>
 </resources>

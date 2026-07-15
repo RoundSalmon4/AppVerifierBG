@@ -12,6 +12,7 @@ data class VerifyAppUiState(
     val verificationStatus: VerificationStatus = VerificationStatus.UNKNOWN,
     val appNotFoundOrInvalidFormat: Boolean = false,
     val apkFailedToParse: Boolean = false,
+    val unsupportedFileType: Boolean = false,
     val invalidHashFormat: Boolean = false,
     val multipleHashesWithoutPackageName: Boolean = false,
     val expectedHashes: List<String> = emptyList(),
@@ -19,6 +20,7 @@ data class VerifyAppUiState(
         InternalDatabaseStatus.NOT_FOUND,
         hashSources = listOf(Source.NONE)
     ),
+    val extractedFromSplitBundle: Boolean = false,
 )
 
 

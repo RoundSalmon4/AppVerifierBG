@@ -59,6 +59,7 @@ class VerifyAppViewModel(
         packageName: String,
         hashes: Hashes,
         internalDatabaseInfo: InternalDatabaseInfo,
+        extractedFromSplitBundle: Boolean = false,
     ) {
         _uiState.update { it.copy(
             name = name,
@@ -71,6 +72,7 @@ class VerifyAppViewModel(
             invalidHashFormat = false,
             multipleHashesWithoutPackageName = false,
             expectedHashes = emptyList(),
+            extractedFromSplitBundle = extractedFromSplitBundle,
         ) }
     }
 
@@ -294,12 +296,27 @@ class VerifyAppViewModel(
         _uiState.value = VerifyAppUiState()
 
         var baseApkFile: File? = null
+        var extractedFromSplitBundle = false
 
         try {
             val inputStream = contentResolver.openInputStream(uri)
             if (inputStream == null) {
                 Log.e("VerifyAppViewModel", "openInputStream returned null for URI: $uri")
                 setApkFailedToParse(true)
+                return@withContext
+            }
+
+            val supportedExtensions = setOf("apk", "apks", "apkm", "xapk")
+            val fileName = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (idx >= 0) cursor.getString(idx) else null
+                } else null
+            }
+            val fileExtension = fileName?.substringAfterLast('.', "")?.lowercase()
+            if (fileExtension != null && fileExtension !in supportedExtensions) {
+                inputStream.close()
+                _uiState.update { it.copy(unsupportedFileType = true) }
                 return@withContext
             }
 
@@ -316,14 +333,24 @@ class VerifyAppViewModel(
 
                 try {
                     ZipFile(tempFile).use { zip ->
-                        val baseEntry = zip.getEntry("base.apk")
-                        if (baseEntry != null) {
+                        val apkEntries = zip.entries().asSequence()
+                            .filter { !it.isDirectory && !it.name.contains('/') && it.name.endsWith(".apk", ignoreCase = true) }
+                            .toList()
+
+                        if (apkEntries.isNotEmpty()) {
+                            val selectedEntry = apkEntries.firstOrNull { it.name.equals("base.apk", ignoreCase = true) }
+                                ?: apkEntries.firstOrNull { it.name.contains("base", ignoreCase = true) }
+                                ?: apkEntries.firstOrNull { it.name.contains("main", ignoreCase = true) || it.name.contains("master", ignoreCase = true) }
+                                ?: apkEntries.maxByOrNull { it.size }
+                                ?: apkEntries.sortedBy { it.name }.first()
+
                             baseApkFile = File.createTempFile("base", ".apk", getApplication<Application>().cacheDir)
-                            zip.getInputStream(baseEntry).use { input ->
+                            zip.getInputStream(selectedEntry).use { input ->
                                 baseApkFile!!.outputStream().use { output ->
                                     copyBounded(input, output)
                                 }
                             }
+                            extractedFromSplitBundle = true
                         }
                     }
                 } catch (_: Exception) {
@@ -359,6 +386,7 @@ class VerifyAppViewModel(
                     packageName,
                     hashes,
                     getInternalDatabaseInfoFromVerificationInfo(VerificationInfo(packageName, hashes)),
+                    extractedFromSplitBundle,
                 )
                 setAppIcon(packageManager.getApplicationIcon(applicationInfo))
             } finally {

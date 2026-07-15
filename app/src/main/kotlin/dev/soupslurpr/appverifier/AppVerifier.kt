@@ -277,7 +277,7 @@ fun AppVerifierApp(
                         navController.navigate(AppVerifierScreens.AppList.name)
                     },
                     onVerifyApkFileButtonClicked = {
-                        openApkFileLauncher.launch(arrayOf("application/vnd.android.package-archive", "application/zip"))
+                        openApkFileLauncher.launch(arrayOf("*/*"))
                     },
                     onPasteFromClipboard = {
                         val text = clipboardManager.getText()?.text
@@ -518,6 +518,8 @@ fun AppVerifierApp(
                     },
                     sharedTextHashMatch = sharedTextHashMatchForVerify,
                     onDone = { navController.navigate(AppVerifierScreens.Start.name) { popUpTo(AppVerifierScreens.Start.name) { inclusive = true } } },
+                    extractedFromSplitBundle = verifyAppUiState.value.extractedFromSplitBundle,
+                    unsupportedFileType = verifyAppUiState.value.unsupportedFileType,
                 )
             }
             composableWithDefaultSlideTransitions(route = AppVerifierScreens.Settings) {
