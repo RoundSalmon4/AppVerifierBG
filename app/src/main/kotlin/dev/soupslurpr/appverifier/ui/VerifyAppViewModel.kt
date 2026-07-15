@@ -313,8 +313,13 @@ class VerifyAppViewModel(
                     if (idx >= 0) cursor.getString(idx) else null
                 } else null
             }
-            val fileExtension = fileName?.substringAfterLast('.', "")?.lowercase()
-            if (!fileExtension.isNullOrEmpty() && fileExtension !in supportedExtensions) {
+            if (fileName == null) {
+                inputStream.close()
+                _uiState.update { it.copy(unsupportedFileType = true) }
+                return@withContext
+            }
+            val fileExtension = fileName.substringAfterLast('.', "").lowercase()
+            if (fileExtension !in supportedExtensions) {
                 inputStream.close()
                 _uiState.update { it.copy(unsupportedFileType = true) }
                 return@withContext
