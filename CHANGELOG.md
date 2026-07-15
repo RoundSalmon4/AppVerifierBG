@@ -2,6 +2,11 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-07-16
+
+- .apks, .apkm, and .xapk split APK bundles are now supported when verifying APK files.
+- Smart ZIP entry selection picks the base APK from split bundles automatically.
+
 ## 2026-07-15
 
 - Confirmation dialog before clearing user database to prevent accidental data loss.
