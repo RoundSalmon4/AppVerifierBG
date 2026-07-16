@@ -21,7 +21,7 @@ fun LicenseScreen() {
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
         Text(
-            modifier = Modifier.padding(horizontal = 15.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             text = stringResource(R.string.full_license)
         )
 
