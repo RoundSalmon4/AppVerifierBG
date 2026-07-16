@@ -88,4 +88,14 @@
     <string name="import_summary_skipped">%d entries could not be read.</string>
     <string name="split_bundle_notice">Extracted base APK from split bundle</string>
     <string name="unsupported_file_type_message">Please select an APK, APKS, APKM, or XAPK file.</string>
+    <string name="theme">Theme</string>
+    <string name="theme_mode">Theme mode</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="amoled_theme_name">AMOLED black theme</string>
+    <string name="amoled_theme_description">Use pure black background in dark mode</string>
+    <string name="color_scheme">Color scheme</string>
+    <string name="color_scheme_standard">Standard</string>
+    <string name="color_scheme_dynamic">Dynamic</string>
 </resources>

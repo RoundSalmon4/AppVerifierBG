@@ -162,7 +162,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            AppVerifierTheme {
+            AppVerifierTheme(
+                themeMode = preferencesUiState.themeMode,
+                useAmoledTheme = preferencesUiState.useAmoledTheme,
+                colorSchemeMode = preferencesUiState.colorSchemeMode,
+            ) {
                 AppVerifierApp(
                     modifier = Modifier,
                     verifyAppViewModel = verifyAppViewModel,

@@ -54,6 +54,9 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                 showUnverifiedOnly = settings[PreferencesUiState.Keys.SHOW_UNVERIFIED_ONLY] ?: false,
                 unverifiedExcludeUserDb = settings[PreferencesUiState.Keys.UNVERIFIED_EXCLUDE_USER_DB] ?: false,
                 defaultSortMode = settings[PreferencesUiState.Keys.DEFAULT_SORT_MODE] ?: "NAME_ASC",
+                themeMode = settings[PreferencesUiState.Keys.THEME_MODE] ?: "SYSTEM",
+                useAmoledTheme = settings[PreferencesUiState.Keys.USE_AMOLED_THEME] ?: false,
+                colorSchemeMode = settings[PreferencesUiState.Keys.COLOR_SCHEME_MODE] ?: "STANDARD",
             )
         }
     }
@@ -183,6 +186,24 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     suspend fun setDefaultSortMode(mode: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesUiState.Keys.DEFAULT_SORT_MODE] = mode
+        }
+    }
+
+    suspend fun setThemeMode(mode: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesUiState.Keys.THEME_MODE] = mode
+        }
+    }
+
+    suspend fun setUseAmoledTheme(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesUiState.Keys.USE_AMOLED_THEME] = enabled
+        }
+    }
+
+    suspend fun setColorSchemeMode(mode: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesUiState.Keys.COLOR_SCHEME_MODE] = mode
         }
     }
 

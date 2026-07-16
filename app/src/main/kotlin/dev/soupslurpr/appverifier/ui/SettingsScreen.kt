@@ -4,8 +4,10 @@ import android.app.ActivityOptions
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,13 +22,18 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -118,6 +125,108 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Column {
+            SettingsCategoryText(category = stringResource(R.string.theme))
+
+            val themeModeOptions = listOf(
+                stringResource(R.string.theme_system) to "SYSTEM",
+                stringResource(R.string.theme_light) to "LIGHT",
+                stringResource(R.string.theme_dark) to "DARK",
+            )
+            val selectedThemeIndex = themeModeOptions.indexOfFirst { it.second == preferencesUiState.themeMode }.coerceAtLeast(0)
+
+            Text(
+                text = stringResource(R.string.theme_mode),
+                style = typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            ) {
+                themeModeOptions.forEachIndexed { index, (label, _) ->
+                    SegmentedButton(
+                        selected = selectedThemeIndex == index,
+                        onClick = {
+                            coroutineScope.launch {
+                                preferencesViewModel.setThemeMode(themeModeOptions[index].second)
+                            }
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = themeModeOptions.size,
+                        ),
+                        icon = {
+                            Icon(
+                                imageVector = when (themeModeOptions[index].second) {
+                                    "LIGHT" -> Icons.Filled.LightMode
+                                    "DARK" -> Icons.Filled.DarkMode
+                                    else -> Icons.AutoMirrored.Filled.RotateLeft
+                                },
+                                contentDescription = null,
+                            )
+                        },
+                    ) {
+                        Text(label)
+                    }
+                }
+            }
+
+            val isDarkModeActive = preferencesUiState.themeMode == "DARK" ||
+                (preferencesUiState.themeMode == "SYSTEM" && isSystemInDarkTheme())
+
+            if (isDarkModeActive) {
+                SettingsItem(
+                    name = stringResource(R.string.amoled_theme_name),
+                    description = stringResource(R.string.amoled_theme_description),
+                    hasSwitch = true,
+                    checked = preferencesUiState.useAmoledTheme,
+                    onCheckedChange = {
+                        coroutineScope.launch {
+                            preferencesViewModel.setUseAmoledTheme(it)
+                        }
+                    }
+                )
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val colorSchemeOptions = listOf(
+                    stringResource(R.string.color_scheme_standard) to "STANDARD",
+                    stringResource(R.string.color_scheme_dynamic) to "DYNAMIC_COLOR",
+                )
+                val selectedColorSchemeIndex = colorSchemeOptions.indexOfFirst { it.second == preferencesUiState.colorSchemeMode }.coerceAtLeast(0)
+
+                Text(
+                    text = stringResource(R.string.color_scheme),
+                    style = typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    colorSchemeOptions.forEachIndexed { index, (label, _) ->
+                        SegmentedButton(
+                            selected = selectedColorSchemeIndex == index,
+                            onClick = {
+                                coroutineScope.launch {
+                                    preferencesViewModel.setColorSchemeMode(colorSchemeOptions[index].second)
+                                }
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = colorSchemeOptions.size,
+                            ),
+                        ) {
+                            Text(label)
+                        }
+                    }
+                }
+            }
+        }
+
         Column {
             SettingsCategoryText(category = stringResource(R.string.app_list))
             SettingsItem(

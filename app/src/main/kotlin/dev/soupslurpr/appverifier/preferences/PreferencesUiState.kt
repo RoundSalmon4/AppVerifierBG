@@ -14,6 +14,9 @@ data class PreferencesUiState(
     val showUnverifiedOnly: Boolean = false,
     val unverifiedExcludeUserDb: Boolean = false,
     val defaultSortMode: String = "NAME_ASC",
+    val themeMode: String = "SYSTEM",
+    val useAmoledTheme: Boolean = false,
+    val colorSchemeMode: String = "STANDARD",
 ) {
     object Keys {
         val PRIVACY_POLICY_ACCEPTED_VERSION = intPreferencesKey("PRIVACY_POLICY_ACCEPTED_VERSION")
@@ -23,5 +26,8 @@ data class PreferencesUiState(
         val SHOW_UNVERIFIED_ONLY = booleanPreferencesKey("SHOW_UNVERIFIED_ONLY")
         val UNVERIFIED_EXCLUDE_USER_DB = booleanPreferencesKey("UNVERIFIED_EXCLUDE_USER_DB")
         val DEFAULT_SORT_MODE = stringPreferencesKey("DEFAULT_SORT_MODE")
+        val THEME_MODE = stringPreferencesKey("THEME_MODE")
+        val USE_AMOLED_THEME = booleanPreferencesKey("USE_AMOLED_THEME")
+        val COLOR_SCHEME_MODE = stringPreferencesKey("COLOR_SCHEME_MODE")
     }
 }
