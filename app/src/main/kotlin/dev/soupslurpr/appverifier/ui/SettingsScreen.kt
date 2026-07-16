@@ -22,6 +22,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -162,7 +163,7 @@ fun SettingsScreen(
                                 imageVector = when (themeModeOptions[index].second) {
                                     "LIGHT" -> Icons.Filled.LightMode
                                     "DARK" -> Icons.Filled.DarkMode
-                                    else -> Icons.AutoMirrored.Filled.RotateLeft
+                                    else -> Icons.Filled.BrightnessAuto
                                 },
                                 contentDescription = null,
                             )
