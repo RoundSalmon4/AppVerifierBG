@@ -57,6 +57,8 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                 themeMode = settings[PreferencesUiState.Keys.THEME_MODE] ?: "SYSTEM",
                 useAmoledTheme = settings[PreferencesUiState.Keys.USE_AMOLED_THEME] ?: false,
                 colorSchemeMode = settings[PreferencesUiState.Keys.COLOR_SCHEME_MODE] ?: "STANDARD",
+                primaryColor = settings[PreferencesUiState.Keys.PRIMARY_COLOR] ?: 0xFF1A237E.toInt(),
+                secondaryColor = settings[PreferencesUiState.Keys.SECONDARY_COLOR] ?: 0xFFFFD54F.toInt(),
             )
         }
     }
@@ -204,6 +206,18 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     suspend fun setColorSchemeMode(mode: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesUiState.Keys.COLOR_SCHEME_MODE] = mode
+        }
+    }
+
+    suspend fun setPrimaryColor(color: Int) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesUiState.Keys.PRIMARY_COLOR] = color
+        }
+    }
+
+    suspend fun setSecondaryColor(color: Int) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesUiState.Keys.SECONDARY_COLOR] = color
         }
     }
 

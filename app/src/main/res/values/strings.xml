@@ -98,4 +98,7 @@
     <string name="color_scheme">Color scheme</string>
     <string name="color_scheme_standard">Standard</string>
     <string name="color_scheme_dynamic">Dynamic</string>
+    <string name="primary_color">Primary color</string>
+    <string name="secondary_color">Secondary color</string>
+    <string name="select_color">Select color</string>
 </resources>

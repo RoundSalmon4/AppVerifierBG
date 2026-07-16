@@ -166,6 +166,8 @@ class MainActivity : ComponentActivity() {
                 themeMode = preferencesUiState.themeMode,
                 useAmoledTheme = preferencesUiState.useAmoledTheme,
                 colorSchemeMode = preferencesUiState.colorSchemeMode,
+                primaryColor = preferencesUiState.primaryColor,
+                secondaryColor = preferencesUiState.secondaryColor,
             ) {
                 AppVerifierApp(
                     modifier = Modifier,

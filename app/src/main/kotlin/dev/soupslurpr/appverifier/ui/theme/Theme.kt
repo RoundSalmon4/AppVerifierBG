@@ -11,17 +11,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Blue80,
-    secondary = Gold80,
+private fun Color.lighten(factor: Float = 0.5f): Color {
+    val red = red + (1f - red) * factor
+    val green = green + (1f - green) * factor
+    val blue = blue + (1f - blue) * factor
+    return Color(red, green, blue, alpha)
+}
+
+private fun standardLightScheme(primaryColor: Int, secondaryColor: Int) = lightColorScheme(
+    primary = Color(primaryColor),
+    secondary = Color(secondaryColor),
+    tertiary = BlueGrey40,
+    secondaryContainer = Color(0xFFFFF3E0),
+    onSecondaryContainer = Color(primaryColor),
+)
+
+private fun standardDarkScheme(primaryColor: Int, secondaryColor: Int) = darkColorScheme(
+    primary = Color(primaryColor).lighten(0.4f),
+    secondary = Color(secondaryColor),
     tertiary = BlueGrey80,
     secondaryContainer = Color(0xFF4E3500),
     onSecondaryContainer = Color(0xFFFFF3E0),
 )
 
-private val DarkAmoledColorScheme = darkColorScheme(
-    primary = Blue80,
-    secondary = Gold80,
+private fun amoledDarkScheme(primaryColor: Int, secondaryColor: Int) = darkColorScheme(
+    primary = Color(primaryColor).lighten(0.4f),
+    secondary = Color(secondaryColor),
     tertiary = BlueGrey80,
     secondaryContainer = Color(0xFF4E3500),
     onSecondaryContainer = Color(0xFFFFF3E0),
@@ -29,19 +44,13 @@ private val DarkAmoledColorScheme = darkColorScheme(
     background = Color.Black,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Blue40,
-    secondary = Gold40,
-    tertiary = BlueGrey40,
-    secondaryContainer = Color(0xFFFFF3E0),
-    onSecondaryContainer = Color(0xFF1A237E),
-)
-
 @Composable
 fun AppVerifierTheme(
     themeMode: String = "SYSTEM",
     useAmoledTheme: Boolean = false,
     colorSchemeMode: String = "STANDARD",
+    primaryColor: Int = 0xFF1A237E.toInt(),
+    secondaryColor: Int = 0xFFFFD54F.toInt(),
     content: @Composable () -> Unit
 ) {
     val systemDarkTheme = isSystemInDarkTheme()
@@ -57,9 +66,9 @@ fun AppVerifierTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme && useAmoledTheme -> DarkAmoledColorScheme
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme && useAmoledTheme -> amoledDarkScheme(primaryColor, secondaryColor)
+        darkTheme -> standardDarkScheme(primaryColor, secondaryColor)
+        else -> standardLightScheme(primaryColor, secondaryColor)
     }
 
     MaterialTheme(

@@ -6,23 +6,31 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -224,6 +232,124 @@ fun SettingsScreen(
                             Text(label)
                         }
                     }
+                }
+            }
+
+            if (preferencesUiState.colorSchemeMode == "STANDARD") {
+                val presetPrimaryColors = listOf(
+                    0xFF1A237E.toInt() to "Blue",
+                    0xFFB71C1C.toInt() to "Red",
+                    0xFF1B5E20.toInt() to "Green",
+                    0xFF4A148C.toInt() to "Purple",
+                    0xFF006064.toInt() to "Teal",
+                    0xFFE65100.toInt() to "Orange",
+                    0xFF880E4F.toInt() to "Pink",
+                    0xFF0D47A1.toInt() to "Indigo",
+                    0xFF33691E.toInt() to "Olive",
+                    0xFFBF360C.toInt() to "Deep Orange",
+                    0xFF311B92.toInt() to "Deep Purple",
+                    0xFF004D40.toInt() to "Dark Teal",
+                )
+                val presetSecondaryColors = listOf(
+                    0xFFFFD54F.toInt() to "Gold",
+                    0xFF00BCD4.toInt() to "Cyan",
+                    0xFFCDDC39.toInt() to "Lime",
+                    0xFFFFC107.toInt() to "Amber",
+                    0xFFFF5722.toInt() to "Deep Orange",
+                    0xFF9C27B0.toInt() to "Purple",
+                    0xFF03A9F4.toInt() to "Light Blue",
+                    0xFF66BB6A.toInt() to "Green",
+                    0xFFFF7043.toInt() to "Peach",
+                    0xFFAB47BC.toInt() to "Mauve",
+                    0xFF26A69A.toInt() to "Teal",
+                    0xFFEF5350.toInt() to "Red",
+                )
+
+                var showPrimaryColorDialog by remember { mutableStateOf(false) }
+                var showSecondaryColorDialog by remember { mutableStateOf(false) }
+
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = stringResource(R.string.primary_color),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(Color(preferencesUiState.primaryColor))
+                        )
+                    },
+                    modifier = Modifier.clickable { showPrimaryColorDialog = true },
+                )
+
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = stringResource(R.string.secondary_color),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(Color(preferencesUiState.secondaryColor))
+                        )
+                    },
+                    modifier = Modifier.clickable { showSecondaryColorDialog = true },
+                )
+
+                if (showPrimaryColorDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showPrimaryColorDialog = false },
+                        title = { Text(stringResource(R.string.select_color)) },
+                        text = {
+                            ColorSwatchGrid(
+                                colors = presetPrimaryColors,
+                                selectedColor = preferencesUiState.primaryColor,
+                                onColorSelected = { color ->
+                                    coroutineScope.launch {
+                                        preferencesViewModel.setPrimaryColor(color)
+                                    }
+                                    showPrimaryColorDialog = false
+                                },
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showPrimaryColorDialog = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        },
+                    )
+                }
+
+                if (showSecondaryColorDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showSecondaryColorDialog = false },
+                        title = { Text(stringResource(R.string.select_color)) },
+                        text = {
+                            ColorSwatchGrid(
+                                colors = presetSecondaryColors,
+                                selectedColor = preferencesUiState.secondaryColor,
+                                onColorSelected = { color ->
+                                    coroutineScope.launch {
+                                        preferencesViewModel.setSecondaryColor(color)
+                                    }
+                                    showSecondaryColorDialog = false
+                                },
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showSecondaryColorDialog = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        },
+                    )
                 }
             }
         }
@@ -640,4 +766,42 @@ fun SettingsCategoryText(category: String) {
         style = typography.bodyMedium,
         fontWeight = FontWeight.Bold
     )
+}
+
+@Composable
+fun ColorSwatchGrid(
+    colors: List<Pair<Int, String>>,
+    selectedColor: Int,
+    onColorSelected: (Int) -> Unit,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(4),
+        contentPadding = PaddingValues(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(colors) { (colorInt, name) ->
+            val isSelected = colorInt == selectedColor
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color(colorInt))
+                    .clickable { onColorSelected(colorInt) },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = name,
+                        tint = if (Color(colorInt).luminance() > 0.5f) Color.Black else Color.White,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun Color.luminance(): Float {
+    return 0.299f * red + 0.587f * green + 0.114f * blue
 }

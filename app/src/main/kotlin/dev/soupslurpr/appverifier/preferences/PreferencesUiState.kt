@@ -17,6 +17,8 @@ data class PreferencesUiState(
     val themeMode: String = "SYSTEM",
     val useAmoledTheme: Boolean = false,
     val colorSchemeMode: String = "STANDARD",
+    val primaryColor: Int = 0xFF1A237E.toInt(),
+    val secondaryColor: Int = 0xFFFFD54F.toInt(),
 ) {
     object Keys {
         val PRIVACY_POLICY_ACCEPTED_VERSION = intPreferencesKey("PRIVACY_POLICY_ACCEPTED_VERSION")
@@ -29,5 +31,7 @@ data class PreferencesUiState(
         val THEME_MODE = stringPreferencesKey("THEME_MODE")
         val USE_AMOLED_THEME = booleanPreferencesKey("USE_AMOLED_THEME")
         val COLOR_SCHEME_MODE = stringPreferencesKey("COLOR_SCHEME_MODE")
+        val PRIMARY_COLOR = intPreferencesKey("PRIMARY_COLOR")
+        val SECONDARY_COLOR = intPreferencesKey("SECONDARY_COLOR")
     }
 }
