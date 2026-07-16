@@ -17,7 +17,7 @@ Verify installed apps against shared signature hashes, the internal database, or
 
 ## Verification
 
-Pasted hashes are checked for valid SHA-256 format and show a clear error if something's wrong. When verification fails, hashes are labeled "Expected" (what you pasted) and "Found" (on-device fingerprint) so you can tell which is which. Apps signed with debug certificates are flagged as insecure. Verification results use chip-based status indicators. The expected vs. found hash comparison has a collapsible toggle. ZIP files containing a base APK are also accepted — the base APK is extracted and verified the same way as a regular APK.
+Pasted hashes are checked for valid SHA-256 format and show a clear error if something's wrong. When verification fails, hashes are labeled "Expected" (what you pasted) and "Found" (on-device fingerprint) so you can tell which is which. Apps signed with debug certificates are flagged as insecure. Verification results use chip-based status indicators. The expected vs. found hash comparison has a collapsible toggle. Split APK bundles (.apks, .apkm, .xapk) and ZIP files containing a base APK are accepted — the base APK is extracted and verified the same way as a regular APK.
 
 ## App List
 
@@ -81,6 +81,21 @@ Nightly builds include a downloadable text file with hashes shared by users on t
 ## Share All Apps
 
 Share every installed app's verification info as text from the settings screen.
+
+## Theme Customization
+
+Follow system theme, or pick light or dark mode. An AMOLED black theme option replaces all surfaces with pure black for OLED screens. On Android 12+, a dynamic color scheme option pulls colors from your wallpaper. In standard mode, primary and secondary colors are customizable with 12 preset swatches each. MATCH info dialogs (source names, domains, verification methods) follow the chosen secondary color.
+
+---
+
+## Support
+
+If you find AppVerifier BG useful, consider supporting development:
+
+<a href="https://www.buymeacoffee.com/RoundSalmon4"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me a Coffee" height="40"></a>
+
+Feather wallet (XMR):
+![Feather Wallet QR Code](featherqrcode.png)
 
 ---
 

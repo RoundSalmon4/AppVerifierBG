@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Share
@@ -72,6 +74,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat.startActivity
 import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
@@ -103,6 +106,7 @@ fun SettingsScreen(
 
     var showClearedDialog by remember { mutableStateOf(false) }
     var showClearConfirmDialog by remember { mutableStateOf(false) }
+    var showSupportDialog by remember { mutableStateOf(false) }
 
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var pendingExportFormat by remember { mutableStateOf<ExportFormat?>(null) }
@@ -607,6 +611,41 @@ fun SettingsScreen(
                     }
                 )
             }
+            if (showSupportDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSupportDialog = false },
+                    title = { Text(stringResource(R.string.support_developer)) },
+                    text = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.support_developer_description))
+                            TextButton(onClick = {
+                                runCatching {
+                                    localUriHandler.openUri("https://www.buymeacoffee.com/RoundSalmon4")
+                                }.onFailure { _ ->
+                                    Toast.makeText(context, R.string.no_browser_available, Toast.LENGTH_SHORT).show()
+                                }
+                            }) {
+                                Text(stringResource(R.string.buy_me_a_coffee))
+                            }
+                            Text(stringResource(R.string.feather_wallet))
+                            Image(
+                                painter = painterResource(id = R.drawable.feather_qr_code),
+                                contentDescription = stringResource(R.string.feather_wallet),
+                                modifier = Modifier.size(200.dp),
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showSupportDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    },
+                )
+            }
             SettingsItem(
                 name = stringResource(R.string.share_all_verification_info),
                 description = stringResource(R.string.share_all_verification_info_description),
@@ -688,6 +727,18 @@ fun SettingsScreen(
                 icon = {
                     Icon(
                         imageVector = Icons.Filled.Info,
+                        contentDescription = null
+                    )
+                }
+            )
+            SettingsItem(
+                name = stringResource(id = R.string.support_developer),
+                description = stringResource(id = R.string.support_developer_description),
+                hasIcon = true,
+                onClickIconSetting = { showSupportDialog = true },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Filled.Favorite,
                         contentDescription = null
                     )
                 }
