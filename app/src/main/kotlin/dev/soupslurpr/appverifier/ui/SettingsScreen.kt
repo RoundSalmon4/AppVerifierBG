@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -74,7 +73,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat.startActivity
 import dev.soupslurpr.appverifier.R
 import dev.soupslurpr.appverifier.data.DatabaseStatusDisplayMode
@@ -631,12 +629,6 @@ fun SettingsScreen(
                             }) {
                                 Text(stringResource(R.string.buy_me_a_coffee))
                             }
-                            Text(stringResource(R.string.feather_wallet))
-                            Image(
-                                painter = painterResource(id = R.drawable.feather_qr_code),
-                                contentDescription = stringResource(R.string.feather_wallet),
-                                modifier = Modifier.size(200.dp),
-                            )
                         }
                     },
                     confirmButton = {
