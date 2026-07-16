@@ -69,7 +69,6 @@ import dev.soupslurpr.appverifier.data.SimpleInternalDatabaseStatus
 import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationStatus
-import dev.soupslurpr.appverifier.ui.theme.Gold80
 import dev.soupslurpr.appverifier.ui.theme.UserDbPurple
 import dev.soupslurpr.appverifier.ui.theme.WarningOrange
 
@@ -602,7 +601,7 @@ fun VerifyAppScreen(
                         Text(
                             text = internalDatabaseInfo.hashSources.joinToString("\n") { it.displayName },
                             style = typography.bodyMedium,
-                            color = Gold80,
+                            color = MaterialTheme.colorScheme.secondary,
                         )
                         Text(
                             "\nThis information can be useful if you distrust a specific source and want to make" +
@@ -660,14 +659,14 @@ fun VerifyAppScreen(
                         Text(
                             text = domain,
                             style = typography.bodyMedium,
-                            color = Gold80,
+                            color = MaterialTheme.colorScheme.secondary,
                         )
                         if (domainMethods.isNotEmpty()) {
                             Text("\nVerification method${if (domainMethods.size > 1) "s" else ""}:\n")
                             Text(
                                 text = domainMethods.joinToString("\n"),
                                 style = typography.bodyMedium,
-                                color = Gold80,
+                                color = MaterialTheme.colorScheme.secondary,
                             )
                         }
                     }
