@@ -95,6 +95,7 @@ If you find AppVerifier BG useful, consider supporting development:
 <a href="https://www.buymeacoffee.com/RoundSalmon4"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me a Coffee" height="40"></a>
 
 Feather wallet (XMR):
+
 <img src="featherqrcode.png" alt="Feather Wallet QR Code" height="150">
 
 ---
