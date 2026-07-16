@@ -48,7 +48,6 @@ class PreferencesViewModelTest {
     fun uiStateDefaults() = runTest {
         val state = viewModel.uiState.first()
 
-        assertEquals(0, state.acceptedPrivacyPolicyVersion)
         assertFalse(state.showUnverifiedOnly)
         assertFalse(state.showClipboardCheckmark)
     }

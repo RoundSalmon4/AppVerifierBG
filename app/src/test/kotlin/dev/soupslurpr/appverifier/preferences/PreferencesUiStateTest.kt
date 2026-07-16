@@ -9,7 +9,6 @@ class PreferencesUiStateTest {
     fun defaultValues() {
         val state = PreferencesUiState()
 
-        assertEquals(0, state.acceptedPrivacyPolicyVersion)
         assertEquals(false, state.showHasMultipleSigners)
         assertEquals(false, state.showClipboardCheckmark)
         assertEquals(false, state.showUnverifiedOnly)
@@ -23,11 +22,5 @@ class PreferencesUiStateTest {
 
         assertEquals(true, modified.showUnverifiedOnly)
         assertEquals(false, modified.showClipboardCheckmark)
-        assertEquals(0, modified.acceptedPrivacyPolicyVersion)
-    }
-
-    @Test
-    fun currentPrivacyPolicyVersionConstant() {
-        assertEquals(2, CURRENT_PRIVACY_POLICY_VERSION)
     }
 }
