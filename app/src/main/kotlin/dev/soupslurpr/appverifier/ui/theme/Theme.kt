@@ -22,24 +22,18 @@ private fun standardLightScheme(primaryColor: Int, secondaryColor: Int) = lightC
     primary = Color(primaryColor),
     secondary = Color(secondaryColor),
     tertiary = BlueGrey40,
-    secondaryContainer = Color(0xFFFFF3E0),
-    onSecondaryContainer = Color(primaryColor),
 )
 
 private fun standardDarkScheme(primaryColor: Int, secondaryColor: Int) = darkColorScheme(
     primary = Color(primaryColor).lighten(0.4f),
     secondary = Color(secondaryColor),
     tertiary = BlueGrey80,
-    secondaryContainer = Color(0xFF4E3500),
-    onSecondaryContainer = Color(0xFFFFF3E0),
 )
 
 private fun amoledDarkScheme(primaryColor: Int, secondaryColor: Int) = darkColorScheme(
     primary = Color(primaryColor).lighten(0.4f),
     secondary = Color(secondaryColor),
     tertiary = BlueGrey80,
-    secondaryContainer = Color(0xFF4E3500),
-    onSecondaryContainer = Color(0xFFFFF3E0),
     surface = Color.Black,
     background = Color.Black,
 )

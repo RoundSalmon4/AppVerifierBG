@@ -2,6 +2,14 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-07-17
+
+- Theme customization: follow system, light, or dark mode.
+- AMOLED black theme for OLED screens (dark mode only).
+- Dynamic color scheme on Android 12+ (uses wallpaper colors).
+- Primary and secondary color pickers with 12 preset swatches.
+- MATCH info dialogs now follow the chosen secondary color instead of hardcoded gold.
+
 ## 2026-07-16
 
 - .apks, .apkm, and .xapk split APK bundles are now supported when verifying APK files.

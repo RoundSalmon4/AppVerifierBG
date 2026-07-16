@@ -47,7 +47,6 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
     private suspend fun populateSettingsFromDatastore() {
         dataStore.data.collect { settings ->
             _uiState.value = PreferencesUiState(
-                acceptedPrivacyPolicyVersion = settings[PreferencesUiState.Keys.PRIVACY_POLICY_ACCEPTED_VERSION] ?: 0,
                 showHasMultipleSigners = settings[PreferencesUiState.Keys.SHOW_HAS_MULTIPLE_SIGNERS] ?: false,
                 databaseStatusDisplayMode = settings[PreferencesUiState.Keys.DATABASE_STATUS_DISPLAY_MODE] ?: "BOTH",
                 showClipboardCheckmark = settings[PreferencesUiState.Keys.SHOW_CLIPBOARD_CHECKMARK] ?: false,

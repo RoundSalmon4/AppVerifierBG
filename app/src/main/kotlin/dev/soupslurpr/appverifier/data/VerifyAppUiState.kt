@@ -31,23 +31,11 @@ data class InternalDatabaseInfo(
 )
 
 enum class InternalDatabaseStatus(
-    val info: String,
     val simpleInternalDatabaseStatus: SimpleInternalDatabaseStatus,
 ) {
-    NOT_FOUND(
-        "This app was not found in the internal database. This isn't anything to worry about, but please verify the " +
-                "app normally.",
-        SimpleInternalDatabaseStatus.NOT_FOUND,
-    ),
-    MATCH(
-        "This app's verification info matches an entry in the internal database. You don't need to verify normally.",
-        SimpleInternalDatabaseStatus.SUCCESS,
-    ),
-    NOMATCH(
-        "This app was found in the internal database, but its hash did NOT match. This app may be " +
-                "non-genuine.",
-        SimpleInternalDatabaseStatus.FAILURE,
-    ),
+    NOT_FOUND(SimpleInternalDatabaseStatus.NOT_FOUND),
+    MATCH(SimpleInternalDatabaseStatus.SUCCESS),
+    NOMATCH(SimpleInternalDatabaseStatus.FAILURE),
 }
 
 enum class SimpleInternalDatabaseStatus(val color: Color) {
