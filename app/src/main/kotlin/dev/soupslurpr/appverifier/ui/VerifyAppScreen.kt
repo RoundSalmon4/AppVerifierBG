@@ -621,8 +621,8 @@ fun VerifyAppScreen(
             null
         }
         val domainInfoText = when (internalDatabaseInfo.internalDatabaseStatus) {
-            InternalDatabaseStatus.MATCH -> "This app's signing certificate hash matches against a domain-verified source in the internal database. You don't need to verify normally."
-            InternalDatabaseStatus.NOMATCH -> "Found via domain verification, but the hash does not match. The app may be tampered with or has a new signing key."
+            InternalDatabaseStatus.MATCH -> "This app's package name is listed in a domain-verified assetlinks.json, and its signing certificate hash matches a known entry in the database. You don't need to verify normally."
+            InternalDatabaseStatus.NOMATCH -> "This app's package name is listed in a domain-verified assetlinks.json, but the signing certificate hash does not match. The app may be tampered with or has a new signing key."
             InternalDatabaseStatus.NOT_FOUND -> "This app was not found in the internal database. This isn't anything to worry about, but please verify the app normally."
         }
         AlertDialog(
@@ -655,7 +655,7 @@ fun VerifyAppScreen(
                         if (isEmpty() && Source.VERIFIED_DOMAIN in internalDatabaseInfo.domainSources) add("Domain")
                     }
                     if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.MATCH && domain != null) {
-                        Text("\nThe matched hash entry for this app was verified against the following domain:\n")
+                        Text("\nThis app's package name is declared in the domain's assetlinks.json:\n")
                         Text(
                             text = domain,
                             style = typography.bodyMedium,

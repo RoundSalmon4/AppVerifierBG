@@ -3,10 +3,10 @@
 self-verified domains via .well-known/assetlinks.json and inject
 Source.VERIFIED_DOMAIN_HTTPS into InternalVerificationInfoDatabase.kt.
 
-Match on package name only — if a domain serves assetlinks.json that
-mentions the package, that's domain verification. Fingerprints aren't
-cross-checked since the purpose is proving domain control, not verifying
-a specific hash.
+Only adds domain verification when the signing certificate fingerprint
+declared in assetlinks.json matches a fingerprint already known for that
+package in data.yml.  This prevents a fake app that copies a legitimate
+package name from inheriting domain verification meant for the real app.
 
 Operates directly on the Kotlin file, independent of generate_internal_db.py.
 """
@@ -34,6 +34,11 @@ MAX_ASSETLINKS_SIZE = 1048576  # 1 MB, matching upstream --max-filesize
 S20 = "                    "
 
 ssl_ctx = ssl.create_default_context()
+
+
+def normalize_fingerprint(fp):
+    """Normalize a fingerprint to uppercase colon-separated format."""
+    return fp.strip().upper().replace(" ", "").replace("\n", "")
 
 
 def fetch_assetlinks(url, max_size=MAX_ASSETLINKS_SIZE, timeout=20, retries=2):
@@ -64,9 +69,9 @@ def derive_domain(package_name):
     return f"{parts[1]}.{parts[0]}"
 
 
-def check_assetlinks_packages(domain, max_docs=10):
-    """Fetch assetlinks.json and return set of package names that the
-    domain associates with android_app statements.
+def check_assetlinks_packages_and_fingerprints(domain, max_docs=10):
+    """Fetch assetlinks.json and return a dict mapping package names to the
+    set of sha256_cert_fingerprints declared for them.
 
     Follows `include` references (bounded by max_docs) per upstream's
     domain_fetch_https_record. Returns None if the top-level file is
@@ -77,7 +82,7 @@ def check_assetlinks_packages(domain, max_docs=10):
     queue = [url]
     docs = 0
     found_top = False
-    all_packages = set()
+    pkg_to_fps = defaultdict(set)
 
     while queue and docs < max_docs:
         cur = queue.pop(0)
@@ -113,14 +118,18 @@ def check_assetlinks_packages(domain, max_docs=10):
                 inc_url = item["include"]
                 if inc_url.startswith("https://") and inc_url not in visited:
                     queue.append(inc_url)
-            # Collect android_app statements
+            # Collect android_app statements with fingerprints
             target = item.get("target")
             if isinstance(target, dict) and target.get("namespace") == "android_app":
                 pkg = target.get("package_name", "")
                 if pkg:
-                    all_packages.add(pkg)
+                    fps = target.get("sha256_cert_fingerprints", [])
+                    for fp in fps:
+                        pkg_to_fps[pkg].add(normalize_fingerprint(fp))
 
-    return all_packages if found_top and all_packages else None
+    if found_top and pkg_to_fps:
+        return dict(pkg_to_fps)
+    return None
 
 
 def load_data_yaml(path):
@@ -129,6 +138,25 @@ def load_data_yaml(path):
     if isinstance(data, dict):
         data = data.get("packages", [])
     return data
+
+
+def build_data_yml_fingerprint_map(entries):
+    """Build a dict mapping package names to sets of known fingerprints
+    from the data.yml entries."""
+    pkg_fps = {}
+    for app in entries:
+        pkg = app.get("package", "")
+        if not pkg:
+            continue
+        fps = set()
+        for sig in app.get("signature", []):
+            fp_raw = sig.get("fingerprint", "")
+            for line in fp_raw.strip().splitlines():
+                normalized = normalize_fingerprint(line)
+                if normalized:
+                    fps.add(normalized)
+        pkg_fps[pkg] = fps
+    return pkg_fps
 
 
 # --- Kotlin text manipulation helpers (unchanged from original) ---
@@ -199,9 +227,16 @@ def source_list_bounds_in_hashes(text, hashes_pos):
     return sl, close
 
 
-def add_https_source_to_all_hashes(kotlin_text, package):
-    """Add Source.VERIFIED_DOMAIN_HTTPS to every Hashes block in the
-    given package's entry that doesn't already have it.
+def fingerprints_in_hashes_block(text, hashes_start, hashes_end):
+    """Extract fingerprint strings from a Hashes block."""
+    block_text = text[hashes_start:hashes_end]
+    fps = re.findall(r'"((?:[0-9A-F]{2}:)+[0-9A-F]{2})"', block_text)
+    return {normalize_fingerprint(fp) for fp in fps}
+
+
+def add_https_source_to_matched_hashes(kotlin_text, package, assetlinks_fps):
+    """Add Source.VERIFIED_DOMAIN_HTTPS only to Hashes blocks whose
+    fingerprints overlap with assetlinks_fps for this package.
 
     Returns the modified text, or original text if nothing changed.
     """
@@ -214,12 +249,17 @@ def add_https_source_to_all_hashes(kotlin_text, package):
     hashes_blocks = find_all_hashes_in_entry(kotlin_text, entry_start, entry_end)
 
     modifications = []
-    for hs, _ in hashes_blocks:
+    for hs, he in hashes_blocks:
         sl_bounds = source_list_bounds_in_hashes(kotlin_text, hs)
         if sl_bounds is None:
             continue
         sl_open, sl_close = sl_bounds
         if "Source.VERIFIED_DOMAIN_HTTPS" in kotlin_text[sl_open:sl_close]:
+            continue
+
+        # Check if any fingerprints in this block match assetlinks
+        block_fps = fingerprints_in_hashes_block(kotlin_text, hs, he)
+        if not block_fps & assetlinks_fps:
             continue
 
         # Insert before the closing paren of the source list
@@ -238,7 +278,7 @@ def add_https_source_to_all_hashes(kotlin_text, package):
                 modifications.append((last_nl, ","))
 
     if not modifications:
-        print(f"  skip {package}: no new HTTPS source needed", file=sys.stderr)
+        print(f"  skip {package}: no matching fingerprints in assetlinks.json", file=sys.stderr)
         return kotlin_text
 
     # Apply right-to-left so positions stay valid
@@ -306,6 +346,9 @@ def main():
 
     entries = load_data_yaml(args.data_yml)
 
+    # Build fingerprint map from data.yml
+    data_yml_fps = build_data_yml_fingerprint_map(entries)
+
     # Load previously verified packages so we can skip re-checking them
     already_verified = set()
     if os.path.exists(args.verified_json):
@@ -320,7 +363,14 @@ def main():
     with open(args.kotlin, "r", encoding="utf-8") as f:
         kotlin_text = f.read()
     for pkg in sorted(already_verified):
-        new_text = add_https_source_to_all_hashes(kotlin_text, pkg)
+        # For previously verified packages, re-apply using data.yml fingerprints
+        # as a fallback (we don't re-fetch assetlinks.json here)
+        pkg_fps = data_yml_fps.get(pkg, set())
+        if not pkg_fps:
+            # If we can't find fingerprints, skip (shouldn't happen for
+            # previously verified packages)
+            continue
+        new_text = add_https_source_to_matched_hashes(kotlin_text, pkg, pkg_fps)
         if new_text is not kotlin_text:
             kotlin_text = new_text
             re_modified += 1
@@ -329,7 +379,7 @@ def main():
             f.write(kotlin_text)
     print(f"Re-applied previously verified: {re_modified}", file=sys.stderr)
 
-    # Collect packages and derive domains (fingerprints not needed)
+    # Collect packages and derive domains
     pkgs = []
     for app in entries:
         pkg = app.get("package", "")
@@ -347,8 +397,8 @@ def main():
     print(f"Derived unique domains:     {total_domains}", file=sys.stderr)
     print(f"Previously verified pkgs:   {len(already_verified)}", file=sys.stderr)
 
-    # Check assetlinks for each domain and collect package-name matches
-    matches = []
+    # Check assetlinks for each domain and collect fingerprint-matched packages
+    matches = {}
     serving_domains = 0
     skipped_domains = 0
 
@@ -365,20 +415,35 @@ def main():
             time.sleep(REQUEST_DELAY)
             continue
 
-        assetlinks_pkgs = check_assetlinks_packages(domain)
-        if assetlinks_pkgs is None:
+        assetlinks_pkg_fps = check_assetlinks_packages_and_fingerprints(domain)
+        if assetlinks_pkg_fps is None:
             time.sleep(REQUEST_DELAY)
             continue
 
         serving_domains += 1
 
         for pkg in pkg_list:
-            if pkg in assetlinks_pkgs and pkg not in already_verified:
-                matches.append(pkg)
+            if pkg in already_verified:
+                continue
+            assetlinks_fps = assetlinks_pkg_fps.get(pkg, set())
+            if not assetlinks_fps:
+                continue
+            # Cross-check: only count if at least one fingerprint from
+            # assetlinks.json matches a fingerprint in data.yml for this package
+            data_fps = data_yml_fps.get(pkg, set())
+            if assetlinks_fps & data_fps:
+                matches[pkg] = assetlinks_fps
+            else:
+                print(
+                    f"  [{i}/{total_domains}] {domain}: {pkg} fingerprints "
+                    f"do not match assetlinks.json ({len(assetlinks_fps)} al fps, "
+                    f"{len(data_fps)} data.yml fps)",
+                    file=sys.stderr,
+                )
 
         time.sleep(REQUEST_DELAY)
 
-    deduplicated = list(dict.fromkeys(matches))
+    deduplicated = list(dict.fromkeys(matches.keys()))
     total_matched = len(deduplicated)
     print(f"\nDomains skipped (all done):     {skipped_domains}", file=sys.stderr)
     print(f"Domains serving assetlinks:     {serving_domains}", file=sys.stderr)
@@ -389,7 +454,7 @@ def main():
 
     modified = 0
     for pkg in sorted(deduplicated):
-        new_text = add_https_source_to_all_hashes(kotlin_text, pkg)
+        new_text = add_https_source_to_matched_hashes(kotlin_text, pkg, matches[pkg])
         if new_text is not kotlin_text:
             kotlin_text = new_text
             modified += 1

@@ -2,6 +2,11 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## 2026-07-18
+
+- Domain verification now cross-checks signing certificate fingerprints against assetlinks.json.
+- Domain verification dialog text clarified to distinguish package name association from signing key verification.
+
 ## 2026-07-17
 
 - Theme customization: follow system, light, or dark mode.
