@@ -399,6 +399,7 @@ def main():
 
     # Check assetlinks for each domain and collect fingerprint-matched packages
     matches = {}
+    mismatches = []
     serving_domains = 0
     skipped_domains = 0
 
@@ -434,6 +435,7 @@ def main():
             if assetlinks_fps & data_fps:
                 matches[pkg] = assetlinks_fps
             else:
+                mismatches.append((domain, pkg, assetlinks_fps, data_fps))
                 print(
                     f"  [{i}/{total_domains}] {domain}: {pkg} fingerprints "
                     f"do not match assetlinks.json ({len(assetlinks_fps)} al fps, "
@@ -461,6 +463,19 @@ def main():
 
     print(f"  New sources added:               {modified}", file=sys.stderr)
     print(f"\nModified {modified} entries", file=sys.stderr)
+
+    if mismatches:
+        print(f"\nFingerprint Mismatches: {len(mismatches)}", file=sys.stderr)
+        for domain, pkg, al_fps, data_fps in mismatches:
+            al_display = ", ".join(sorted(al_fps)[:3])
+            if len(al_fps) > 3:
+                al_display += f" (+{len(al_fps) - 3} more)"
+            data_display = ", ".join(sorted(data_fps)[:3])
+            if len(data_fps) > 3:
+                data_display += f" (+{len(data_fps) - 3} more)"
+            print(f"  {domain}: {pkg}", file=sys.stderr)
+            print(f"    assetlinks.json:  {al_display}", file=sys.stderr)
+            print(f"    data.yml:         {data_display}", file=sys.stderr)
 
     if modified:
         with open(args.kotlin, "w", encoding="utf-8", newline="") as f:

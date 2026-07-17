@@ -81,6 +81,7 @@ jobs:
           MATCHES=$(grep -oP 'Matching apps found:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           SKIPPED=$(grep -oP 'Already had VERIFIED_DOMAIN_HTTPS:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           ADDED=$(grep -oP 'New sources added:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
+          MISMATCH_COUNT=$(grep -oP 'Fingerprint Mismatches:\s+\K\d+' "$RUNNER_TEMP/backfill_output.txt" || echo 0)
           CHECKED=$(( TOTAL - SKIPPED_DOMAINS ))
           {
             echo "## Backfill HTTPS Verified Domains"
@@ -94,7 +95,21 @@ jobs:
             echo "| Matching apps found (new) | $MATCHES |"
             echo "| Already had VERIFIED_DOMAIN_HTTPS | $SKIPPED |"
             echo "| New sources added | $ADDED |"
+            echo "| Fingerprint mismatches | $MISMATCH_COUNT |"
           } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$MISMATCH_COUNT" -gt 0 ]; then
+            {
+              echo ""
+              echo "### Fingerprint Mismatches"
+              echo ""
+              echo "These packages have assetlinks.json records but their declared fingerprints"
+              echo "do not overlap with any fingerprint known for that package in data.yml."
+              echo ""
+              echo '```'
+              sed -n '/^Fingerprint Mismatches:/,/^$/p' "$RUNNER_TEMP/backfill_output.txt" | tail -n +2
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Commit updated database and verified domains
         run: |
