@@ -1,4 +1,4 @@
-AppVerifier BG verifies that installed Android apps match their expected signing certificate fingerprints. Compare an app's signing hash against shared text, an internal database synced from Privacy Guides, or your own user database. Hashes are checked for valid SHA-256 format — when verification fails, they're labeled "Expected" vs "Found" so you can tell which is which. Apps signed with debug certificates are flagged as insecure. ZIP files containing a base APK are also accepted.
+AppVerifier BG verifies that installed Android apps match their expected signing certificate fingerprints. Compare an app's signing hash against shared text, an internal database synced from Privacy Guides, or your own user database. Hashes are checked for valid SHA-256 format — when verification fails, they're labeled "Expected" vs "Found" so you can tell which is which. Apps signed with debug certificates are flagged as insecure. Split APK bundles (.apks, .apkm, .xapk) and ZIP files containing a base APK are also accepted.
 
 <b>App List</b>
 
@@ -24,9 +24,17 @@ Share verification info for several apps at once. Multiple entries separated by 
 
 Verify from clipboard with a single button on the startup screen. Successful clipboard verifications add a blue checkmark in the app list. The checkmark can be toggled on or off in settings and cleared separately. Individual checkmarks can be removed by long-pressing the app in the list.
 
+<b>Hash-Only Verification</b>
+
+Paste or share a SHA-256 hash on its own and AppVerifier BG will find every installed app signed with that certificate. Handy when someone shares just a hash without a package name. If multiple installed apps share the same signing key, a picker lets you choose the right one.
+
 <b>Share All Apps</b>
 
 Share every installed app's verification info as text from the settings screen.
+
+<b>Theme Customization</b>
+
+Follow system theme, or pick light or dark mode. An AMOLED black theme option replaces all surfaces with pure black for OLED screens. On Android 12+, dynamic color pulls from your wallpaper. Primary and secondary colors are customizable with 12 preset swatches each.
 
 <b>Reproducible Builds</b>
 
