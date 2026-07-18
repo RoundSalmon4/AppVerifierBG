@@ -293,6 +293,60 @@ def add_https_source_to_matched_hashes(kotlin_text, package, assetlinks_fps):
     return kotlin_text
 
 
+def add_https_source_to_all_hashes(kotlin_text, package):
+    """Add Source.VERIFIED_DOMAIN_HTTPS to every Hashes block for this package.
+
+    Unlike add_https_source_to_matched_hashes, this skips the fingerprint
+    cross-check.  Intended for merge_https_domains.py where we already know
+    the package is verified and just need to re-inject the source after a
+    database regeneration.
+
+    Returns the modified text, or original text if nothing changed.
+    """
+    entry_bounds = find_entry_by_package(kotlin_text, package)
+    if not entry_bounds:
+        print(f"  skip {package}: entry not found", file=sys.stderr)
+        return kotlin_text
+
+    entry_start, entry_end = entry_bounds
+    hashes_blocks = find_all_hashes_in_entry(kotlin_text, entry_start, entry_end)
+
+    modifications = []
+    for hs, he in hashes_blocks:
+        sl_bounds = source_list_bounds_in_hashes(kotlin_text, hs)
+        if sl_bounds is None:
+            continue
+        sl_open, sl_close = sl_bounds
+        if "Source.VERIFIED_DOMAIN_HTTPS" in kotlin_text[sl_open:sl_close]:
+            continue
+
+        close_paren = sl_close - 1
+        last_nl = kotlin_text.rfind("\n", sl_open, close_paren)
+        if last_nl == -1:
+            insert = ", Source.VERIFIED_DOMAIN_HTTPS"
+            modifications.append((close_paren, insert))
+        else:
+            insert_text = f"{S20}Source.VERIFIED_DOMAIN_HTTPS,\n"
+            insert_pos = last_nl + 1
+            modifications.append((insert_pos, insert_text))
+            if kotlin_text[last_nl - 1] != ',':
+                modifications.append((last_nl, ","))
+
+    if not modifications:
+        print(f"  skip {package}: already has VERIFIED_DOMAIN_HTTPS in all blocks", file=sys.stderr)
+        return kotlin_text
+
+    modifications.sort(key=lambda x: -x[0])
+    for pos, insert_text in modifications:
+        kotlin_text = kotlin_text[:pos] + insert_text + kotlin_text[pos:]
+
+    print(
+        f"  modified: {package} ({len(modifications)} Hashes blocks)",
+        file=sys.stderr,
+    )
+    return kotlin_text
+
+
 def find_all_packages_with_source(kotlin_text, source_name):
     """Return sorted list of package names whose entry contains source_name."""
     packages = []
