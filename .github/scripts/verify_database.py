@@ -136,6 +136,42 @@ def _find_apksigner():
     return None
 
 
+def _find_aapt():
+    for root_var in ("ANDROID_SDK_ROOT", "ANDROID_HOME"):
+        sdk_root = os.environ.get(root_var)
+        if not sdk_root:
+            continue
+        bt_dir = os.path.join(sdk_root, "build-tools")
+        if not os.path.isdir(bt_dir):
+            continue
+        for ver in sorted(os.listdir(bt_dir), reverse=True):
+            for name in ("aapt2", "aapt"):
+                aapt = os.path.join(bt_dir, ver, name)
+                if os.path.isfile(aapt) and os.access(aapt, os.X_OK):
+                    return aapt
+    return None
+
+
+def extract_package_name(apk_path):
+    """Extract the package name from an APK's manifest via aapt dump badging."""
+    aapt_path = _find_aapt()
+    if not aapt_path:
+        return None
+    try:
+        result = subprocess.run(
+            [aapt_path, "dump", "badging", apk_path],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        m = re.search(r"package:\s+name='([^']+)'", result.stdout)
+        if m:
+            return m.group(1)
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    return None
+
+
 def _search_output(output):
     m = FP_RE.search(output)
     if m:
@@ -232,7 +268,7 @@ def get_latest_apk_name(index, package):
     return versions[0].get("apkName") if versions else None
 
 
-def check_apk(url, timeout=60):
+def check_apk(url, expected_pkg=None, timeout=60):
     with tempfile.NamedTemporaryFile(suffix=".apk", delete=False) as f:
         apk_path = f.name
     try:
@@ -243,6 +279,10 @@ def check_apk(url, timeout=60):
             return None, "downloaded file is empty"
         if not _is_valid_apk(apk_path):
             return None, "downloaded file is not a valid APK"
+        if expected_pkg:
+            actual_pkg = extract_package_name(apk_path)
+            if actual_pkg and actual_pkg != expected_pkg:
+                return None, f"package name mismatch: expected {expected_pkg}, got {actual_pkg}"
         try:
             fp = extract_fingerprint(apk_path)
         except ExtractionError as e:
@@ -276,7 +316,7 @@ def check_fdroid_source(package, repo_url):
     if not apk_name:
         return None, "package not found in F-Droid repo"
     apk_url = f"{repo_url}/{apk_name}"
-    return check_apk(apk_url)
+    return check_apk(apk_url, expected_pkg=package)
 
 
 def check_google_play(package, timeout=120):
@@ -309,6 +349,10 @@ def check_google_play(package, timeout=120):
 
         if not os.path.getsize(apk_path):
             return None, "downloaded APK is empty"
+
+        actual_pkg = extract_package_name(apk_path)
+        if actual_pkg and actual_pkg != package:
+            return None, f"package name mismatch: expected {package}, got {actual_pkg}"
 
         try:
             fp = extract_fingerprint(apk_path)
@@ -373,7 +417,7 @@ def verify_package(app, source_filter, results, stats):
                 if not link:
                     result["error"] = "no APK link in source entry"
                 else:
-                    actual, err = check_apk(link)
+                    actual, err = check_apk(link, expected_pkg=pkg)
                     result["actual"] = actual
                     result["error"] = err
             elif name in FDROID_REPOS:
