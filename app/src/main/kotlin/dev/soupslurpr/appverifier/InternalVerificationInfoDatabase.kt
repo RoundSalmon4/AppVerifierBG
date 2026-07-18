@@ -4021,7 +4021,8 @@ private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "91:1D:60:44:46:08:4C:A7:F4:76:0B:77:5B:FC:16:0F:A8:70:24:41:24:0A:72:58:64:5D:7A:72:C4:31:2D:27"
@@ -12384,7 +12385,8 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
-                    Source.FDROID
+                    Source.FDROID,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "9E:CD:BF:06:77:DD:50:60:9C:76:C2:BA:05:DB:E3:62:23:23:27:B1:0A:1C:37:CD:58:72:29:93:D9:FE:5D:57"
@@ -14059,7 +14061,8 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             Hashes(
                 listOf(
                     Source.APPVERIFIER,
-                    Source.FDROID
+                    Source.FDROID,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "6A:2F:DC:31:48:04:9C:E0:D5:C6:E8:50:10:72:3B:83:FB:20:7D:20:C7:47:7F:5C:22:AC:53:C8:77:E9:2D:47"
@@ -14179,7 +14182,8 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             ),
             Hashes(
                 listOf(
-                    Source.DIRECT_APK_LINK
+                    Source.DIRECT_APK_LINK,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "5B:DD:27:47:B7:CF:A9:8D:62:9E:4D:44:41:01:A9:CE:DC:E3:32:AD:6A:7F:2A:0B:14:F4:69:ED:93:7F:13:27"
