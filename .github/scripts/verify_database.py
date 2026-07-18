@@ -172,6 +172,11 @@ def extract_package_name(apk_path):
     return None
 
 
+def is_valid_package_name(name):
+    """Check if a string looks like a valid Android package name."""
+    return bool(re.match(r'^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$', name))
+
+
 def _search_output(output):
     m = FP_RE.search(output)
     if m:
@@ -280,6 +285,8 @@ def check_apk(url, expected_pkg=None, timeout=60):
         if not _is_valid_apk(apk_path):
             return None, "downloaded file is not a valid APK"
         if expected_pkg:
+            if not is_valid_package_name(expected_pkg):
+                return None, f"invalid expected package name: {expected_pkg}"
             actual_pkg = extract_package_name(apk_path)
             if actual_pkg and actual_pkg != expected_pkg:
                 return None, f"package name mismatch: expected {expected_pkg}, got {actual_pkg}"
@@ -320,6 +327,9 @@ def check_fdroid_source(package, repo_url):
 
 
 def check_google_play(package, timeout=120):
+    if not is_valid_package_name(package):
+        return None, f"invalid expected package name: {package}"
+
     email = os.environ.get("GOOGLE_PLAY_EMAIL", "")
     aas_token = os.environ.get("GOOGLE_PLAY_AAS_TOKEN", "")
     if not email or not aas_token:
