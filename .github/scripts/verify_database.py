@@ -336,6 +336,18 @@ def check_google_play(package, timeout=120):
 
 def verify_package(app, source_filter, results, stats):
     pkg = app.get("package", "")
+
+    # Collect all fingerprints across all signature blocks for this package.
+    # Some packages (e.g. com.facebook.katana) have multiple signature entries
+    # in data.yml — one with both old and new keys after a Google Play App
+    # Signing rotation, and another with only the old key.  We need to match
+    # against all of them to avoid false mismatches.
+    all_recorded_fps = set()
+    for sig in app.get("signature", []):
+        raw_fp = sig.get("fingerprint", "")
+        for chunk in split_fingerprints(raw_fp):
+            all_recorded_fps.add(normalize_fp(chunk))
+
     for sig in app.get("signature", []):
         raw_fp = sig.get("fingerprint", "")
         recorded = normalize_fp(raw_fp)
@@ -387,6 +399,8 @@ def verify_package(app, source_filter, results, stats):
             elif recorded_chunks and actual in recorded_chunks:
                 result["status"] = "match"
                 result["matched_chunk"] = recorded_chunks.index(actual)
+            elif actual in all_recorded_fps:
+                result["status"] = "match"
             elif actual == recorded:
                 result["status"] = "match"
             else:
