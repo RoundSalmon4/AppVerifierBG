@@ -46,7 +46,7 @@ jobs:
           TARGET="${TARGET_BRANCH:-${GITHUB_REF_NAME:-${{ github.ref_name }}}}"
           echo "Resolved TARGET=${TARGET}"
 
-          if [ "${BLOCK_PUSH_TO_MASTER:-true}" = "true" ] && [ "${TARGET}" = "feature/all-enhancements" ]; then
+          if [ "${BLOCK_PUSH_TO_MASTER:-false}" = "true" ] && [ "${TARGET}" = "feature/all-enhancements" ]; then
             echo "BLOCK_PUSH_TO_MASTER=true → refusing to push to 'feature/all-enhancements'."
             exit 0
           fi

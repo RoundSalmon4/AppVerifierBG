@@ -19,134 +19,151 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Latest Release Info
-        id: get_release
+      - name: Sync all releases to Codeberg
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          latest_release=$(curl -s -H "Authorization: token ${GH_TOKEN}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases?per_page=1")
-
-          tag_name=$(echo "${latest_release}" | jq -r '.[0].tag_name // empty')
-
-          if [ -z "${tag_name}" ]; then
-            echo "No latest release found."
-            exit 1
-          fi
-
-          echo "Latest release tag: ${tag_name}"
-          echo "tag_name=${tag_name}" >> "$GITHUB_ENV"
-
-          echo "${latest_release}" | jq -r '.[0].name // empty' > /tmp/release_name.txt
-          echo "${latest_release}" | jq -r '.[0].body // empty' > /tmp/release_body.txt
-
-          echo "${latest_release}" | jq -r '.[0].assets[] | "\(.name) \(.browser_download_url)"' > assets.txt || true
-
-          if [ ! -s assets.txt ]; then
-            echo "No assets found for ${tag_name}. Exiting."
-            exit 1
-          fi
-
-      - name: Download Assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          while IFS= read -r line; do
-            asset_name=$(echo "$line" | awk '{print $1}')
-            asset_url=$(echo "$line" | awk '{print $2}')
-            if [ -z "${asset_name}" ] || [ -z "${asset_url}" ]; then
-              echo "Skipping malformed asset line: $line"
-              continue
-            fi
-            echo "Downloading asset: ${asset_name} from: ${asset_url}"
-            if curl -fSL -o "${asset_name}" "${asset_url}"; then
-              echo "${asset_name} downloaded successfully."
-            else
-              echo "Failed to download ${asset_name}. Exiting."
-              exit 1
-            fi
-          done < assets.txt
-
-      - name: "[TEST] Skipping Codeberg release creation/upload (NO_SIDE_EFFECTS=true)"
-        if: ${{ vars.NO_SIDE_EFFECTS == 'true' }}
-        run: echo "[TEST] NO_SIDE_EFFECTS=true → Codeberg release creation and asset upload are skipped"
-
-      - name: Upload Assets to Codeberg
-        if: ${{ vars.NO_SIDE_EFFECTS != 'true' }}
-        shell: bash
-        env:
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         run: |
           set -euo pipefail
 
           if [ -z "${CODEBERG_TOKEN:-}" ]; then
-            echo "ERROR: CODEBERG_TOKEN is not set; cannot create/upload release on Codeberg."
+            echo "ERROR: CODEBERG_TOKEN is not set."
             exit 1
           fi
 
-          if [ -z "${tag_name:-}" ]; then
-            echo "ERROR: tag_name env is not set."
-            exit 1
-          fi
+          PAGE=1
+          TOTAL_SYNCED=0
+          TOTAL_SKIPPED=0
 
-          echo "Checking for release with tag ${tag_name} on Codeberg."
-          release=$(curl -s -H "Authorization: token ${CODEBERG_TOKEN}" \
-            "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${tag_name}")
+          while true; do
+            echo "=== Fetching GitHub releases page ${PAGE} ==="
+            RELEASES=$(curl -sS \
+              -H "Authorization: token ${GH_TOKEN}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases?per_page=30&page=${PAGE}")
 
-          release_id=""
-          if echo "${release}" | jq -e '.id' >/dev/null 2>&1; then
-            echo "Release for tag ${tag_name} found."
-            release_id=$(echo "${release}" | jq -r '.id')
-          else
-            echo "Creating new release for tag ${tag_name}."
-            NAME=$(cat /tmp/release_name.txt)
-            [ -z "${NAME}" ] && NAME="AppVerifierBG ${tag_name}"
-            BODY=$(cat /tmp/release_body.txt)
-            jq -n --arg tag "${tag_name}" --arg name "${NAME}" --arg body "${BODY}" \
-              '{ tag_name: $tag, target_commitish: "feature/all-enhancements", name: $name, body: $body }' > /tmp/release_data.json
-
-            release_response=$(curl -s -X POST \
-              -H "Authorization: token ${CODEBERG_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -d @/tmp/release_data.json \
-              "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases")
-
-            echo "Release creation response: ${release_response}"
-            release_id=$(echo "${release_response}" | jq -r '.id // empty')
-
-            if [ -z "${release_id}" ] || [ "${release_id}" = "null" ]; then
-              echo "ERROR: Failed to create Codeberg release for ${tag_name}."
-              exit 1
+            COUNT=$(echo "${RELEASES}" | jq 'length')
+            if [ "${COUNT}" = "0" ] || [ "${COUNT}" = "null" ]; then
+              echo "No more releases."
+              break
             fi
-          fi
 
-          for asset_name in *.apk *.txt; do
-            if [ -f "${asset_name}" ]; then
-              upload_url="https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${release_id}/assets?name=${asset_name}"
-              echo "Uploading asset ${asset_name} to release for tag ${tag_name}."
+            echo "Found ${COUNT} releases on page ${PAGE}."
 
-              response=$(curl -s -X POST \
-                -H "Authorization: token ${CODEBERG_TOKEN}" \
-                -H "Content-Type: application/octet-stream" \
-                --data-binary @"${asset_name}" \
-                "${upload_url}" \
-                -w "HTTPSTATUS:%{http_code}")
+            for i in $(seq 0 $((COUNT - 1))); do
+              TAG=$(echo "${RELEASES}" | jq -r ".[$i].tag_name // empty")
+              NAME=$(echo "${RELEASES}" | jq -r ".[$i].name // empty")
+              BODY=$(echo "${RELEASES}" | jq -r ".[$i].body // empty")
+              PRERELEASE=$(echo "${RELEASES}" | jq -r ".[$i].prerelease // false")
 
-              http_code=$(echo "${response}" | sed -e 's/.*HTTPSTATUS://')
-
-              echo "Upload response for ${asset_name}: ${response}"
-
-              if [ "${http_code}" -ne 201 ]; then
-                echo "Failed to upload ${asset_name}. HTTP Status: ${http_code}."
-                exit 1
+              if [ -z "${TAG}" ]; then
+                continue
               fi
 
-              echo "Uploaded ${asset_name} successfully."
-              sleep 2
-            else
-              echo "Asset ${asset_name} does not exist, skipping."
-            fi
+              echo ""
+              echo "--- Processing ${TAG} ---"
+
+              # Check if release exists on Codeberg
+              CB_CHECK=$(curl -sS \
+                -H "Authorization: token ${CODEBERG_TOKEN}" \
+                "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/tags/${TAG}" || true)
+              CB_MSG=$(echo "${CB_CHECK}" | jq -r '.message // empty')
+
+              if [ "${CB_MSG}" = "The target couldn't be found." ] || [ "${CB_MSG}" = "Not Found" ] || [ -z "${CB_CHECK}" ] || [ "${CB_CHECK}" = "null" ]; then
+                # Create release on Codeberg
+                echo "Creating release ${TAG} on Codeberg..."
+                [ -z "${NAME}" ] || [ "${NAME}" = "null" ] && NAME="AppVerifierBG ${TAG}"
+                RELEASE_DATA=$(jq -n --arg tag "${TAG}" --arg name "${NAME}" --arg body "${BODY}" \
+                  '{ tag_name: $tag, target_commitish: "feature/all-enhancements", name: $name, body: $body }')
+                CREATE_RESP=$(curl -sS -X POST \
+                  -H "Authorization: token ${CODEBERG_TOKEN}" \
+                  -H "Content-Type: application/json" \
+                  -d "${RELEASE_DATA}" \
+                  "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases" \
+                  -w "\nHTTPSTATUS:%{http_code}")
+                CREATE_CODE=$(echo "${CREATE_RESP}" | tail -1 | sed 's/HTTPSTATUS://')
+                if [ "${CREATE_CODE}" -ne 201 ]; then
+                  echo "Failed to create release ${TAG} (HTTP ${CREATE_CODE}). Skipping."
+                  TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
+                  continue
+                fi
+                CB_RELEASE_ID=$(echo "${CREATE_RESP}" | sed '$d' | jq -r '.id')
+                echo "Created release ${TAG} (id=${CB_RELEASE_ID})."
+              else
+                CB_RELEASE_ID=$(echo "${CB_CHECK}" | jq -r '.id')
+                echo "Release ${TAG} already exists on Codeberg (id=${CB_RELEASE_ID})."
+
+                # Update name/body to match GitHub
+                [ -z "${NAME}" ] || [ "${NAME}" = "null" ] && NAME="AppVerifierBG ${TAG}"
+                PATCH_DATA=$(jq -n --arg name "${NAME}" --arg body "${BODY}" '{ name: $name, body: $body }')
+                curl -sS -X PATCH \
+                  -H "Authorization: token ${CODEBERG_TOKEN}" \
+                  -H "Content-Type: application/json" \
+                  -d "${PATCH_DATA}" \
+                  "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${CB_RELEASE_ID}" > /dev/null
+              fi
+
+              # Get existing assets on Codeberg
+              CB_ASSETS=$(curl -sS \
+                -H "Authorization: token ${CODEBERG_TOKEN}" \
+                "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${CB_RELEASE_ID}/assets" | \
+                jq -r '.[].name' 2>/dev/null || true)
+
+              # Get GitHub assets
+              GH_ASSETS=$(echo "${RELEASES}" | jq -r ".[$i].assets[] | \"\(.name) \(.browser_download_url)\"" || true)
+
+              if [ -z "${GH_ASSETS}" ]; then
+                echo "No assets for ${TAG}."
+                TOTAL_SYNCED=$((TOTAL_SYNCED + 1))
+                continue
+              fi
+
+              while IFS= read -r line; do
+                ASSET_NAME=$(echo "$line" | awk '{print $1}')
+                ASSET_URL=$(echo "$line" | awk '{print $2}')
+
+                if [ -z "${ASSET_NAME}" ] || [ -z "${ASSET_URL}" ]; then
+                  continue
+                fi
+
+                # Skip if asset already exists on Codeberg
+                if echo "${CB_ASSETS}" | grep -qxF "${ASSET_NAME}"; then
+                  echo "  Asset ${ASSET_NAME} already exists, skipping."
+                  continue
+                fi
+
+                echo "  Downloading ${ASSET_NAME}..."
+                if ! curl -fSL --retry 3 --retry-delay 2 --max-time 120 -o "${ASSET_NAME}" "${ASSET_URL}"; then
+                  echo "  Failed to download ${ASSET_NAME}. Skipping."
+                  continue
+                fi
+
+                echo "  Uploading ${ASSET_NAME} to Codeberg..."
+                UPLOAD_RESP=$(curl -sS -X POST \
+                  -H "Authorization: token ${CODEBERG_TOKEN}" \
+                  -H "Content-Type: application/octet-stream" \
+                  --data-binary @"${ASSET_NAME}" \
+                  "https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG/releases/${CB_RELEASE_ID}/assets?name=${ASSET_NAME}" \
+                  -w "\nHTTPSTATUS:%{http_code}")
+                UPLOAD_CODE=$(echo "${UPLOAD_RESP}" | tail -1 | sed 's/HTTPSTATUS://')
+                if [ "${UPLOAD_CODE}" -ne 201 ]; then
+                  echo "  Failed to upload ${ASSET_NAME} (HTTP ${UPLOAD_CODE})."
+                else
+                  echo "  Uploaded ${ASSET_NAME} successfully."
+                fi
+                sleep 2
+                rm -f "${ASSET_NAME}"
+
+              done <<< "${GH_ASSETS}"
+
+              TOTAL_SYNCED=$((TOTAL_SYNCED + 1))
+              sleep 1
+            done
+
+            PAGE=$((PAGE + 1))
           done
+
+          echo ""
+          echo "=== Summary ==="
+          echo "Synced: ${TOTAL_SYNCED}"
+          echo "Skipped: ${TOTAL_SKIPPED}"

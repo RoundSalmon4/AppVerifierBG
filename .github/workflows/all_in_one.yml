@@ -1,8 +1,12 @@
 # ============================================================
 # APPVERIFIER BG — CODEBERG SYNC ORCHESTRATOR — QUICK START
 #
+# Triggers:
+#   - workflow_dispatch (manual, pick mode)
+#   - workflow_run (Nightly Build completed → production)
+#
 # Dispatches in order:
-#   codeberg.yml → (release only) codeberg_release.yml → codeberg_notes.yml
+#   codeberg.yml → codeberg_release.yml → codeberg_notes.yml
 #
 # ---------- GLOBAL VARIABLES (set once in GitHub) ----------
 # Go to: Settings → Secrets and variables → Actions → Variables
@@ -15,6 +19,7 @@
 #    - true  = Prevents any workflow from pushing to
 #              feature/all-enhancements accidentally.
 #    - false = Allows pushes to feature/all-enhancements (production).
+#              Default: false.
 #
 # ---------- RUN MODES ----------
 #
@@ -37,16 +42,16 @@
 # MODE D — PRODUCTION (real sync)
 #   mode: production
 #   NO_SIDE_EFFECTS = false  (repo variable, required)
-#   BLOCK_PUSH_TO_MASTER = false (optional)
-#   → Real sync: branch pushed, release created, notes synced.
+#   BLOCK_PUSH_TO_MASTER = false (optional, default false)
+#   → Real sync: branch pushed, releases synced, notes synced.
 #   → Final result: SUCCESS.
 #
 # ---------- BEST PRACTICES ----------
 # • For safe end‑to‑end testing, always use safe_test.
 # • For checking orchestrator logic only, use plan.
 # • For actual production syncs, use production.
-# • Leave BLOCK_PUSH_TO_MASTER=true unless you're sure you
-#   want to write to feature/all-enhancements.
+# • Leave BLOCK_PUSH_TO_MASTER=true only if you want to
+#   prevent branch pushes during testing.
 #
 # ============================================================
 name: All-in-One Codeberg Sync
@@ -64,8 +69,6 @@ on:
           - plan_fail
           - safe_test
           - production
-  release:
-    types: [published]
   workflow_run:
     workflows: ["Nightly Build"]
     types: [completed]
@@ -77,7 +80,7 @@ permissions:
   deployments: write
 
 env:
-  MODE: ${{ github.event.inputs.mode || (github.event_name == 'release' && 'production') || (github.event_name == 'workflow_run' && 'production') || '' }}
+  MODE: ${{ github.event.inputs.mode || (github.event_name == 'workflow_run' && 'production') || '' }}
   IS_PLAN: ${{ github.event.inputs.mode == 'plan' || github.event.inputs.mode == 'plan_fail' }}
   IS_TEST: ${{ github.event.inputs.mode == 'plan_fail' || github.event.inputs.mode == 'safe_test' }}
   OWNER: RoundSalmon4
@@ -171,7 +174,7 @@ jobs:
     name: Release sync (codeberg_release.yml)
     runs-on: ubuntu-latest
     needs: dispatch_codeberg
-    if: ${{ github.event_name == 'release' }}
+    if: ${{ always() && env.MODE == 'production' }}
     steps:
       - name: "[PLAN] Would dispatch .github/workflows/codeberg_release.yml"
         if: ${{ env.IS_PLAN == 'true' }}
@@ -211,7 +214,7 @@ jobs:
     name: Notes sync (codeberg_notes.yml)
     runs-on: ubuntu-latest
     needs: dispatch_codeberg_release
-    if: ${{ always() && github.event_name == 'release' && needs.dispatch_codeberg_release.result != 'failure' }}
+    if: ${{ always() && needs.dispatch_codeberg_release.result != 'failure' }}
     steps:
       - name: "[PLAN] Would dispatch .github/workflows/codeberg_notes.yml"
         if: ${{ env.IS_PLAN == 'true' }}
@@ -264,8 +267,8 @@ jobs:
           if [ "${{ env.IS_TEST }}" = "true" ]; then
             echo "Test mode enabled: intentionally failing."
             exit 1
-          elif [ "${{ needs.dispatch_codeberg_release.result }}" = "skipped" ] && [ "${{ github.event_name }}" != "release" ]; then
-            echo "Release sync was skipped (not a release event). Only branch mirror ran."
+          elif [ "${{ needs.dispatch_codeberg_release.result }}" = "skipped" ]; then
+            echo "Release sync was skipped (production not set). Only branch mirror ran."
           else
             echo "Test mode disabled: finishing successfully."
           fi
