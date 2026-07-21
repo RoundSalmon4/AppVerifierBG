@@ -102,7 +102,7 @@ jobs:
     needs: echo_flags
     steps:
       - name: Checkout repo at REF
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ env.REF }}
           fetch-depth: 1
