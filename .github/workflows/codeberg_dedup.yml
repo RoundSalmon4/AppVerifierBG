@@ -1,0 +1,153 @@
+name: Remove Duplicate Codeberg Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (preview only, no deletions)"
+        required: false
+        default: "true"
+        type: boolean
+      tag:
+        description: "Release tag to clean (blank = all releases)"
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  dedup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove duplicate assets
+        shell: bash
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          TARGET_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CODEBERG_TOKEN:-}" ]; then
+            echo "ERROR: CODEBERG_TOKEN is not set."
+            exit 1
+          fi
+
+          CB_API="https://codeberg.org/api/v1/repos/unwanted9855/AppVerifierBG"
+          TOTAL_DELETIONS=0
+          TOTAL_SKIPPED=0
+
+          fetch_all_pages() {
+            local url="$1"
+            local result="[]"
+            local page=1
+            while true; do
+              local sep="?"
+              echo "${url}" | grep -q "?" && sep="&"
+              local resp
+              resp=$(curl -sS -H "Authorization: token ${CODEBERG_TOKEN}" "${url}${sep}page=${page}&limit=50")
+              local count
+              count=$(echo "${resp}" | jq 'length')
+              if [ "${count}" = "0" ] || [ "${count}" = "null" ]; then
+                break
+              fi
+              result=$(echo "${result}" "${resp}" | jq -s '.[0] + .[1]')
+              if [ "${count}" -lt 50 ]; then
+                break
+              fi
+              page=$((page + 1))
+            done
+            echo "${result}"
+          }
+
+          echo "Fetching releases from Codeberg..."
+
+          if [ -n "${TARGET_TAG:-}" ]; then
+            RELEASE=$(curl -sS \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              "${CB_API}/releases/tags/${TARGET_TAG}" || true)
+            MSG=$(echo "${RELEASE}" | jq -r '.message // empty')
+            if [ "${MSG}" = "The target couldn't be found." ] || [ "${MSG}" = "Not Found" ] || [ -z "${RELEASE}" ] || [ "${RELEASE}" = "null" ]; then
+              echo "Release ${TARGET_TAG} not found on Codeberg."
+              exit 0
+            fi
+            RELEASES="[${RELEASE}]"
+          else
+            RELEASES=$(fetch_all_pages "${CB_API}/releases")
+          fi
+
+          R_COUNT=$(echo "${RELEASES}" | jq 'length')
+          echo "Processing ${R_COUNT} release(s)."
+          echo ""
+
+          for i in $(seq 0 $((R_COUNT - 1))); do
+            TAG=$(echo "${RELEASES}" | jq -r ".[$i].tag_name // empty")
+            REL_ID=$(echo "${RELEASES}" | jq -r ".[$i].id // empty")
+
+            if [ -z "${TAG}" ] || [ -z "${REL_ID}" ]; then
+              continue
+            fi
+
+            echo "--- ${TAG} ---"
+
+            ASSETS=$(curl -sS \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              "${CB_API}/releases/${REL_ID}/assets")
+
+            A_COUNT=$(echo "${ASSETS}" | jq 'length')
+            if [ "${A_COUNT}" -le 1 ]; then
+              echo "  ${A_COUNT} asset(s), no duplicates."
+              continue
+            fi
+
+            DUPES=$(echo "${ASSETS}" | jq -r '
+              group_by(.name) |
+              map(select(length > 1)) |
+              if length == 0 then [] else . end
+            ')
+
+            D_COUNT=$(echo "${DUPES}" | jq 'length')
+            if [ "${D_COUNT}" = "0" ]; then
+              echo "  ${A_COUNT} asset(s), no duplicates."
+              continue
+            fi
+
+            for d in $(seq 0 $((D_COUNT - 1))); do
+              GROUP=$(echo "${DUPES}" | jq -r ".[$d]")
+              DNAME=$(echo "${GROUP}" | jq -r ".[0].name")
+              G_COUNT=$(echo "${GROUP}" | jq 'length')
+              KEEP=$(echo "${GROUP}" | jq -r 'sort_by(.id) | last | .id')
+              echo "  '${DNAME}' x${G_COUNT} — keeping asset #${KEEP}"
+
+              for a in $(seq 0 $((G_COUNT - 1))); do
+                AID=$(echo "${GROUP}" | jq -r ".[$a].id")
+                if [ "${AID}" = "${KEEP}" ]; then
+                  continue
+                fi
+
+                TOTAL_DELETIONS=$((TOTAL_DELETIONS + 1))
+                if [ "${DRY_RUN}" = "true" ]; then
+                  echo "    [DRY RUN] Would delete asset #${AID}"
+                else
+                  echo "    Deleting asset #${AID}..."
+                  HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X DELETE \
+                    -H "Authorization: token ${CODEBERG_TOKEN}" \
+                    "${CB_API}/releases/assets/${AID}")
+                  if [ "${HTTP_CODE}" = "204" ]; then
+                    echo "    Deleted."
+                  else
+                    echo "    Failed (HTTP ${HTTP_CODE})."
+                    TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
+                    TOTAL_DELETIONS=$((TOTAL_DELETIONS - 1))
+                  fi
+                  sleep 1
+                fi
+              done
+            done
+          done
+
+          echo ""
+          echo "=== Summary ==="
+          echo "Dry run: ${DRY_RUN}"
+          echo "Deletions: ${TOTAL_DELETIONS}"
+          echo "Failed: ${TOTAL_SKIPPED}"
