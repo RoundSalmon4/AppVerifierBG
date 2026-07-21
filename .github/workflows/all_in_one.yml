@@ -174,7 +174,7 @@ jobs:
     name: Release sync (codeberg_release.yml)
     runs-on: ubuntu-latest
     needs: dispatch_codeberg
-    if: ${{ always() && env.MODE == 'production' }}
+    if: ${{ always() && (github.event.inputs.mode == 'production' || github.event_name == 'workflow_run') }}
     steps:
       - name: "[PLAN] Would dispatch .github/workflows/codeberg_release.yml"
         if: ${{ env.IS_PLAN == 'true' }}
