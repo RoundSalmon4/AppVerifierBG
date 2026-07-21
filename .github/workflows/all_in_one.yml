@@ -3,6 +3,7 @@
 #
 # Triggers:
 #   - workflow_dispatch (manual, pick mode)
+#   - push to feature/all-enhancements (production)
 #   - workflow_run (Nightly Build completed → production)
 #
 # Dispatches in order:
@@ -69,6 +70,9 @@ on:
           - plan_fail
           - safe_test
           - production
+  push:
+    branches:
+      - feature/all-enhancements
   workflow_run:
     workflows: ["Nightly Build"]
     types: [completed]
@@ -80,7 +84,7 @@ permissions:
   deployments: write
 
 env:
-  MODE: ${{ github.event.inputs.mode || (github.event_name == 'workflow_run' && 'production') || '' }}
+  MODE: ${{ github.event.inputs.mode || (github.event_name == 'workflow_run' && 'production') || (github.event_name == 'push' && 'production') || '' }}
   IS_PLAN: ${{ github.event.inputs.mode == 'plan' || github.event.inputs.mode == 'plan_fail' }}
   IS_TEST: ${{ github.event.inputs.mode == 'plan_fail' || github.event.inputs.mode == 'safe_test' }}
   OWNER: RoundSalmon4
@@ -174,7 +178,7 @@ jobs:
     name: Release sync (codeberg_release.yml)
     runs-on: ubuntu-latest
     needs: dispatch_codeberg
-    if: ${{ always() && (github.event.inputs.mode == 'production' || github.event_name == 'workflow_run') }}
+    if: ${{ always() && (github.event.inputs.mode == 'production' || github.event_name == 'workflow_run' || github.event_name == 'push') }}
     steps:
       - name: "[PLAN] Would dispatch .github/workflows/codeberg_release.yml"
         if: ${{ env.IS_PLAN == 'true' }}

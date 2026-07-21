@@ -2,14 +2,7 @@ name: Sync to Codeberg
 
 on:
   workflow_call:
-  push:
-    branches:
-      - feature/all-enhancements
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Nightly Build"]
-    types:
-      - completed
 
 jobs:
   sync:
