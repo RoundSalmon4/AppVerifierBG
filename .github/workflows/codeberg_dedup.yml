@@ -132,7 +132,7 @@ jobs:
                   echo "    Deleting asset #${AID}..."
                   HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X DELETE \
                     -H "Authorization: token ${CODEBERG_TOKEN}" \
-                    "${CB_API}/releases/assets/${AID}")
+                    "${CB_API}/releases/${REL_ID}/assets/${AID}")
                   if [ "${HTTP_CODE}" = "204" ]; then
                     echo "    Deleted."
                   else
