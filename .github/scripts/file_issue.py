@@ -46,6 +46,8 @@ def is_real_failure(r):
     err = r.get('error') or ''
     return not (
         'PAID APP' in err
+        or 'not purchased' in err.lower()
+        or 'no download url' in err.lower()
         or err.startswith('unsupported source type')
         or is_transient(err)
     )

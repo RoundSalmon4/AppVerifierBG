@@ -372,14 +372,14 @@ def check_google_play(package, timeout=120):
             return None, "could not extract certificate fingerprint"
         return fp, None
     except GooglePlayError as e:
-        msg = str(e)
-        if "400" in msg and "purchase" in msg:
-            return None, "PAID APP — requires purchase (HTTP 400 on purchase endpoint)"
+        msg = str(e).lower()
+        if ("400" in msg and "purchase" in msg) or "not purchased" in msg or "no download url" in msg:
+            return None, "PAID APP — requires purchase or not available for download"
         return None, f"Google Play download error: {e}"
     except Exception as e:
-        msg = str(e)
-        if "400" in msg and "purchase" in msg:
-            return None, "PAID APP — requires purchase (HTTP 400 on purchase endpoint)"
+        msg = str(e).lower()
+        if ("400" in msg and "purchase" in msg) or "not purchased" in msg or "no download url" in msg:
+            return None, "PAID APP — requires purchase or not available for download"
         return None, f"Google Play download error: {e}"
     finally:
         try:
