@@ -7,7 +7,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Domain verification now cross-checks signing certificate fingerprints against assetlinks.json.
 - Domain verification dialog text clarified to distinguish package name association from signing key verification.
 
-## 2026-07-17
+## v0.7.0 (2026-07-17)
 
 - Theme customization: follow system, light, or dark mode.
 - AMOLED black theme for OLED screens (dark mode only).
@@ -15,12 +15,12 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Primary and secondary color pickers with 12 preset swatches.
 - MATCH info dialogs now follow the chosen secondary color instead of hardcoded gold.
 
-## 2026-07-16
+## v0.6.3 (2026-07-16)
 
 - .apks, .apkm, and .xapk split APK bundles are now supported when verifying APK files.
 - Smart ZIP entry selection picks the base APK from split bundles automatically.
 
-## 2026-07-15
+## v0.6.2 (2026-07-15)
 
 - Confirmation dialog before clearing user database to prevent accidental data loss.
 - Snackbar feedback after successful database export.
@@ -34,12 +34,12 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Removed .apks file from release assets for the time being.
 - Fixed Verify APK File description to accurately reflect supported formats.
 
-## 2026-06-30
+## v0.6.1 (2026-06-30)
 
 - No browser fallback when tapping "View source code" in Settings.
 - Fixed crash when tapping "View source code" in Settings on a device with no browser installed.
 
-## 2026-06-27
+## v0.6.0 (2026-06-27)
 
 - Hash-only verification: paste or share a SHA-256 hash to find matching installed apps. ([#53](https://github.com/RoundSalmon4/AppVerifierBG/issues/53))
 - HashPicker screen: pick the right app when multiple share the same signing hash.
@@ -47,33 +47,33 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Error cards now have a Done button to return to the main screen.
 - Fixed navigation race condition from HashPicker to app details.
 
-## 2026-06-23
+## v0.5.6 (2026-06-23)
 
 - Fixed Verify APK File navigation race condition. ([#48](https://github.com/RoundSalmon4/AppVerifierBG/issues/48))
 
-## 2026-06-22
+## v0.5.5 (2026-06-22)
 
 - All prior GitHub release assets lost due to user error. Previous stable
   versions remain available on F-Droid.
 
-## 2026-06-19
+## v0.5.4 (2026-06-19)
 
 - HTTPS domain verification backfilled to existing database entries.
 - Code audit: cleaned up unused params, null checks, and visibility.
 - Fixed sealed class compile error in import dialog state.
 
-## 2026-06-18
+## v0.5.3 (2026-06-18)
 
 - Domain verification now distinguishes between HTTPS (assetlinks.json) and DNS (TXT record) verification methods in the domain info dialog.
 - Internal database generation updated for upstream source name changes.
 
-## 2026-06-17
+## v0.5.2 (2026-06-17)
 
 - Import user database moved from Settings to the main screen for easier access.
 - Import now validates the file type before reading. Non-text selections show an error immediately.
 - Import summary now shows total entries found, how many apps were verified (new, installed), and how many were updated (already in user DB).
 
-## 2026-06-13
+## v0.5.1 (2026-06-13)
 
 - No more "App not responding" pop-ups. Verification statuses load in the background. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
 - Back navigation from app details is instant. ([#26](https://github.com/RoundSalmon4/AppVerifierBG/issues/26))
@@ -83,7 +83,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 - App list sorting and search are faster and use less memory.
 - Info dialogs are more reliable.
 
-## 2026-06-12
+## v0.5.0 (2026-06-12)
 
 - Status chips now show NO MATCH instead of FAILURE, and NONE instead of UNKNOWN.
 - Filter chip renamed from "Failures only" to "Mismatches only".
@@ -94,11 +94,11 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Large APK files are handled more reliably without crashing.
 - Internal database generation hardened against edge cases in source data.
 
-## 2026-06-11
+## v0.4.0 (2026-06-11)
 
 - Internal database status chip now shows separate Hash and Domain info with dedicated dialogs.
 
-## 2026-06-09
+## v0.3.0 (2026-06-09)
 
 - .apks split APK container support.
 - Normalized text sizing across error cards, labels, and dialogs.
@@ -111,7 +111,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Privacy policy updated.
 - Added .apks split APK container support.
 
-## 2026-06-07
+## v0.2.0 (2026-06-07)
 
 - Blue/gold theme replaces dynamic color.
 - Startup screen redesigned with card-based action items.

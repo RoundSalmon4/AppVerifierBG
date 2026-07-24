@@ -11,8 +11,8 @@ on:
           - build
           - verify
           - publish
-      changelog_date:
-        description: 'Changelog date (YYYY-MM-DD) for release notes. Defaults to today.'
+      changelog_version:
+        description: 'Version (e.g. 0.7.0) for release notes. Defaults to current version.'
         required: false
         default: ''
 
@@ -280,9 +280,9 @@ jobs:
         if: github.event.inputs.mode == 'publish'
         id: body
         env:
-          CHANGELOG_DATE: ${{ github.event.inputs.changelog_date }}
+          CHANGELOG_VERSION: ${{ github.event.inputs.changelog_version }}
         run: |
-          DATE="${CHANGELOG_DATE:-$(date -u +'%Y-%m-%d')}"
+          VERSION="${CHANGELOG_VERSION:-${{ steps.version.outputs.version }}}"
           cat > /tmp/release_body.md << BODYEOF
           **Version:** v${{ steps.version.outputs.version }}
 
@@ -302,11 +302,11 @@ jobs:
 
           BODYEOF
 
-          if grep -q "^## $DATE$" CHANGELOG.md; then
+          if grep -q "^## v${VERSION} " CHANGELOG.md; then
             echo "" >> /tmp/release_body.md
             echo "## What's Changed" >> /tmp/release_body.md
             echo "" >> /tmp/release_body.md
-            awk "/^## $DATE"'$/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md >> /tmp/release_body.md
+            awk "/^## v${VERSION}"' /{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md >> /tmp/release_body.md
           fi
 
           echo "path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
