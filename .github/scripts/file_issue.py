@@ -17,6 +17,7 @@ partial = []
 real_fail = []
 
 TRANSIENT_ERRORS = (
+    'could not fetch',
     'could not resolve',
     'couldn\'t resolve',
     'connection refused',
