@@ -138,7 +138,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 - Releases now use a proper semver version with its own release workflow instead of piggybacking on the nightly tag.
 - Hash matching now allows the reference to have extra signatures.
 
-## 2026-06-01
+## v0.1.0 (2026-06-01)
 
 - Self-verification now shows a SKIPPED status instead of a misleading hash mismatch.
 - Apps using signature rotation / key rotation no longer show false hash mismatches.
