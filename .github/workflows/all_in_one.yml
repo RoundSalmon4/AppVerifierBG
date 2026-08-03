@@ -109,7 +109,7 @@ jobs:
     needs: echo_flags
     steps:
       - name: Checkout repo at REF
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.REF }}
           fetch-depth: 1
@@ -144,7 +144,7 @@ jobs:
         run: echo "[PLAN] Would dispatch .github/workflows/codeberg.yml on ref ${{ env.REF }}"
       - name: Dispatch and wait (codeberg.yml)
         if: ${{ env.IS_PLAN != 'true' }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           WORKFLOW_FILE: .github/workflows/codeberg.yml
         with:
@@ -185,7 +185,7 @@ jobs:
         run: echo "[PLAN] Would dispatch .github/workflows/codeberg_release.yml on ref ${{ env.REF }}"
       - name: Dispatch and wait (codeberg_release.yml)
         if: ${{ env.IS_PLAN != 'true' }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           WORKFLOW_FILE: .github/workflows/codeberg_release.yml
         with:
@@ -226,7 +226,7 @@ jobs:
         run: echo "[PLAN] Would dispatch .github/workflows/codeberg_notes.yml on ref ${{ env.REF }}"
       - name: Dispatch and wait (codeberg_notes.yml)
         if: ${{ env.IS_PLAN != 'true' }}
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           WORKFLOW_FILE: .github/workflows/codeberg_notes.yml
         with:
