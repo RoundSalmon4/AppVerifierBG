@@ -36,6 +36,7 @@ TRANSIENT_ERRORS = (
     'the read operation timed out',
     'the write operation timed out',
     'remote end closed connection',
+    'server error',
 )
 
 def is_transient(err):
