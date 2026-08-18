@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Help
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DockedSearchBar
@@ -72,6 +73,7 @@ import dev.soupslurpr.appverifier.data.SimpleVerificationStatus
 import dev.soupslurpr.appverifier.data.UserDatabaseEntry
 import dev.soupslurpr.appverifier.data.VerificationInfo
 import dev.soupslurpr.appverifier.ui.theme.ClipboardBlue
+import dev.soupslurpr.appverifier.ui.theme.InfoTeal
 import dev.soupslurpr.appverifier.ui.theme.UserDbPurple
 import dev.soupslurpr.appverifier.ui.theme.WarningOrange
 import androidx.compose.runtime.DisposableEffect
@@ -794,7 +796,14 @@ fun AppItem(
                                     SimpleVerificationStatus.FAILURE.color,
                                 )
                             }
-                            InternalDatabaseStatus.NOT_FOUND -> {}
+                            InternalDatabaseStatus.NOT_FOUND -> {
+                                Icon(
+                                    Icons.Outlined.Help,
+                                    "No entry in internal database",
+                                    Modifier,
+                                    InfoTeal,
+                                )
+                            }
                         }
                     }
                     if (showClipboardCheckmark && isClipboardVerified &&
