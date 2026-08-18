@@ -2,6 +2,10 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## v0.7.1 (2026-08-19)
+
+- Added teal question-mark icon next to apps that have no entry in the internal database.
+
 ## 2026-07-18
 
 - Domain verification now cross-checks signing certificate fingerprints against assetlinks.json.
