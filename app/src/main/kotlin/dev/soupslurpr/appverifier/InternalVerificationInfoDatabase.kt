@@ -8911,6 +8911,21 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.raiiware.forcestophelper",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.FDROID
+                ),
+                listOf(
+                    "CE:F2:1A:F3:54:DB:78:40:34:61:A8:D2:A1:FB:5A:1E:04:D7:69:93:25:FB:B6:3A:27:C3:D4:D2:8C:ED:4F:EB"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.razeeman.util.simpletimetracker",
         listOf(
             Hashes(
@@ -10216,6 +10231,10 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.termux",
         listOf(
@@ -10250,10 +10269,6 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "com.termux.api",
         listOf(
@@ -13671,6 +13686,10 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "fr.emersion.goguma.play",
         listOf(
@@ -13686,10 +13705,6 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "fr.fan.wallet",
         listOf(
@@ -14779,6 +14794,21 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "BA:F0:B1:5A:78:40:D7:78:2C:05:E4:BD:8B:99:D3:A6:C5:37:51:97:65:A9:36:88:FD:77:45:31:27:E1:E6:51"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "marto.rtl_tcp_andro",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.DIRECT_APK_LINK,
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "00:0F:4F:FF:70:CA:CA:D5:02:BB:35:3F:7F:E0:49:68:2D:93:75:F7:F9:EB:CA:8D:75:40:22:A9:D6:2A:A0:48"
                 ),
                 false
             )
@@ -17596,6 +17626,10 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "org.wikipedia",
         listOf(
@@ -17625,10 +17659,6 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "org.woheller69.whobird",
         listOf(
