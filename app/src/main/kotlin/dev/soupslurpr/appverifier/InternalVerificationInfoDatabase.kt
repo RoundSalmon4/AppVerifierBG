@@ -15108,7 +15108,8 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             Hashes(
                 listOf(
                     Source.DIRECT_APK_LINK,
-                    Source.FDROID
+                    Source.FDROID,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "A5:76:9B:88:D3:C5:00:F9:C5:8C:69:39:A7:B0:9D:C2:93:63:0C:8B:93:B6:9F:44:57:88:80:60:BF:1F:AA:43"
