@@ -4,6 +4,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -23,8 +24,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Search
@@ -163,8 +164,13 @@ fun AppListScreen(
     var isLoadingAppData by remember { mutableStateOf(true) }
     var appDataMap by remember { mutableStateOf<Map<String, AppListData>>(emptyMap()) }
 
-    val listState = rememberSaveable(saver = LazyListState.Saver) {
-        LazyListState()
+    var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
+    val listState = rememberLazyListState()
+
+    val onAppItemClicked: (String, String, Hashes, Drawable, InternalDatabaseInfo) -> Unit = { n, p, h, i, info ->
+        savedScrollIndex = listState.firstVisibleItemIndex
+        Log.d("AppListScreen", "Capturing scroll index $savedScrollIndex before opening ${p}")
+        onClickAppItem(n, p, h, i, info)
     }
 
     val packageHashes: Map<String, Hashes> = appDataMap.mapValues { it.value.hashes }
@@ -328,6 +334,13 @@ fun AppListScreen(
             }
         } else {
             sorted
+        }
+    }
+
+    LaunchedEffect(isLoadingAppData) {
+        if (!isLoadingAppData && savedScrollIndex > 0 && listState.firstVisibleItemIndex == 0) {
+            Log.d("AppListScreen", "Restoring scroll to index $savedScrollIndex")
+            listState.scrollToItem(savedScrollIndex)
         }
     }
 
@@ -615,7 +628,7 @@ fun AppListScreen(
                             packageName = pkg.packageName,
                             hashes = hashes,
                             icon = icon,
-                            onClickAppItem = onClickAppItem,
+                            onClickAppItem = onAppItemClicked,
                             internalDatabaseInfo = internalDbInfo,
                             showInternalDbIcon = showInternalDbIcon,
                             showUserDbIcon = showUserDbIcon,
@@ -634,7 +647,7 @@ fun AppListScreen(
                         packageName = pkg.packageName,
                         hashes = hashes,
                         icon = icon,
-                        onClickAppItem = onClickAppItem,
+                        onClickAppItem = onAppItemClicked,
                         internalDatabaseInfo = internalDbInfo,
                         showInternalDbIcon = showInternalDbIcon,
                         showUserDbIcon = showUserDbIcon,
