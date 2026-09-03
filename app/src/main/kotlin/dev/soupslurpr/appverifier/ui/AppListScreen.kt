@@ -382,12 +382,12 @@ fun AppListScreen(
         }
         ) { innerPadding ->
         LazyColumn(
-            state = listState,
-            Modifier.padding(
+            modifier = Modifier.padding(
                 innerPadding.calculateStartPadding(LayoutDirection.Ltr),
                 innerPadding.calculateTopPadding(),
                 innerPadding.calculateEndPadding(LayoutDirection.Ltr)
-            )
+            ),
+            state = listState,
         ) {
             item {
                     Row(
