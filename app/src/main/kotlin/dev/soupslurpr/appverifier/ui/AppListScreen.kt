@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
@@ -161,6 +162,10 @@ fun AppListScreen(
 
     var isLoadingAppData by remember { mutableStateOf(true) }
     var appDataMap by remember { mutableStateOf<Map<String, AppListData>>(emptyMap()) }
+
+    val listState = rememberSaveable(saver = LazyListState.Saver) {
+        LazyListState()
+    }
 
     val packageHashes: Map<String, Hashes> = appDataMap.mapValues { it.value.hashes }
 
@@ -377,6 +382,7 @@ fun AppListScreen(
         }
         ) { innerPadding ->
         LazyColumn(
+            state = listState,
             Modifier.padding(
                 innerPadding.calculateStartPadding(LayoutDirection.Ltr),
                 innerPadding.calculateTopPadding(),
