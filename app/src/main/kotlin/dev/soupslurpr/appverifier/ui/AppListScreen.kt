@@ -4,7 +4,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -169,7 +168,6 @@ fun AppListScreen(
 
     val onAppItemClicked: (String, String, Hashes, Drawable, InternalDatabaseInfo) -> Unit = { n, p, h, i, info ->
         savedScrollIndex = listState.firstVisibleItemIndex
-        Log.d("AppListScreen", "Capturing scroll index $savedScrollIndex before opening ${p}")
         onClickAppItem(n, p, h, i, info)
     }
 
@@ -339,7 +337,6 @@ fun AppListScreen(
 
     LaunchedEffect(isLoadingAppData) {
         if (!isLoadingAppData && savedScrollIndex > 0 && listState.firstVisibleItemIndex == 0) {
-            Log.d("AppListScreen", "Restoring scroll to index $savedScrollIndex")
             listState.scrollToItem(savedScrollIndex)
         }
     }
