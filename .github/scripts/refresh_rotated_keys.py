@@ -72,19 +72,15 @@ def get_labeled_issues():
 
 
 def get_issue_comments(issue_number):
+    # Fetch the raw JSON array (no --jq) so comment bodies with newlines do not
+    # break parsing.
     out = run_gh(
         [
             "api",
             f"repos/{os.environ['GITHUB_REPOSITORY']}/issues/{issue_number}/comments",
-            "--jq", ".[] | {user: .user.login, body: .body}",
         ]
     )
-    # --jq ".[] | {...}" emits one JSON object per line; parse them individually.
-    comments = []
-    for line in out.splitlines():
-        line = line.strip()
-        if line:
-            comments.append(json.loads(line))
+    comments = json.loads(out)
     return comments
 
 
