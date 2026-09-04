@@ -114,6 +114,9 @@ jobs:
         continue-on-error: true
         run: python .github/scripts/scrape_forum_db.py --txt-only grapheneos-forum-hashes
 
+      - name: Generate rotated keys file
+        run: python .github/scripts/generate_rotated_keys.py --txt-only rotated-keys
+
       - name: Get branch name
         id: branch
         run: echo "name=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
@@ -206,6 +209,12 @@ jobs:
         if: hashFiles('grapheneos-forum-hashes.txt') != ''
         run: mv grapheneos-forum-hashes.txt grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
 
+      - name: Rename rotated keys file
+        run: |
+          if [ -f rotated-keys.txt ]; then
+            mv rotated-keys.txt rotated-keys-${{ steps.date.outputs.date }}.txt
+          fi
+
       - name: Extract fingerprint from APK
         id: apkfp
         run: |
@@ -266,6 +275,8 @@ jobs:
           New apps can be submitted at [privacyguides/verified-apps/issues](https://github.com/privacyguides/verified-apps/issues/new?template=app-submission.yml).
 
           **Community hashes:** \`grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt\` is included in the release assets — hashes shared by users on the [GrapheneOS forum](https://discuss.grapheneos.org/d/15368-lets-compare-hashes-for-apps-not-in-appverifiers-database), in text format for import into the user database. These are community-submitted with no guarantee of accuracy. Cross-verify against multiple sources before trusting.
+
+          **Rotated keys:** \`rotated-keys-${{ steps.date.outputs.date }}.txt\` is included in the release assets. These are new signing keys observed on installed apps after a suspected key rotation, where the app's certificate no longer matches the key recorded in the database. They are NOT independently verified by AppVerifier BG. Only add them to your user database if you are confident the app is legitimately signed. Cross-verify against multiple sources before trusting.
           BODYEOF
 
           DATE="${{ steps.date.outputs.date }}"
@@ -287,4 +298,5 @@ jobs:
           files: |
             app/build/outputs/apk/release/AppVerifierBG-nightly-${{ steps.date.outputs.date }}.apk
             grapheneos-forum-hashes-${{ steps.date.outputs.date }}.txt
+            rotated-keys-${{ steps.date.outputs.date }}.txt
           make_latest: false

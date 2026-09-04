@@ -1,0 +1,65 @@
+{
+  "last_updated": "2026-09-03",
+  "entries": [
+    {
+      "package": "com.apple.android.music",
+      "old_keys": [
+        "88:BA:59:0E:C2:E1:EA:33:C4:45:8D:AF:59:48:9F:AE:E2:CE:F2:97:A9:B4:07:1E:18:CF:82:EF:53:11:00:AA"
+      ],
+      "new_key": "77:1D:86:74:D3:D9:83:7C:9E:DF:11:B1:18:73:44:39:98:F1:91:05:AB:CE:CA:B4:25:ED:9B:8E:6F:EF:FF:9B",
+      "source_issue": 105
+    },
+    {
+      "package": "com.comuto",
+      "old_keys": [
+        "D0:F8:58:4B:7D:13:8B:47:1D:29:ED:D0:D8:CE:A8:F5:A1:81:76:F0:02:FF:4D:E6:D3:5D:38:31:6B:AC:07:26"
+      ],
+      "new_key": "92:0D:0E:52:CD:5B:B9:96:33:94:18:89:9A:70:18:E8:6A:FA:26:C0:75:D9:49:67:A4:5E:66:31:A1:0D:B3:5B",
+      "source_issue": 110
+    },
+    {
+      "package": "com.github.catfriend1.syncthingandroid",
+      "old_keys": [
+        "F8:E0:27:73:B8:2C:F7:E9:4A:AB:01:62:02:9F:57:88:5F:F0:72:0F:AE:C1:0C:6B:CE:F4:9F:7D:F8:C9:4A:99"
+      ],
+      "new_key": "46:0C:A8:D6:32:87:AA:4A:31:65:20:6B:6D:C4:91:0F:9D:DE:ED:F9:DC:06:A6:A4:4C:6C:2D:AD:15:AA:BD:E3",
+      "source_issue": 113
+    },
+    {
+      "package": "com.google.android.apps.docs.editors.docs",
+      "old_keys": [
+        "3D:7A:12:23:01:9A:A3:9D:9E:A0:E3:43:6A:B7:C0:89:6B:FB:4F:B6:79:F4:DE:5F:E7:C2:3F:32:6C:8F:99:4A",
+        "5A:AD:2B:EE:6D:B9:5D:17:E0:5A:08:D7:D1:E6:4C:10:A1:51:18:79:15:44:83:91:6B:6A:E6:C7:FD:9C:B0:C6"
+      ],
+      "new_key": "CF:5D:00:F9:79:56:91:E6:DF:57:06:48:2C:E0:BB:A3:27:F9:59:18:3B:AF:3E:83:ED:B8:19:50:67:B7:1F:68",
+      "source_issue": 98
+    },
+    {
+      "package": "com.google.android.apps.docs.editors.slides",
+      "old_keys": [
+        "3D:7A:12:23:01:9A:A3:9D:9E:A0:E3:43:6A:B7:C0:89:6B:FB:4F:B6:79:F4:DE:5F:E7:C2:3F:32:6C:8F:99:4A",
+        "5A:AD:2B:EE:6D:B9:5D:17:E0:5A:08:D7:D1:E6:4C:10:A1:51:18:79:15:44:83:91:6B:6A:E6:C7:FD:9C:B0:C6"
+      ],
+      "new_key": "29:D8:97:BE:F8:F9:05:73:C7:8D:13:1A:9D:F2:BA:D1:E5:8A:B4:BB:1F:3E:AD:05:D3:B5:D1:F5:EA:28:0B:51",
+      "source_issue": 104
+    },
+    {
+      "package": "com.google.android.apps.googlevoice",
+      "old_keys": [
+        "3D:7A:12:23:01:9A:A3:9D:9E:A0:E3:43:6A:B7:C0:89:6B:FB:4F:B6:79:F4:DE:5F:E7:C2:3F:32:6C:8F:99:4A",
+        "5A:AD:2B:EE:6D:B9:5D:17:E0:5A:08:D7:D1:E6:4C:10:A1:51:18:79:15:44:83:91:6B:6A:E6:C7:FD:9C:B0:C6"
+      ],
+      "new_key": "E5:D2:C6:E3:44:47:71:6E:E1:4D:CC:3B:8C:36:78:07:EA:9D:C0:08:0A:F6:45:69:A3:A3:AE:00:4B:4D:7C:02",
+      "source_issue": 104
+    },
+    {
+      "package": "com.google.android.apps.messaging",
+      "old_keys": [
+        "CC:75:52:6D:6C:0F:80:AC:3B:3A:84:EB:44:83:84:40:DB:BE:6B:12:44:43:A7:C7:D7:BD:19:18:2A:C0:22:C9",
+        "F7:E7:3D:4E:DC:2B:7F:55:EE:CD:3F:89:8D:3C:CA:7D:A9:CB:BF:51:69:4E:BA:14:F8:16:E2:EC:CF:01:50:35"
+      ],
+      "new_key": "32:84:B5:3C:BC:69:9D:6A:DF:92:49:45:CC:5A:26:DC:5A:00:66:B1:D6:76:7F:FC:D7:BC:A4:4D:0E:A9:FA:B8",
+      "source_issue": 106
+    }
+  ]
+}

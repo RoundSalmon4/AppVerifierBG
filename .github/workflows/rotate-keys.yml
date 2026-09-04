@@ -1,0 +1,55 @@
+name: Refresh Rotated Keys
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rotated-keys-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+
+      - name: Refresh rotated keys store
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python .github/scripts/refresh_rotated_keys.py | tee "$RUNNER_TEMP/rotate_output.txt"
+          {
+            echo "## Rotated keys refresh"
+            echo ""
+            awk '/SUMMARY_BEGIN/{flag=1; next} /SUMMARY_END/{flag=0} flag' \
+              "$RUNNER_TEMP/rotate_output.txt" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+      - name: Commit and push updates
+        run: |
+          git config user.name "roundsalmon4"
+          git config user.email "209016228+RoundSalmon4@users.noreply.github.com"
+          git add rotated-keys/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "update rotated keys store"
+            git pull --rebase origin "${{ github.ref_name }}"
+            git remote set-url origin https://RoundSalmon4:${{ secrets.PAT }}@github.com/RoundSalmon4/AppVerifierBG.git
+            git push origin "${{ github.ref_name }}"
+            git remote set-url origin https://github.com/RoundSalmon4/AppVerifierBG.git
+          fi

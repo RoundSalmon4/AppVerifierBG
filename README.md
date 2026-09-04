@@ -78,6 +78,10 @@ The internal database is extended with entries from [privacyguides/verified-apps
 
 Nightly builds include a downloadable text file with hashes shared by users on the GrapheneOS forum. These are not added to the internal database — import them into your user database if you wish. Cross-verify against multiple sources before relying on any entry.
 
+## Rotated Keys
+
+Nightly builds include a downloadable text file of new signing keys observed on installed apps after a suspected key rotation, where the app's certificate no longer matches the key recorded in the database. These are not independently verified and are not added to the internal database — import them into your user database only if you are confident the app is legitimately signed. Cross-verify against multiple sources before relying on any entry.
+
 ## Share All Apps
 
 Share every installed app's verification info as text from the settings screen.
