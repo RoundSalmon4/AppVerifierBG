@@ -20,18 +20,12 @@ import json
 import os
 import re
 import subprocess
-import sys
 import tempfile
-import urllib.request
 
 STORE_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "rotated-keys",
     "rotated_keys.json",
-)
-
-DATA_YML_URL = (
-    "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml"
 )
 
 MAINTAINER = "roundsalmon4"
@@ -206,6 +200,94 @@ def merge_issue_detailed(store, issue, packages, run_id):
     return rows
 
 
+def download_data_yml_attested():
+    """Fetch upstream data.yml and verify it via GitHub attestation.
+
+    Tries the `main` branch first with `gh attestation verify`, matching the
+    pattern used by the other database-sync workflows. If the main-branch file
+    is not yet attested (see upstream issue privacyguides/verified-apps#941),
+    falls back to the attested release asset.
+
+    Returns the data.yml content as a string, or None on failure.
+    """
+    temp_dir = tempfile.mkdtemp(prefix="data-yml-")
+    runner_temp = os.environ.get("RUNNER_TEMP", temp_dir)
+
+    try:
+        # Download from main
+        main_path = os.path.join(runner_temp, "data_main.yml")
+        try:
+            subprocess.run(
+                [
+                    "curl", "-fsSL", "-o", main_path,
+                    "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=60,
+            )
+        except subprocess.CalledProcessError:
+            print("WARN could not download data.yml from main")
+            return None
+
+        # Attestation verify main (pattern matches verify-database.yml)
+        try:
+            subprocess.run(
+                [
+                    "gh", "attestation", "verify", "-R", "privacyguides/verified-apps",
+                    "--cert-identity-regex",
+                    "https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*",
+                    main_path,
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=120,
+            )
+            with open(main_path, "r", encoding="utf-8") as f:
+                print("RECONCILE data.yml verified via attestation (main)")
+                return f.read()
+        except subprocess.CalledProcessError:
+            print("INFO main data.yml not attested, falling back to release")
+
+        # Fallback: download attested release asset
+        release_path = os.path.join(runner_temp, "data_release.yml")
+        try:
+            subprocess.run(
+                [
+                    "gh", "release", "download", "-R", "privacyguides/verified-apps",
+                    "-p", "data.yml", "--dir", runner_temp, "--clobber",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=120,
+            )
+            release_file = os.path.join(runner_temp, "data.yml")
+            if os.path.exists(release_file):
+                with open(release_file, "r", encoding="utf-8") as f:
+                    print("RECONCILE data.yml from attested release asset")
+                    return f.read()
+        except subprocess.CalledProcessError:
+            pass
+        print("WARN could not obtain attested data.yml")
+        return None
+    finally:
+        # Best-effort cleanup of temp files we created.
+        for p in ("data_main.yml", "data_release.yml", "data.yml"):
+            try:
+                pp = os.path.join(runner_temp, p)
+                if os.path.exists(pp):
+                    os.remove(pp)
+            except OSError:
+                pass
+        try:
+            os.rmdir(temp_dir)
+        except OSError:
+            pass
+
+
 def reconcile_with_data_yml(store, summary_rows=None):
     """Remove store entries whose new key is now recorded in upstream data.yml.
 
@@ -219,11 +301,8 @@ def reconcile_with_data_yml(store, summary_rows=None):
     if summary_rows is None:
         summary_rows = []
 
-    try:
-        with urllib.request.urlopen(DATA_YML_URL, timeout=30) as resp:
-            content = resp.read().decode("utf-8")
-    except Exception as e:
-        print(f"WARN could not fetch data.yml for reconciliation: {e}")
+    content = download_data_yml_attested()
+    if content is None:
         return 0
 
     # Build package -> set of recorded fingerprints from data.yml.
