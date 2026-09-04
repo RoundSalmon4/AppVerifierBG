@@ -88,7 +88,7 @@ def extract_confirmed_packages(issue):
     confirmed = set()
     comments = get_issue_comments(issue["number"])
     for c in comments:
-        if c.get("user", {}).get("login") != MAINTAINER:
+        if (c.get("user", {}).get("login") or "").lower() != MAINTAINER.lower():
             continue
         body = c.get("body") or ""
         if KEY_MARKER not in body:
