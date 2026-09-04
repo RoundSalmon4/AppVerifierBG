@@ -4,7 +4,7 @@ Dates are based on UTC (releases typically around 2am UTC).
 
 ## v0.7.2 (2026-09-04)
 
-- App list now remembers your scroll position when returning from an app's details.
+- App list now remembers your scroll position when returning from an app's details. ([#114](https://github.com/RoundSalmon4/AppVerifierBG/issues/114))
 
 ## v0.7.1 (2026-08-19)
 
