@@ -347,6 +347,11 @@ def check_google_play(package, timeout=120):
         return None, f"Google Play ToS error: {e}"
     except GooglePlayError as e:
         return None, f"Google Play login failed: {e}"
+    except Exception as e:
+        # Transient Google Play API failure (e.g. 502/503 on checkin) or any
+        # unexpected error during login. Do not abort the whole run; record it
+        # as a per-package error instead.
+        return None, f"Google Play login error: {e}"
 
     workdir = tempfile.mkdtemp()
     try:
