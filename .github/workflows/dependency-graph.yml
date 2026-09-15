@@ -22,6 +22,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          # Google removed the legacy `tools` package from the SDK repo, which
+          # made the action's default `sdkmanager tools` fail. The runner image
+          # already ships the SDK, so skip installing extra packages.
+          packages: ''
 
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
