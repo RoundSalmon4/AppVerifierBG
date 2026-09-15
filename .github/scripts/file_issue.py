@@ -35,6 +35,8 @@ TRANSIENT_ERRORS = (
     'broken pipe',
     'the read operation timed out',
     'the write operation timed out',
+    'read timed out',
+    'read timeout',
     'remote end closed connection',
     'server error',
 )
