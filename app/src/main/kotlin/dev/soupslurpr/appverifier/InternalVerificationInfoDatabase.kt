@@ -4770,7 +4770,8 @@ private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "2B:47:AC:B3:D0:BC:0C:9C:CF:CA:B5:FD:BA:91:CA:DC:D1:6E:6B:EF:14:26:D7:3B:8A:F0:2C:76:C5:FC:5A:E8"
@@ -9852,7 +9853,8 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "21:E1:56:78:30:77:33:7D:F5:13:65:75:31:6C:3A:D7:FA:E3:4F:19:7F:61:DD:C0:25:87:0F:B6:F7:0F:C2:99"
@@ -11738,7 +11740,8 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "8B:85:52:7E:C6:9D:D1:DC:9E:49:E6:53:5C:E0:13:01:19:20:8F:F6:4A:43:8C:B0:6C:9A:87:04:A9:2E:8B:2E"
@@ -18672,7 +18675,8 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
-                    Source.GOOGLE_PLAY_STORE
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS,
                 ),
                 listOf(
                     "2A:FF:40:C6:A3:68:82:31:0C:6B:D1:B3:9F:F1:0D:A0:4A:DD:FB:D2:D1:00:1B:8C:29:3C:9B:CF:5C:40:F5:8B"

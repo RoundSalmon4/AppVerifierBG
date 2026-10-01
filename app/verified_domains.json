@@ -54,6 +54,7 @@
   "com.floatplane.floatplane",
   "com.fundrise.android",
   "com.geoguessr.app",
+  "com.getyourguide.android",
   "com.github.android",
   "com.google.android.apps.adm",
   "com.google.android.apps.maps",
@@ -99,6 +100,7 @@
   "com.samsung.android.voc",
   "com.samsung.ecomm",
   "com.schwab.mobile",
+  "com.simplepractice.video",
   "com.spotify.music",
   "com.starlingbank.android",
   "com.starlink.mobile",
@@ -124,6 +126,7 @@
   "com.whatsapp.w4b",
   "com.wizzair.WizzAirApp",
   "com.wolt.android",
+  "com.workday.workdroidapp",
   "com.xfinity.digitalhome",
   "com.zillow.android.zillowmap",
   "com.zoho.mail",
@@ -161,5 +164,6 @@
   "org.wikipedia",
   "se.onlinepizza",
   "se.parkster.client.android",
-  "se.skanetrafiken.washington"
+  "se.skanetrafiken.washington",
+  "tv.trakt.trakt"
 ]
