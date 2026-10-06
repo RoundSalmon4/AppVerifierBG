@@ -178,7 +178,10 @@ jobs:
                 case "$line" in
                   -*)
                     key=$(echo "$line" | sed 's/^- *\*\*//;s/^- *//;s/[ *].*//')
-                    if echo "$already_keys" | grep -q -F "$key" 2>/dev/null; then
+                    # -x: whole-line match. Without it, grep -F would treat
+                    # e.g. com.foo as a substring of com.foo.bar and wrongly
+                    # skip reporting a genuinely new package.
+                    if echo "$already_keys" | grep -qxF "$key" 2>/dev/null; then
                       continue
                     fi
                     new_count=$((new_count + 1))

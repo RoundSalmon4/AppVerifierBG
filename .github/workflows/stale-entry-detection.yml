@@ -100,7 +100,9 @@ jobs:
               case "$line" in
                 -*)
                   key=$(echo "$line" | sed 's/^- //')
-                  if echo "$already_keys" | grep -q -F "$key" 2>/dev/null; then
+                  # -x: whole-line match, so a short package name cannot be
+                  # deduped as a substring of a longer unrelated one.
+                  if echo "$already_keys" | grep -qxF "$key" 2>/dev/null; then
                     continue
                   fi
                   new_count=$((new_count + 1))
