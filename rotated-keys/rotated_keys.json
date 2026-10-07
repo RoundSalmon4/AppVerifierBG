@@ -26,6 +26,14 @@
       "source_issue": 113
     },
     {
+      "package": "com.google.android.apps.docs",
+      "keys": [
+        "1D:4F:2E:F6:62:F8:D0:86:AB:E0:35:E9:F5:C3:AD:34:70:0B:AA:83:1F:3E:7E:32:ED:AB:30:3E:FF:B8:F1:56",
+        "F0:FD:6C:5B:41:0F:25:CB:25:C3:B5:33:46:C8:97:2F:AE:30:F8:EE:74:11:DF:91:04:80:AD:6B:2D:60:DB:83"
+      ],
+      "source_issue": 134
+    },
+    {
       "package": "com.google.android.apps.docs.editors.docs",
       "keys": [
         "3D:7A:12:23:01:9A:A3:9D:9E:A0:E3:43:6A:B7:C0:89:6B:FB:4F:B6:79:F4:DE:5F:E7:C2:3F:32:6C:8F:99:4A",
@@ -78,6 +86,14 @@
         "77:BD:89:7C:29:73:02:03:A5:48:D5:91:A0:78:3E:08:62:6C:2A:54:BC:22:C8:0E:A4:7E:D8:86:36:97:38:0C"
       ],
       "source_issue": 128
+    },
+    {
+      "package": "eu.siacs.conversations",
+      "keys": [
+        "9C:2E:57:C8:5C:27:9E:5E:1A:42:7F:6E:87:92:7F:C1:E2:27:8F:62:D6:1D:7F:CE:FD:E9:34:6E:56:8C:CF:86",
+        "C7:5A:BE:78:59:36:43:AE:7C:AC:52:73:27:CD:21:93:48:2D:B0:67:40:4A:88:B8:C1:3F:7A:07:01:94:61:87"
+      ],
+      "source_issue": 134
     },
     {
       "package": "me.proton.android.lumo",
