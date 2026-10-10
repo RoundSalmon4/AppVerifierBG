@@ -182,6 +182,9 @@ jobs:
                     # e.g. com.foo as a substring of com.foo.bar and wrongly
                     # skip reporting a genuinely new package.
                     if echo "$already_keys" | grep -qxF "$key" 2>/dev/null; then
+                      # Keep the entry but mark it, so the body matches the
+                      # count in the title and readers know why it is not new.
+                      new_body="${new_body}${line} (already reported in an earlier spot check, skipped)"$'\n'
                       continue
                     fi
                     new_count=$((new_count + 1))
