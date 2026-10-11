@@ -61,6 +61,15 @@
       "source_issue": 83
     },
     {
+      "package": "com.google.android.apps.kids.familylink",
+      "keys": [
+        "55:43:EA:22:D8:40:2D:02:2A:9F:7B:4C:D5:1B:59:93:D6:BE:3E:7F:39:A3:8B:64:30:0D:5B:A0:18:FA:95:C6",
+        "5F:18:DD:CA:47:42:08:41:32:5E:D5:4D:1A:F9:48:4A:F9:2F:65:AA:C7:0A:3B:62:3C:4E:86:7F:4E:F7:1E:20",
+        "6B:58:BB:84:C1:C6:D0:81:D9:50:44:8F:F5:C0:51:A3:47:69:D7:FD:8D:41:54:52:C8:6E:FE:B8:08:71:6C:0E"
+      ],
+      "source_issue": 135
+    },
+    {
       "package": "com.google.android.apps.messaging",
       "keys": [
         "32:84:B5:3C:BC:69:9D:6A:DF:92:49:45:CC:5A:26:DC:5A:00:66:B1:D6:76:7F:FC:D7:BC:A4:4D:0E:A9:FA:B8",
