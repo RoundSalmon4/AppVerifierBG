@@ -204,7 +204,7 @@ jobs:
 
       - name: Upload verify APKs
         if: github.event.inputs.mode == 'verify'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: AppVerifierBG-${{ steps.version.outputs.version }}-verify
           path: /tmp/verify/*.apk
@@ -318,7 +318,7 @@ jobs:
 
       - name: Upload APK artifact
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'build'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: AppVerifierBG-${{ steps.version.outputs.version }}
           path: app/build/outputs/apk/release/AppVerifierBG-${{ steps.version.outputs.version }}.apk
