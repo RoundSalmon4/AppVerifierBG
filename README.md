@@ -10,7 +10,7 @@ Verify installed apps against shared signature hashes, the internal database, or
 </div>
 <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
   <a href="https://f-droid.org/en/packages/com.roundsalmon4.appverifier/"><img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80"></a>
-  <a href="https://apt.izzysoft.de/packages/com.roundsalmon4.appverifier"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80"></a>
+  <a href="https://apt.izzysoft.de/packages/com.roundsalmon4.appverifier"><img src="https://codeberg.org/IzzyOnDroid/repo/raw/branch/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80"></a>
 </div>
 
 </div>
