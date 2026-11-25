@@ -302,92 +302,19 @@ def merge_issue_detailed(store, issue, packages, run_id, latest_reports=None):
     return rows
 
 
-def download_data_yml_attested():
-    """Fetch upstream data.yml and verify it via GitHub attestation.
+def read_verified_data_yml():
+    """Read the upstream data.yml that rotate-keys.yml fetched with the
+    privacyguides/verified-apps action.
 
-    Tries the `main` branch first with `gh attestation verify`, matching the
-    pattern used by the other database-sync workflows. If the main-branch file
-    is not yet attested (see upstream issue privacyguides/verified-apps#941),
-    falls back to the attested release asset.
-
-    Returns the data.yml content as a string, or None on failure.
+    The action only leaves a file at $RUNNER_TEMP/data.yml once its
+    attestation is verified. Returns its content, or None if it is missing.
     """
-    temp_dir = tempfile.mkdtemp(prefix="data-yml-")
-    runner_temp = os.environ.get("RUNNER_TEMP", temp_dir)
-
     try:
-        # Download from main
-        main_path = os.path.join(runner_temp, "data_main.yml")
-        try:
-            subprocess.run(
-                [
-                    "curl", "-fsSL", "-o", main_path,
-                    "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml",
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=60,
-            )
-        except subprocess.CalledProcessError:
-            print("WARN could not download data.yml from main")
-            return None
-
-        # Attestation verify main (pattern matches verify-database.yml)
-        try:
-            subprocess.run(
-                [
-                    "gh", "attestation", "verify", "-R", "privacyguides/verified-apps",
-                    "--cert-identity-regex",
-                    "https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*",
-                    main_path,
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=120,
-            )
-            with open(main_path, "r", encoding="utf-8") as f:
-                print("RECONCILE data.yml verified via attestation (main)")
-                return f.read()
-        except subprocess.CalledProcessError:
-            print("INFO main data.yml not attested, falling back to release")
-
-        # Fallback: download attested release asset
-        release_path = os.path.join(runner_temp, "data_release.yml")
-        try:
-            subprocess.run(
-                [
-                    "gh", "release", "download", "-R", "privacyguides/verified-apps",
-                    "-p", "data.yml", "--dir", runner_temp, "--clobber",
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=120,
-            )
-            release_file = os.path.join(runner_temp, "data.yml")
-            if os.path.exists(release_file):
-                with open(release_file, "r", encoding="utf-8") as f:
-                    print("RECONCILE data.yml from attested release asset")
-                    return f.read()
-        except subprocess.CalledProcessError:
-            pass
-        print("WARN could not obtain attested data.yml")
+        with open(os.path.join(os.environ["RUNNER_TEMP"], "data.yml"), encoding="utf-8") as f:
+            return f.read()
+    except (KeyError, OSError):
+        print("WARN no verified data.yml in $RUNNER_TEMP, skipping reconcile")
         return None
-    finally:
-        # Best-effort cleanup of temp files we created.
-        for p in ("data_main.yml", "data_release.yml", "data.yml"):
-            try:
-                pp = os.path.join(runner_temp, p)
-                if os.path.exists(pp):
-                    os.remove(pp)
-            except OSError:
-                pass
-        try:
-            os.rmdir(temp_dir)
-        except OSError:
-            pass
 
 
 def reconcile_with_data_yml(store, summary_rows=None):
@@ -403,7 +330,7 @@ def reconcile_with_data_yml(store, summary_rows=None):
     if summary_rows is None:
         summary_rows = []
 
-    content = download_data_yml_attested()
+    content = read_verified_data_yml()
     if content is None:
         return 0
 

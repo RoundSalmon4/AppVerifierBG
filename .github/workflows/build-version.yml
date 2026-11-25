@@ -53,39 +53,10 @@ jobs:
         run: git pull --rebase origin feature/all-enhancements
 
       - name: Download and verify database
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          verify_main() {
-            local file=$1
-            gh attestation verify -R privacyguides/verified-apps \
-              --cert-identity-regex 'https://github.com/privacyguides/.github/.github/workflows/sign-artifact.yml*' \
-              "$file"
-          }
-          verify_release() {
-            local file=$1
-            local tag
-            tag=$(gh release view -R privacyguides/verified-apps --json tagName -q .tagName)
-            gh release verify-asset -R privacyguides/verified-apps "$tag" "$file"
-          }
-          # Try main tip first (freshest data). Attestations will exist once
-          # upstream resumes signing submission commits.
-          curl -fsSL -o "$RUNNER_TEMP/data.yml" \
-            "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" \
-            || { echo "Failed to download from main" >&2; exit 1; }
-          if verify_main "$RUNNER_TEMP/data.yml"; then
-            echo "Attestation verified (main)"
-          else
-            echo "main not attested, using latest release data..."
-            gh release download -R privacyguides/verified-apps \
-              -p "data.yml" --dir "$RUNNER_TEMP" --clobber
-            if verify_release "$RUNNER_TEMP/data.yml"; then
-              echo "Attestation verified (release)"
-            else
-              echo "ERROR: Release data also not attested" >&2
-              exit 1
-            fi
-          fi
+        uses: privacyguides/verified-apps@07e8c098700d30cda21d01a661215134cf9a0e88
+        with:
+          source: main
+          fallback: release
 
       - name: Run sync script
         run: python .github/scripts/generate_internal_db.py --data-yml "$RUNNER_TEMP/data.yml"
@@ -252,7 +223,7 @@ jobs:
         id: pgcount
         if: github.event.inputs.mode == 'publish'
         run: |
-          TOTAL=$(curl -s "https://raw.githubusercontent.com/privacyguides/verified-apps/main/data.yml" | grep -c "\- package:" || true)
+          TOTAL=$(grep -c "\- package:" "$RUNNER_TEMP/data.yml" || true)
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
 
       - name: Extract fingerprint from APK

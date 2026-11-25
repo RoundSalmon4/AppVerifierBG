@@ -26,6 +26,14 @@ jobs:
         with:
           python-version: "3.15"
 
+      # Reconciling against upstream is best-effort; the script skips it without the file.
+      - name: Download and verify database
+        continue-on-error: true
+        uses: privacyguides/verified-apps@07e8c098700d30cda21d01a661215134cf9a0e88
+        with:
+          source: main
+          fallback: release
+
       - name: Refresh rotated keys store
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
