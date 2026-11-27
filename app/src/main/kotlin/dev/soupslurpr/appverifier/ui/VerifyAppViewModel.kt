@@ -158,8 +158,18 @@ class VerifyAppViewModel(
         }
         val installerSource = when (installerPackage) {
             "com.android.vending" -> "Google Play"
-            "org.fdroid.fdroid", "org.fdroid.basic", "com.aurora.store", "in.sunilpaulmathew.izzyondroid" -> "F-Droid"
-            "com.google.android.packageinstaller", "com.android.packageinstaller" -> "APK Installer"
+            "org.fdroid.fdroid", "org.fdroid.basic", "com.looker.droidify",
+            "com.machiav3lli.fdroid", "in.sunilpaulmathew.izzyondroid" -> "F-Droid"
+            "com.aurora.store" -> "Aurora Store"
+            "dev.imranr.obtainium", "dev.imranr.obtainium.fdroid" -> "Obtainium"
+            "com.sec.android.app.samsungapps" -> "Galaxy Store"
+            "com.huawei.appmarket" -> "AppGallery"
+            "com.amazon.venezia" -> "Amazon Appstore"
+            "com.xiaomi.market", "com.xiaomi.mipicks" -> "GetApps"
+            "ru.vk.store" -> "RuStore"
+            "com.google.android.packageinstaller", "com.android.packageinstaller",
+            "com.miui.packageinstaller", "com.samsung.android.packageinstaller",
+            "com.android.shell" -> "APK Installer"
             "" -> ""
             else -> installerPackage
         }

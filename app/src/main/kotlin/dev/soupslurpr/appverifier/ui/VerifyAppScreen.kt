@@ -392,8 +392,9 @@ fun VerifyAppScreen(
                         )
                     }
                     if (hashes.installerSource.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Signing key from: ${hashes.installerSource} (${hashes.installerPackage})",
+                            text = "Install Source: ${hashes.installerSource}",
                             style = typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
