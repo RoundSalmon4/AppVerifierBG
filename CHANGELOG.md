@@ -2,6 +2,10 @@
 
 Dates are based on UTC (releases typically around 2am UTC).
 
+## v0.8.0 (2026-11-28)
+
+- Show which source an app was installed from on the verification screen (Google Play, F-Droid, Aurora Store, Obtainium, Morphe, and others), with a setting to also show unrecognized install sources so they can be reported.
+
 ## 2026-09-11
 
 - Rotated keys list now includes all signing certificates for each app, not just the rotated key, so imported entries verify completely against apps with multiple signatures.

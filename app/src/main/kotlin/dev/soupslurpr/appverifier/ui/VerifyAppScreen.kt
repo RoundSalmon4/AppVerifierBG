@@ -88,6 +88,7 @@ fun VerifyAppScreen(
     internalDatabaseInfo: InternalDatabaseInfo,
     apkFailedToParse: Boolean,
     showHasMultipleSigners: Boolean,
+    showUnknownInstallSource: Boolean,
     showClipboardEmptyMessage: () -> Unit,
     databaseStatusDisplayMode: DatabaseStatusDisplayMode = DatabaseStatusDisplayMode.BOTH,
     userDbEntry: UserDatabaseEntry? = null,
@@ -390,6 +391,15 @@ fun VerifyAppScreen(
                             fontFamily = FontFamily.Monospace,
                             style = typography.bodySmall,
                         )
+                    }
+                    if (hashes.installerSource.isNotEmpty() || hashes.installerPackage.isNotEmpty() || showUnknownInstallSource) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Install Source: ${if (hashes.installerSource.isNotEmpty()) hashes.installerSource else if (hashes.installerPackage.isNotEmpty()) hashes.installerPackage else "Unknown"}",
+                            style = typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(4.dp))
                     }
                     Spacer(Modifier.height(16.dp))
 

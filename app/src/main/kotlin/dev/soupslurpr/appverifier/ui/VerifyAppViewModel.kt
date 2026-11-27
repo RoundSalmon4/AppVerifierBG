@@ -118,7 +118,7 @@ class VerifyAppViewModel(
         return hashVerifier.getVerificationInfoText(text)
     }
 
-    fun getHashesFromPackageInfo(packageInfo: PackageInfo): Hashes {
+    fun getHashesFromPackageInfo(packageInfo: PackageInfo, packageManager: PackageManager): Hashes {
         val signingInfo = packageInfo.signingInfo ?: return Hashes(listOf(Source.NONE), emptyList(), false)
         val hasMultipleSigners = signingInfo.hasMultipleSigners()
 
@@ -151,7 +151,38 @@ class VerifyAppViewModel(
                 .uppercase()
         }
 
-        return Hashes(listOf(Source.NONE), signatures, hasMultipleSigners, isDebug)
+        val installerPackage = try {
+            packageManager.getInstallerPackageName(packageInfo.packageName) ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        val installerSource = when (installerPackage) {
+            "com.android.vending" -> "Google Play"
+            "org.fdroid.fdroid", "org.fdroid.basic", "com.looker.droidify",
+            "com.machiav3lli.fdroid", "in.sunilpaulmathew.izzyondroid" -> "F-Droid"
+            "com.aurora.store" -> "Aurora Store"
+            "dev.imranr.obtainium", "dev.imranr.obtainium.fdroid" -> "Obtainium"
+            "app.morphe.manager" -> "Morphe"
+            "com.sec.android.app.samsungapps" -> "Galaxy Store"
+            "com.huawei.appmarket" -> "AppGallery"
+            "com.amazon.venezia" -> "Amazon Appstore"
+            "com.xiaomi.market", "com.xiaomi.mipicks" -> "GetApps"
+            "ru.vk.store" -> "RuStore"
+            "com.google.android.packageinstaller", "com.android.packageinstaller",
+            "com.miui.packageinstaller", "com.samsung.android.packageinstaller",
+            "com.android.shell" -> "APK Installer"
+            "" -> ""
+            else -> installerPackage
+        }
+
+        return Hashes(
+            listOf(Source.NONE),
+            signatures,
+            hasMultipleSigners,
+            isDebug,
+            installerPackage,
+            installerSource,
+        )
     }
 
     fun isValidSha256Hash(hash: String): Boolean = hashVerifier.isValidSha256Hash(hash)
@@ -175,7 +206,7 @@ class VerifyAppViewModel(
             val fullInfo = runCatching {
                 packageManager.getPackageInfo(packageInfo.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
             }.getOrNull() ?: return@mapNotNull null
-            val hashes = getHashesFromPackageInfo(fullInfo)
+            val hashes = getHashesFromPackageInfo(fullInfo, packageManager)
             if (normalizedLines.all { it in hashes.hashes }) {
                 val applicationInfo = packageInfo.applicationInfo ?: return@mapNotNull null
                 AppHashMatch(
@@ -203,7 +234,7 @@ class VerifyAppViewModel(
 
             val applicationInfo = packageInfo.applicationInfo ?: ApplicationInfo()
 
-            val hashes = getHashesFromPackageInfo(packageInfo)
+            val hashes = getHashesFromPackageInfo(packageInfo, packageManager)
 
             setAppVerificationInfo(
                 packageManager.getApplicationLabel(
@@ -382,7 +413,7 @@ class VerifyAppViewModel(
 
                 val packageName = packageInfo.packageName
 
-                val hashes = getHashesFromPackageInfo(packageInfo)
+                val hashes = getHashesFromPackageInfo(packageInfo, packageManager)
 
                 if (generation != currentGeneration) return@withContext
 

@@ -48,7 +48,9 @@ data class Hashes(
     val sources: List<Source>,
     val hashes: List<String>,
     val hasMultipleSigners: Boolean,
-    val isDebug: Boolean = false
+    val isDebug: Boolean = false,
+    val installerPackage: String = "",
+    val installerSource: String = "",
 )
 
 data class VerificationInfo(val packageName: String, val hashes: Hashes)

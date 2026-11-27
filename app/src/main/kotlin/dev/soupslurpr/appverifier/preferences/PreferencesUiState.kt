@@ -16,6 +16,7 @@ data class PreferencesUiState(
     val colorSchemeMode: String = "STANDARD",
     val primaryColor: Int = 0xFF1A237E.toInt(),
     val secondaryColor: Int = 0xFFFFD54F.toInt(),
+    val showUnknownInstallSource: Boolean = false,
 ) {
     object Keys {
         val SHOW_HAS_MULTIPLE_SIGNERS = booleanPreferencesKey("SHOW_HAS_MULTIPLE_SIGNERS")
@@ -29,5 +30,6 @@ data class PreferencesUiState(
         val COLOR_SCHEME_MODE = stringPreferencesKey("COLOR_SCHEME_MODE")
         val PRIMARY_COLOR = intPreferencesKey("PRIMARY_COLOR")
         val SECONDARY_COLOR = intPreferencesKey("SECONDARY_COLOR")
+        val SHOW_UNKNOWN_INSTALL_SOURCE = booleanPreferencesKey("SHOW_UNKNOWN_INSTALL_SOURCE")
     }
 }

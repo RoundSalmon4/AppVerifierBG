@@ -116,7 +116,7 @@ fun AppListScreen(
         internalDatabaseInfo: InternalDatabaseInfo,
     ) -> Unit,
     onQueryChange: (query: String) -> Unit,
-    getHashesFromPackageInfo: (packageInfo: PackageInfo) -> Hashes,
+    getHashesFromPackageInfo: (packageInfo: PackageInfo, packageManager: PackageManager) -> Hashes,
     getInternalDatabaseInfoFromVerificationInfo: (verification: VerificationInfo) -> InternalDatabaseInfo,
     databaseStatusDisplayMode: DatabaseStatusDisplayMode = DatabaseStatusDisplayMode.BOTH,
     userDatabaseEntries: List<UserDatabaseEntry> = emptyList(),
@@ -226,7 +226,7 @@ fun AppListScreen(
                             val packageInfo = try {
                                 packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
                             } catch (_: Exception) { null } ?: return@mapNotNull null
-                            val hashes = getHashesFromPackageInfo(packageInfo)
+                            val hashes = getHashesFromPackageInfo(packageInfo, packageManager)
                             val name = packageInfo.applicationInfo?.let {
                                 packageManager.getApplicationLabel(it).toString()
                             } ?: pkg.packageName

@@ -361,7 +361,7 @@ fun AppVerifierApp(
                         navController.navigate(AppVerifierScreens.VerifyApp.name)
                     },
                     { searchQuery = it },
-                    { verifyAppViewModel.getHashesFromPackageInfo(it) },
+                    { pkg, _ -> verifyAppViewModel.getHashesFromPackageInfo(pkg, context.packageManager) },
                     { verifyAppViewModel.getInternalDatabaseInfoFromVerificationInfo(it) },
                     DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode),
                     userDatabaseEntries,
@@ -494,6 +494,7 @@ fun AppVerifierApp(
                     verifyAppUiState.value.internalDatabaseInfo,
                     verifyAppUiState.value.apkFailedToParse,
                     preferencesUiState.value.showHasMultipleSigners,
+                    preferencesUiState.value.showUnknownInstallSource,
                     {
                         snackbarCoroutineScope.launch {
                             snackbarHostState.showSnackbar("Clipboard is empty!")

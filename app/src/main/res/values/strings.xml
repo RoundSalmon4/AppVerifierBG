@@ -21,6 +21,8 @@
     <string name="app_list">App List</string>
     <string name="show_hasmultiplesigners_setting_name">Show hasMultipleSigners</string>
     <string name="show_hasmultiplesigners_setting_description">"Shows hasMultipleSigners in the app verification screen. This is useful for contributing to the internal verification info database."</string>
+    <string name="show_unknown_install_source_setting_name">Show unknown install sources</string>
+    <string name="show_unknown_install_source_setting_description">Show the source an app was installed from even when it is not recognized. This helps identify and report unrecognized install sources.</string>
     <string name="user_database">User Database</string>
     <string name="export_user_database">Export user database</string>
     <string name="export_user_database_description">Export your database</string>
