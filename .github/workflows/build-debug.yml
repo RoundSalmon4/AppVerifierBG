@@ -17,6 +17,11 @@ on:
         type: choice
         options:
           - feature/all-enhancements
+      branch_override:
+        description: 'Optional: build a different branch or PR head instead'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write
@@ -27,9 +32,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve branch to build
+        id: resolve
+        run: |
+          if [ -n "${{ github.event.inputs.branch_override }}" ]; then
+            echo "branch=${{ github.event.inputs.branch_override }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${{ github.event.inputs.branch }}" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ steps.resolve.outputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
@@ -50,7 +65,8 @@ jobs:
         run: pip install pyyaml
 
       - name: Pull latest
-        run: git pull --rebase origin ${{ github.event.inputs.branch }}
+        if: ${{ !startsWith(steps.resolve.outputs.branch, 'refs/') }}
+        run: git pull --rebase origin ${{ steps.resolve.outputs.branch }}
 
       - name: Download and verify database
         uses: privacyguides/verified-apps@07e8c098700d30cda21d01a661215134cf9a0e88
@@ -183,7 +199,7 @@ jobs:
       - name: Sanitize branch name for artifact
         id: sanitize
         run: |
-          BRANCH="${{ github.event.inputs.branch }}"
+          BRANCH="${{ steps.resolve.outputs.branch }}"
           SANITIZED="${BRANCH//\//-}"
           echo "name=$SANITIZED" >> "$GITHUB_OUTPUT"
         shell: bash
