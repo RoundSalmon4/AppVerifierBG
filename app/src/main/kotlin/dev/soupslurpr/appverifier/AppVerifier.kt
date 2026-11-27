@@ -494,6 +494,7 @@ fun AppVerifierApp(
                     verifyAppUiState.value.internalDatabaseInfo,
                     verifyAppUiState.value.apkFailedToParse,
                     preferencesUiState.value.showHasMultipleSigners,
+                    preferencesUiState.value.showUnknownInstallSource,
                     {
                         snackbarCoroutineScope.launch {
                             snackbarHostState.showSnackbar("Clipboard is empty!")

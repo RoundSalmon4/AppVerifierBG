@@ -424,6 +424,17 @@ fun SettingsScreen(
                     }
                 }
             )
+            SettingsItem(
+                name = stringResource(id = R.string.show_unknown_install_source_setting_name),
+                description = stringResource(id = R.string.show_unknown_install_source_setting_description),
+                hasSwitch = true,
+                checked = preferencesUiState.showUnknownInstallSource,
+                onCheckedChange = {
+                    coroutineScope.launch {
+                        preferencesViewModel.setPreference(PreferencesUiState.Keys.SHOW_UNKNOWN_INSTALL_SOURCE, it)
+                    }
+                }
+            )
             Text(
                 text = stringResource(R.string.default_sort_mode_name),
                 style = typography.bodyMedium,

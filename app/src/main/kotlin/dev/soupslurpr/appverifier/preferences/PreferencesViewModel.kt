@@ -58,6 +58,7 @@ class PreferencesViewModel(private val dataStore: DataStore<Preferences>) : View
                 colorSchemeMode = settings[PreferencesUiState.Keys.COLOR_SCHEME_MODE] ?: "STANDARD",
                 primaryColor = settings[PreferencesUiState.Keys.PRIMARY_COLOR] ?: 0xFF1A237E.toInt(),
                 secondaryColor = settings[PreferencesUiState.Keys.SECONDARY_COLOR] ?: 0xFFFFD54F.toInt(),
+                showUnknownInstallSource = settings[PreferencesUiState.Keys.SHOW_UNKNOWN_INSTALL_SOURCE] ?: false,
             )
         }
     }
