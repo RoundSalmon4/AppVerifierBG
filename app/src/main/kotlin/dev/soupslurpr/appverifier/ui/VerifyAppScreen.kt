@@ -391,6 +391,14 @@ fun VerifyAppScreen(
                             style = typography.bodySmall,
                         )
                     }
+                    if (hashes.installerSource.isNotEmpty()) {
+                        Text(
+                            text = "Signing key from: ${hashes.installerSource} (${hashes.installerPackage})",
+                            style = typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
                     Spacer(Modifier.height(16.dp))
 
                     val displayVerificationStatus = if (isSelfVerification) {
