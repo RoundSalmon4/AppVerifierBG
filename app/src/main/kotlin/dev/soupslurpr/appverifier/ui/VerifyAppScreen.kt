@@ -392,10 +392,10 @@ fun VerifyAppScreen(
                             style = typography.bodySmall,
                         )
                     }
-                    if (hashes.installerSource.isNotEmpty() || showUnknownInstallSource) {
+                    if (hashes.installerSource.isNotEmpty() || hashes.installerPackage.isNotEmpty() || showUnknownInstallSource) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Install Source: ${if (hashes.installerSource.isNotEmpty()) hashes.installerSource else "Unknown"}",
+                            text = "Install Source: ${if (hashes.installerSource.isNotEmpty()) hashes.installerSource else if (hashes.installerPackage.isNotEmpty()) hashes.installerPackage else "Unknown"}",
                             style = typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
