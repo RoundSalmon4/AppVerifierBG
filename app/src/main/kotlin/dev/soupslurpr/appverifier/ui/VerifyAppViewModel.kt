@@ -162,6 +162,7 @@ class VerifyAppViewModel(
             "com.machiav3lli.fdroid", "in.sunilpaulmathew.izzyondroid" -> "F-Droid"
             "com.aurora.store" -> "Aurora Store"
             "dev.imranr.obtainium", "dev.imranr.obtainium.fdroid" -> "Obtainium"
+            "app.morphe.manager" -> "Morphe"
             "com.sec.android.app.samsungapps" -> "Galaxy Store"
             "com.huawei.appmarket" -> "AppGallery"
             "com.amazon.venezia" -> "Amazon Appstore"
