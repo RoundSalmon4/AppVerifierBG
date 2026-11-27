@@ -124,6 +124,20 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "air.com.hypah.io.slither",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "CC:50:D8:E5:45:33:AD:F0:E5:9E:50:8F:40:D3:C3:AB:FD:A8:A8:9E:09:1B:42:8F:4E:67:19:A6:40:D3:FA:F2"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "air.com.parkerstech.day",
         listOf(
             Hashes(
@@ -588,6 +602,22 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "app.lonecloud.prism",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID,
+                    Source.FDROID_IZZYONDROID,
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "FD:29:86:45:7A:6A:6E:4D:D9:05:6B:3C:A5:A6:9E:0E:DF:D5:AA:9D:D4:5B:3D:78:DB:21:E8:AD:72:FB:AE:AD"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "app.lunatask.android",
         listOf(
             Hashes(
@@ -712,6 +742,20 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "A2:BD:5F:24:43:FD:4B:43:A0:39:B7:3E:BE:25:4F:EB:BC:7E:B5:7A:29:93:DF:F5:41:DE:52:C5:2E:58:81:49"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "app.onloc.android",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "AB:E6:80:8D:71:32:0A:B4:96:59:4F:34:BC:3E:53:A8:BD:49:45:9B:06:E7:BC:14:54:6E:8C:31:06:F5:C6:60"
                 ),
                 false
             )
@@ -1531,6 +1575,21 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "cgeo.geocaching",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID_IZZYONDROID,
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "3D:B1:DD:84:43:B9:6F:E9:F7:68:0E:EA:4F:7F:9D:02:34:F8:40:72:83:FF:E3:E6:A4:3A:D6:8A:DC:FD:C5:E4"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "ch.coredump.watertemp.zh",
         listOf(
             Hashes(
@@ -1643,6 +1702,56 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "ch.sbb.mobile.android.b2c",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "20:89:5F:37:5B:70:74:5D:5A:FB:B5:97:E3:53:3B:D7:BE:CB:CC:1F:5E:7C:FA:21:69:D6:23:28:6D:6C:2F:0D",
+                    "38:05:B8:B6:AF:F3:5D:FB:64:B2:51:0B:31:AF:BE:90:47:CD:41:6B:C7:AB:57:7E:FD:45:C1:07:F1:CA:9F:27"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "20:89:5F:37:5B:70:74:5D:5A:FB:B5:97:E3:53:3B:D7:BE:CB:CC:1F:5E:7C:FA:21:69:D6:23:28:6D:6C:2F:0D",
+                    "38:05:B8:B6:AF:F3:5D:FB:64:B2:51:0B:31:AF:BE:90:47:CD:41:6B:C7:AB:57:7E:FD:45:C1:07:F1:CA:9F:27"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "ch.sbb.prail2",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "88:03:2A:52:7D:5E:8E:FC:38:1C:EF:E8:DC:87:62:87:D7:E6:62:CE:81:D5:3F:F6:6E:22:BC:EB:55:7C:EB:CF",
+                    "8C:6B:38:17:ED:50:96:26:81:83:95:A0:AA:4B:BD:B2:82:DC:38:B5:77:2B:80:70:62:71:3F:59:B6:09:DE:58"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "88:03:2A:52:7D:5E:8E:FC:38:1C:EF:E8:DC:87:62:87:D7:E6:62:CE:81:D5:3F:F6:6E:22:BC:EB:55:7C:EB:CF",
+                    "8C:6B:38:17:ED:50:96:26:81:83:95:A0:AA:4B:BD:B2:82:DC:38:B5:77:2B:80:70:62:71:3F:59:B6:09:DE:58"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "ch.threema.app.libre",
         listOf(
             Hashes(
@@ -1651,6 +1760,20 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "05:08:B5:3F:F1:02:B5:38:91:9C:83:4E:9E:6B:6A:FB:A0:46:ED:F6:7E:17:CA:4D:1C:E7:A4:B9:C3:82:37:41"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "ch.viseca.visecaone",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "0D:19:C2:6C:3F:EA:4E:54:B9:37:9B:9C:53:DA:E9:51:2D:28:E1:CF:9A:58:BF:8B:54:D7:4D:05:A2:80:CA:4F"
                 ),
                 false
             )
@@ -2484,6 +2607,20 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.akslabs.circletosearch",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "F0:A7:83:EB:E9:ED:90:38:74:E9:9C:E3:5F:7D:10:89:7F:99:09:A0:E3:82:68:83:BD:D8:37:55:70:4E:D5:B5"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.akylas.documentscanner",
         listOf(
             Hashes(
@@ -3105,6 +3242,10 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.app.codmobileloadout2",
         listOf(
@@ -3228,10 +3369,6 @@ private fun __db_c0(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "com.apps.adrcotfas.goodtime",
         listOf(
@@ -6379,6 +6516,10 @@ private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.dsemu.drastic",
         listOf(
@@ -6517,10 +6658,6 @@ private fun __db_c1(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "com.ebay.mobile",
         listOf(
@@ -6574,6 +6711,20 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "43:F6:D7:1E:13:EA:F0:62:BB:9F:D3:4A:0C:6C:D5:B3:BA:A8:AD:14:DE:DC:87:99:23:7F:2F:F9:33:FD:53:DC"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.eco.global.app",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "F0:E8:E7:0C:95:9A:6F:94:9D:B6:26:D4:64:AD:E2:31:CA:A6:FF:2C:E6:52:E5:72:0E:C4:E4:1F:6F:EF:8B:E8"
                 ),
                 false
             )
@@ -6660,6 +6811,20 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "6F:82:30:4F:DF:12:5A:78:E0:C5:30:93:DC:D8:A2:2E:87:11:D3:64:F8:AF:89:5E:4D:75:12:F8:59:95:9E:AA"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.eightybee.app",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "66:51:B4:B8:D3:6C:C8:D5:1E:66:6C:5E:1E:15:9C:60:4C:DF:F1:2C:E5:14:F2:3C:F1:20:85:3A:35:06:3A:02"
                 ),
                 false
             )
@@ -7374,6 +7539,35 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
                 listOf(
                     "0B:EB:17:4C:ED:95:B3:05:E2:FC:DB:59:CC:F8:F0:48:76:98:A8:4F:25:59:4F:1E:76:64:3A:66:60:0E:16:C1",
                     "7B:60:56:83:44:C2:F9:9D:D8:EF:E4:B9:BE:C1:5D:A7:D9:85:15:45:19:10:1F:37:50:0C:E6:0E:61:FC:55:4A"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.fivemobile.myaccount",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "EB:5A:B3:BE:FA:B6:FC:9E:FD:57:AC:B1:82:4A:E0:2D:29:03:87:08:C0:55:DD:C0:2F:51:CB:58:5E:06:75:E4"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.fixupxer",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID,
+                    Source.FDROID_IZZYONDROID
+                ),
+                listOf(
+                    "78:E3:69:50:96:3A:98:EA:39:FE:30:B9:55:C2:73:64:E1:87:FE:CA:85:A1:AF:6A:D1:09:87:D1:5F:18:EC:2F"
                 ),
                 false
             )
@@ -8251,6 +8445,20 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.github.jamsinclair.owcamera2",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "66:1C:7A:9C:39:17:59:C3:C2:18:B0:F0:AA:9A:A0:00:67:86:9C:18:C4:D9:C9:AB:6D:82:BC:15:63:96:2A:D8"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.github.lamarios.clipious",
         listOf(
             Hashes(
@@ -8334,6 +8542,20 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.github.mistermo_vibecode.voiceplus",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "E9:B7:EB:FF:DF:D9:6D:08:BB:75:18:10:81:9C:21:33:A6:C0:60:BB:6F:17:44:9D:95:22:3B:6F:8B:16:D2:F2"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.github.muellerma.coffee",
         listOf(
             Hashes(
@@ -8379,6 +8601,20 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "90:43:1B:46:5B:44:03:31:14:5C:76:9C:40:D8:72:B0:79:BE:15:40:50:88:22:CD:FC:3A:2A:C3:97:D4:6C:AE"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.github.nicorac.bcrgui",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID_IZZYONDROID
+                ),
+                listOf(
+                    "9F:DF:EA:BE:A8:9F:F5:7E:7E:0C:68:3F:88:D9:27:E3:2F:D0:6F:AE:79:1F:A0:DF:A0:4B:20:99:74:56:44:59"
                 ),
                 false
             )
@@ -9943,6 +10179,10 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.greyhound.mobile.consumer",
         listOf(
@@ -10156,10 +10396,6 @@ private fun __db_c2(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "com.heise.ct",
         listOf(
@@ -10610,6 +10846,20 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.invoiceninja.app",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "BB:BC:8B:FB:72:4E:F2:56:77:30:31:B1:C9:22:C0:51:D3:5D:EE:3F:CE:BD:59:3A:F7:11:2F:AB:46:7D:E8:88"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.iotsolution.aidot",
         listOf(
             Hashes(
@@ -10733,6 +10983,48 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.jarsilio.android.drowser",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "36:C6:B2:04:EA:42:62:A0:8F:B6:B4:3A:EB:D1:11:39:F2:B5:F4:A1:00:DF:60:9C:D6:E3:E4:3F:43:1A:03:E9"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.jarsilio.android.magnifica",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "24:06:CA:D9:83:B1:C5:A1:D9:9C:5C:D5:06:4F:D3:D7:83:E9:85:02:7A:1C:4C:E9:CE:87:9B:50:ED:3C:08:B6"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.jarsilio.android.pingoff",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "24:06:CA:D9:83:B1:C5:A1:D9:9C:5C:D5:06:4F:D3:D7:83:E9:85:02:7A:1C:4C:E9:CE:87:9B:50:ED:3C:08:B6"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.jarsilio.android.scrambledeggsif",
         listOf(
             Hashes(
@@ -10767,6 +11059,34 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.jarsilio.android.waveup",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "76:BA:3A:A3:78:60:41:F0:F2:64:8F:28:78:21:F1:05:5C:07:1E:AE:E0:7A:A4:CF:7B:62:11:43:59:FF:48:5A"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.jarsilio.android.waveup.tasker",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "67:A2:C1:45:9B:CE:29:6B:4C:B0:CD:15:8B:89:2D:62:B8:89:76:41:E6:50:54:4D:46:05:F1:CF:36:67:71:85"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.jemcik.jemrec",
         listOf(
             Hashes(
@@ -10775,6 +11095,20 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "50:AE:AB:36:30:F0:19:8E:A3:84:5D:B5:14:13:B1:AD:29:58:2F:78:24:0F:A2:DF:6F:E5:5B:A8:53:7A:FD:F8"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.jens.automation2",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "D3:12:D8:CA:65:99:EE:71:CC:27:58:31:5D:CA:0C:87:1C:AF:E9:91:B7:6E:2B:EA:BF:8F:E1:86:CA:EA:A9:3F"
                 ),
                 false
             )
@@ -11253,6 +11587,20 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "EA:52:2B:12:5F:40:1A:12:98:3F:D5:76:1D:A3:AF:18:52:21:66:20:ED:31:E6:03:52:5C:D5:9F:2D:03:41:57"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.kompact",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "58:13:FC:01:BA:8D:D9:D2:83:5B:6B:EA:E8:0F:65:CA:09:F4:44:4D:4F:B4:26:E8:E3:FF:3D:4A:DE:B1:1D:7B"
                 ),
                 false
             )
@@ -13172,6 +13520,10 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.myfitnesspal.android",
         listOf(
@@ -13556,10 +13908,6 @@ private fun __db_c3(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "com.nintendo.zaka",
         listOf(
@@ -14610,6 +14958,20 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.petrocanada.my_petro_canada",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "58:9C:3F:38:A7:4E:77:28:60:92:C7:10:7E:14:8E:BC:BC:27:F0:5D:52:F8:A9:8A:FA:B6:B6:41:86:B3:24:75"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.pettoxic.android",
         listOf(
             Hashes(
@@ -15443,6 +15805,20 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.rkgames.basisgame",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "35:0B:01:5F:24:DC:BB:B7:56:FB:11:FE:A9:44:1E:1A:6F:D8:AB:EC:76:8B:A1:61:84:46:6A:44:E0:E7:48:29"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.robinhood.android",
         listOf(
             Hashes(
@@ -16020,6 +16396,20 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.seafile.seadroid2",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "9D:EB:B4:38:91:C6:67:EA:D7:A9:99:D4:5A:BB:69:AF:CC:A9:C4:3A:48:CE:B7:F4:F4:CA:BB:AF:FB:1E:48:AF"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.seazon.feedme",
         listOf(
             Hashes(
@@ -16205,6 +16595,10 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.shayan.firewall",
         listOf(
@@ -16302,6 +16696,20 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "0F:E1:B9:F4:4A:4D:B9:7E:C5:09:48:F5:18:9F:6B:43:00:71:6C:C6:D4:84:3F:56:98:D6:14:A2:15:2E:21:88"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.shubhang.loophole",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "38:46:C2:6B:24:20:8E:88:D9:8E:B4:63:E9:7E:5E:39:79:B3:A3:B4:44:03:11:E0:08:14:CB:0E:64:F4:FF:66"
                 ),
                 false
             )
@@ -16596,10 +17004,6 @@ private fun __db_c4(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "com.srtc.source",
         listOf(
@@ -16987,9 +17391,29 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "36:E9:85:3F:48:84:E5:5C:35:80:3D:BF:67:1E:14:93:E8:B0:B4:D3:3E:63:5E:D8:4D:BA:A8:3B:CA:D8:30:3C"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
                     Source.GOOGLE_PLAY_STORE
                 ),
                 listOf(
+                    "66:30:F8:6D:FC:E5:E0:19:B3:21:AD:62:BC:F9:3E:96:8A:C6:DB:C1:5F:C5:B1:BA:12:EB:B8:C0:5F:B2:79:F1"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.FDROID,
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "36:E9:85:3F:48:84:E5:5C:35:80:3D:BF:67:1E:14:93:E8:B0:B4:D3:3E:63:5E:D8:4D:BA:A8:3B:CA:D8:30:3C",
                     "66:30:F8:6D:FC:E5:E0:19:B3:21:AD:62:BC:F9:3E:96:8A:C6:DB:C1:5F:C5:B1:BA:12:EB:B8:C0:5F:B2:79:F1"
                 ),
                 false
@@ -17096,6 +17520,20 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "97:A0:16:3C:F8:8E:37:5E:BD:9C:CA:DD:BA:66:74:24:46:E5:DD:5C:93:BE:E5:26:8C:0F:31:0C:C8:76:9F:B2"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.teamwood.spacewood.unity",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "99:71:F2:1B:DF:4C:20:3E:B7:2A:69:DA:9C:0C:E7:0D:45:B7:F0:DD:8E:9C:D9:E8:02:9C:1B:5A:15:CA:D9:11"
                 ),
                 false
             )
@@ -17621,6 +18059,20 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "44:F0:47:FC:6B:34:B0:BA:0C:49:1F:82:5B:B4:E4:37:70:D2:BC:94:12:20:D2:90:A7:0F:3A:84:67:AE:D6:01"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.trafi.android.tr",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "8F:56:F5:78:2E:3A:89:D1:77:4E:2D:B0:AE:96:1A:04:93:12:12:AC:AE:B3:CA:D8:20:BA:15:8A:A3:29:33:A0"
                 ),
                 false
             )
@@ -19354,6 +19806,10 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c6(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "com.yamaha.hs.headphonecontrol",
         listOf(
@@ -19582,6 +20038,20 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "com.zeptolab.ctr.ads",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "F5:1A:71:B1:21:CF:D9:3F:25:AA:2E:00:EE:B5:0A:8A:B5:EF:0E:39:64:8B:C3:B7:A7:11:A3:F8:93:82:D3:30"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "com.zhangke.fread",
         listOf(
             Hashes(
@@ -19634,6 +20104,48 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "D8:6E:FE:15:1E:09:BF:4C:A8:44:0C:B3:BF:A0:A8:1B:E2:54:4F:70:C7:85:87:DA:F0:26:6D:FC:A2:FA:25:DF"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.zoffcc.applications.tofshare",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "48:2C:78:92:BF:34:23:AF:88:2D:5F:73:B8:E7:28:29:B1:5A:8C:08:36:CD:35:E8:D3:7E:83:5E:68:9D:82:04"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.zoffcc.applications.toloshare",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "9A:37:3A:52:D1:77:27:39:4D:51:F6:EE:E0:2B:28:38:D6:84:6F:0D:63:8C:35:55:0E:7E:42:A1:00:F4:B7:94"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "com.zoffcc.applications.trifa",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "0E:E1:AE:CB:21:E2:65:94:71:4E:90:45:F4:C4:B4:6E:16:61:E2:4C:23:68:E7:0B:8D:AF:97:8D:81:6A:11:93"
                 ),
                 false
             )
@@ -19794,10 +20306,6 @@ private fun __db_c5(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c6(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "d.d.meshenger",
         listOf(
@@ -21496,6 +22004,20 @@ private fun __db_c6(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "de.wivewa.dialer",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "0B:CB:97:D2:24:16:46:E2:18:2E:D4:FB:0C:C2:32:14:5E:92:93:4E:C8:76:5A:48:3E:82:8F:24:96:85:43:56"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "de.xcom.flatex.ptan",
         listOf(
             Hashes(
@@ -22120,6 +22642,20 @@ private fun __db_c6(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "edge.roll",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "2F:E0:9F:50:18:0D:92:E3:B3:20:49:92:FF:C9:A8:C5:98:08:7B:9A:7B:AC:0B:12:D3:F2:3A:1E:36:87:FD:7F"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "edu.cornell.birds.ebird",
         listOf(
             Hashes(
@@ -22671,6 +23207,10 @@ private fun __db_c6(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "flar2.devcheck",
         listOf(
@@ -23220,10 +23760,6 @@ private fun __db_c6(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "im.narayana.another",
         listOf(
@@ -23826,6 +24362,21 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "io.github.friesi23.mhabit",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID,
+                    Source.FDROID_IZZYONDROID
+                ),
+                listOf(
+                    "4A:31:E7:99:06:3F:72:1D:62:13:5F:09:25:F3:16:C2:F5:E5:AB:08:B4:62:FC:4B:95:76:73:C9:B4:08:69:B5"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "io.github.giuig.auraninja",
         listOf(
             Hashes(
@@ -24092,6 +24643,20 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "io.github.RealEarthling.epoch",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "72:63:C0:BF:CE:95:B6:25:83:95:98:B0:1F:DC:C6:95:C0:4C:DB:E6:DD:4F:A3:4A:02:A2:D3:AD:25:22:C2:46"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "io.github.sak.read.it.later",
         listOf(
             Hashes(
@@ -24146,6 +24711,20 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "34:FF:A2:EE:65:8F:E0:36:B6:C5:D2:92:AE:B2:51:45:DE:69:57:ED:52:ED:D9:9F:4B:EB:8D:6B:36:31:C1:FF"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "io.github.yamin8000.dooz",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "C5:FC:36:A2:D1:80:57:15:5A:47:1F:45:62:16:F0:B1:F0:77:55:F3:31:47:F9:38:C9:2E:A6:27:5D:CE:D4:D2"
                 ),
                 false
             )
@@ -24584,6 +25163,20 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "it.bancareale.app",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "49:F9:AB:CD:73:E7:7D:CF:2E:3B:C2:7B:52:B4:49:FF:1A:5F:E3:5A:74:1A:0F:87:20:46:DC:AB:18:CF:BF:89"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "it.belloworld.mercurygram",
         listOf(
             Hashes(
@@ -24861,6 +25454,21 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
                 ),
                 listOf(
                     "1D:E3:25:6F:07:4B:A9:17:27:39:87:D7:47:00:8B:F5:69:E8:9B:5F:E8:7D:C5:98:59:F0:FB:1D:B8:F4:1E:93"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "juloo.keyboard2",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID,
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "0F:D9:6D:AF:7A:70:98:1E:DC:7A:F4:2D:14:A2:0F:F1:9E:90:51:4C:99:66:DE:93:AB:B7:AF:25:14:53:EF:C4"
                 ),
                 false
             )
@@ -25951,6 +26559,20 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "net.millaguie.cosmovisor",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "6D:7C:E9:F4:E5:F6:94:7E:1F:BA:88:BF:8C:97:B3:35:CD:92:2C:CE:CE:A2:A1:7B:18:F9:30:51:E7:2B:E0:35"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "net.minetest.minetest",
         listOf(
             Hashes(
@@ -26129,6 +26751,10 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "net.pgaskin.remotedesktop",
         listOf(
@@ -26773,10 +27399,6 @@ private fun __db_c7(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "org.billthefarmer.buses",
         listOf(
@@ -27187,6 +27809,20 @@ private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
                 listOf(
                     "54:D3:57:33:E9:64:DC:B6:5F:51:1E:50:25:B8:3F:9B:D7:B5:73:31:14:34:AB:79:A7:CD:09:F8:27:BC:45:50",
                     "AF:71:BA:34:4C:AB:25:9F:A6:25:F0:79:FF:52:0F:51:1D:17:A3:72:BB:2E:8F:A2:75:32:79:1B:D5:FE:A8:CB"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "org.dolphinemu.dolphinemu",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "40:14:F9:16:9E:3F:F0:8C:D8:FD:F8:AC:33:41:9D:46:03:ED:95:58:27:16:49:4A:03:92:85:3C:91:14:88:35"
                 ),
                 false
             )
@@ -28704,9 +29340,29 @@ private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
         listOf(
             Hashes(
                 listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "19:ED:8A:FE:05:20:D5:12:BD:1D:9A:78:01:31:D4:86:ED:B7:E3:84:61:4B:5E:43:AF:9A:D8:C6:88:B2:E1:00"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
                     Source.GOOGLE_PLAY_STORE
                 ),
                 listOf(
+                    "D1:76:6D:6A:91:72:68:41:E9:18:2A:D5:04:17:C3:F5:E4:93:CE:E4:B1:B7:E3:E6:75:14:7B:30:59:62:9D:EF"
+                ),
+                false
+            ),
+            Hashes(
+                listOf(
+                    Source.FDROID,
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "19:ED:8A:FE:05:20:D5:12:BD:1D:9A:78:01:31:D4:86:ED:B7:E3:84:61:4B:5E:43:AF:9A:D8:C6:88:B2:E1:00",
                     "D1:76:6D:6A:91:72:68:41:E9:18:2A:D5:04:17:C3:F5:E4:93:CE:E4:B1:B7:E3:E6:75:14:7B:30:59:62:9D:EF"
                 ),
                 false
@@ -28838,6 +29494,34 @@ private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
                 listOf(
                     "19:9F:DB:F8:30:08:EC:CE:44:ED:FD:EE:F4:E1:A2:DD:1A:EF:D9:CA:0F:5C:39:5A:36:B4:7C:07:22:07:AC:2F",
                     "D9:49:6A:86:F9:95:08:78:79:F4:11:99:98:6A:6D:36:C1:93:06:AC:90:DB:D1:E0:79:3F:3A:B1:98:1F:37:44"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "org.runnerup",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "FF:83:AE:6F:E5:8C:71:DF:B3:77:5A:D2:52:F4:56:11:33:94:EF:21:4C:99:68:D3:ED:4B:2B:5A:6A:40:20:E6"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "org.runnerup.free",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "6B:1B:9B:F6:3D:84:17:36:C7:72:DB:C1:0B:25:65:83:22:59:83:65:EC:15:A5:F9:2D:38:77:1F:5C:65:8F:6C"
                 ),
                 false
             )
@@ -29651,6 +30335,10 @@ private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
+    )
+
+private fun __db_c9(): Set<InternalDatabaseVerificationInfo> =
+    setOf(
     InternalDatabaseVerificationInfo(
         "pan.alexander.tordnscrypt.stable",
         listOf(
@@ -30006,6 +30694,20 @@ private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "ru.henridellal.dialer",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.FDROID
+                ),
+                listOf(
+                    "30:04:17:48:5F:FB:BB:F1:E9:D8:A8:16:6A:E8:33:B9:58:BE:07:F8:27:F4:27:B7:97:CA:4F:B6:C8:08:B6:3A"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "ru.ozon.app.android",
         listOf(
             Hashes(
@@ -30316,10 +31018,6 @@ private fun __db_c8(): Set<InternalDatabaseVerificationInfo> =
             )
         )
     ),
-    )
-
-private fun __db_c9(): Set<InternalDatabaseVerificationInfo> =
-    setOf(
     InternalDatabaseVerificationInfo(
         "se.regiongavleborg.xtrafik.app",
         listOf(
@@ -30969,6 +31667,21 @@ private fun __db_c9(): Set<InternalDatabaseVerificationInfo> =
         )
     ),
     InternalDatabaseVerificationInfo(
+        "us.zoom.videomeetings",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE,
+                    Source.VERIFIED_DOMAIN_HTTPS
+                ),
+                listOf(
+                    "60:B7:57:24:B3:46:86:E5:2B:DE:94:49:69:DE:12:0F:16:BD:6D:95:97:88:D5:43:84:49:4C:AE:DD:4E:44:5D"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
         "verbosus.typtic",
         listOf(
             Hashes(
@@ -31104,6 +31817,20 @@ private fun __db_c9(): Set<InternalDatabaseVerificationInfo> =
                 listOf(
                     "40:05:8E:C6:8A:35:55:21:D0:8D:F2:49:98:CF:99:A7:14:91:33:5C:65:D7:58:85:03:9E:80:C0:25:AA:DD:FF",
                     "C1:4D:3C:6B:B5:D6:D9:AE:CF:C5:0B:BC:C1:9B:29:6D:D4:E6:87:46:36:D5:4C:1A:64:1C:14:08:BF:7E:F9:62"
+                ),
+                false
+            )
+        )
+    ),
+    InternalDatabaseVerificationInfo(
+        "xyz.goodcloud.glinet",
+        listOf(
+            Hashes(
+                listOf(
+                    Source.GOOGLE_PLAY_STORE
+                ),
+                listOf(
+                    "4E:AD:CB:A5:06:42:A4:C3:58:3C:F4:59:24:D0:6D:1C:C5:30:6F:02:48:24:FA:A4:E3:41:D8:FD:09:26:B2:95"
                 ),
                 false
             )
