@@ -361,7 +361,7 @@ fun AppVerifierApp(
                         navController.navigate(AppVerifierScreens.VerifyApp.name)
                     },
                     { searchQuery = it },
-                    { verifyAppViewModel.getHashesFromPackageInfo(it) },
+                    { verifyAppViewModel.getHashesFromPackageInfo(it, context.packageManager) },
                     { verifyAppViewModel.getInternalDatabaseInfoFromVerificationInfo(it) },
                     DatabaseStatusDisplayMode.valueOf(preferencesUiState.value.databaseStatusDisplayMode),
                     userDatabaseEntries,
