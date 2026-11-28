@@ -292,13 +292,17 @@ class VerifyAppViewModel(
         return if (maybeMatchedHashes != null) {
             val hashSources = maybeMatchedHashes.sources.filter { it !in domainSourceValues }
             val domainSources = maybeMatchedHashes.sources.filter { it in domainSourceValues }
-            InternalDatabaseInfo(InternalDatabaseStatus.MATCH, hashSources, domainSources)
+            InternalDatabaseInfo(InternalDatabaseStatus.MATCH, hashSources, domainSources, hashSources)
         } else {
+            val hashSources = entry.hashesList
+                .flatMap { it.sources }
+                .filter { it !in domainSourceValues }
+                .distinct()
             val domainSources = entry.hashesList
                 .flatMap { it.sources }
                 .filter { it in domainSourceValues }
                 .distinct()
-            InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE), domainSources)
+            InternalDatabaseInfo(InternalDatabaseStatus.NOMATCH, listOf(Source.NONE), domainSources, hashSources)
         }
     }
 
