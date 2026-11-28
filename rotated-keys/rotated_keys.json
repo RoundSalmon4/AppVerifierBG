@@ -82,6 +82,14 @@
       "source_issue": 128
     },
     {
+      "package": "com.thetransitapp.droid",
+      "keys": [
+        "18:BA:03:3C:DC:60:7A:3D:C7:D7:A2:8A:7E:6E:0F:AF:50:2C:B8:6D:A9:BE:D7:CB:61:8C:61:17:B3:91:0B:95",
+        "A0:55:A8:6A:4F:75:38:D3:EE:2D:57:5C:06:74:32:81:B8:13:05:23:73:DE:A5:BF:F1:0D:20:15:81:55:13:41"
+      ],
+      "source_issue": 149
+    },
+    {
       "package": "me.proton.android.lumo",
       "keys": [
         "A7:47:EA:EE:28:61:1E:25:21:7B:79:3C:07:BF:30:22:34:40:5C:FD:1E:19:06:81:62:55:6C:79:E5:BF:04:F0",
