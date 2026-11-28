@@ -617,6 +617,16 @@ fun VerifyAppScreen(
                             "\nThis information can be useful if you distrust a specific source and want to make" +
                                     " sure the app isn't from them."
                         )
+                    } else if (internalDatabaseInfo.internalDatabaseStatus == InternalDatabaseStatus.NOMATCH && internalDatabaseInfo.knownHashSources.isNotEmpty()) {
+                        Text("\nKnown internal database sources for this package (no matching hash):\n")
+                        Text(
+                            text = internalDatabaseInfo.knownHashSources.joinToString("\n") { it.displayName },
+                            style = typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                        Text(
+                            "\nThe installed app's signing certificate did not match any of these source entries. It may be from a different source, a new signing key, or tampered with."
+                        )
                     }
                 }
             }

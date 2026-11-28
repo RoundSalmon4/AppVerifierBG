@@ -28,6 +28,7 @@ data class InternalDatabaseInfo(
     val internalDatabaseStatus: InternalDatabaseStatus,
     val hashSources: List<Source>,
     val domainSources: List<Source> = emptyList(),
+    val knownHashSources: List<Source> = emptyList(),
 )
 
 enum class InternalDatabaseStatus(

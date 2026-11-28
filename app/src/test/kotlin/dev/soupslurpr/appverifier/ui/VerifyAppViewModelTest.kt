@@ -4,6 +4,8 @@ import android.app.Application
 import dev.soupslurpr.appverifier.Source
 import dev.soupslurpr.appverifier.data.HashVerifier
 import dev.soupslurpr.appverifier.data.Hashes
+import dev.soupslurpr.appverifier.data.InternalDatabaseStatus
+import dev.soupslurpr.appverifier.data.VerificationInfo
 import dev.soupslurpr.appverifier.data.VerificationStatus
 import io.mockk.every
 import io.mockk.mockk
@@ -93,5 +95,24 @@ class VerifyAppViewModelTest {
         viewModel.clearUiState()
 
         assertEquals("", viewModel.uiState.value.packageName)
+    }
+
+    @Test
+    fun getInternalDatabaseInfoFromVerificationInfo_nomatch_returnsKnownHashSources() {
+        every { application.packageName } returns "dev.soupslurpr.appverifier"
+
+        val info = viewModel.getInternalDatabaseInfoFromVerificationInfo(
+            VerificationInfo(
+                packageName = "it.belloworld.mercurygram",
+                hashes = Hashes(
+                    listOf(Source.NONE),
+                    listOf("AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"),
+                    false,
+                ),
+            )
+        )
+
+        assertEquals(InternalDatabaseStatus.NOMATCH, info.internalDatabaseStatus)
+        assertEquals(listOf(Source.FDROID), info.knownHashSources)
     }
 }
